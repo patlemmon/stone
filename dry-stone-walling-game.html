@@ -624,7 +624,7 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-end;
             gap: 12px;
             margin-top: 10px;
             min-height: 100px;
@@ -632,8 +632,7 @@
         }
 
         .hand-card {
-            width: 140px;
-            height: 90px;
+            min-width: 80px;
             border: 3px solid #2a2a2a;
             border-radius: 8px;
             background: #fffdf7;
@@ -686,16 +685,6 @@
             transform: translateY(-2px);
         }
 
-        .hand-card-number {
-            position: absolute;
-            top: 4px;
-            left: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #2a2a2a;
-            font-family: monospace;
-        }
-
         .hand-card-preview {
             display: flex;
             align-items: center;
@@ -703,7 +692,6 @@
         }
 
         .hand-card-preview canvas {
-            border: 1px dashed #ccc;
             border-radius: 3px;
         }
 
@@ -1164,22 +1152,18 @@
 
                 card.onclick = () => onCardClicked(index);
 
-                // Create preview canvas for stone
+                // Create preview canvas for stone (1:1 with play area)
                 const previewCanvas = document.createElement('canvas');
-                previewCanvas.width = 100;
-                previewCanvas.height = 50;
+                const stonePixelW = stone.width * BLOCK_SIZE;
+                const stonePixelH = stone.height * BLOCK_SIZE;
+                previewCanvas.width = stonePixelW;
+                previewCanvas.height = stonePixelH;
                 const previewCtx = previewCanvas.getContext('2d');
 
-                // Draw stone preview
-                const scale = Math.min(90 / (stone.width * BLOCK_SIZE), 40 / (stone.height * BLOCK_SIZE));
-                const w = stone.width * BLOCK_SIZE * scale;
-                const h = stone.height * BLOCK_SIZE * scale;
-                const x = (100 - w) / 2;
-                const y = (50 - h) / 2;
-
+                // Draw stone at actual play-area size
                 previewCtx.fillStyle = '#fffdf7';
-                previewCtx.fillRect(0, 0, 100, 50);
-                drawStoneBlock(previewCtx, x, y, w, h, stone.thickness, false, false, stone.isCoping, stone.width, stone.height);
+                previewCtx.fillRect(0, 0, stonePixelW, stonePixelH);
+                drawStoneBlock(previewCtx, 0, 0, stonePixelW, stonePixelH, stone.thickness, false, false, stone.isCoping, stone.width, stone.height);
 
                 // Type label
                 let typeLabel = '';
@@ -1194,7 +1178,6 @@
                 }
 
                 card.innerHTML = `
-                    <div class="hand-card-number">${index + 1}</div>
                     <div class="hand-card-preview"></div>
                     <div class="hand-card-dims">${stone.width} × ${stone.height}</div>
                     <div class="hand-card-type">${typeLabel}</div>
