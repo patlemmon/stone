@@ -747,6 +747,85 @@
         .card-timer-fill.urgent {
             background: #cc3333;
         }
+
+        /* Tutorial Coach Panel */
+        .tutorial-coach {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 420px;
+            padding: 12px 16px;
+            background: #fffdf7;
+            border: 2px solid #2a2a2a;
+            border-left: 4px solid #2a8a2a;
+            font-family: 'Georgia', serif;
+            z-index: 50;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .tutorial-coach-step {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #888;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tutorial-coach-skip {
+            font-size: 9px;
+            color: #888;
+            cursor: pointer;
+            text-decoration: underline;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tutorial-coach-skip:hover {
+            color: #2a2a2a;
+        }
+
+        .tutorial-coach-main {
+            font-size: 14px;
+            color: #2a2a2a;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+
+        .tutorial-coach-hint {
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            line-height: 1.3;
+        }
+
+        .tutorial-coach.tutorial-fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .hand-row.tutorial-highlight .hand-card {
+            animation: tutorialPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes tutorialPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(42, 138, 42, 0); }
+            50% { box-shadow: 0 0 0 4px rgba(42, 138, 42, 0.3); }
+        }
+
+        .principle-card.tutorial-highlight {
+            animation: principlePulse 1.5s ease-in-out infinite;
+            border-color: #2a8a2a;
+        }
+
+        @keyframes principlePulse {
+            0%, 100% { background: #fffdf7; }
+            50% { background: #e8f5e8; }
+        }
     </style>
 </head>
 <body>
@@ -1045,6 +1124,10 @@
         let winnowTimeout = null; // Track pending winnow animation
         let cardTimerRemaining = 0; // Stored remaining ms when paused
 
+        // Tutorial state
+        let tutorialActive = false;
+        let tutorialStep = 0;
+
         function loadStoneImages() {
             const assets = [
                 // { key: '2x3', src: 'stone_assets/2x3 Stone A.svg' },
@@ -1193,7 +1276,7 @@
             info.innerHTML = `
                 <span><strong>${deck.length}</strong> in deck</span>
                 <span><strong>${redraws}</strong> redraws</span>
-                ${awaitingCardSelection && redraws > 0 ? '<button class="btn hand-redraw-btn" onclick="redrawHandAndRefresh()">Redraw (R)</button>' : ''}
+                ${awaitingCardSelection && redraws > 0 && !tutorialActive ? '<button class="btn hand-redraw-btn" onclick="redrawHandAndRefresh()">Redraw (R)</button>' : ''}
             `;
             handRow.appendChild(info);
 
@@ -1226,6 +1309,12 @@
             // Update hand row to show disabled/placing state
             renderHandRow();
 
+            // Tutorial: advance from "pick card" to "place stone" step
+            if (tutorialActive && (tutorialStep === 0 || tutorialStep === 2 || tutorialStep === 4)) {
+                tutorialStep++;
+                updateCoachPanel();
+            }
+
             // Start the game loop for this stone's drop
             gameRunning = true;
             gamePaused = false;
@@ -1242,6 +1331,7 @@
         // ============ CARD SELECTION TIMER ============
 
         function startCardSelectTimer() {
+            if (tutorialActive) return;
             clearCardSelectTimer();
             cardsWinnowed = 0;
             cardSelectDeadline = performance.now() + CARD_SELECT_TIME * 1000;
@@ -1360,6 +1450,214 @@
             onCardClicked(randomIndex);
         }
 
+        // ============ TUTORIAL SYSTEM ============
+
+        function startTutorial() {
+            tutorialActive = true;
+            tutorialStep = 0;
+            createCoachPanel();
+            updateCoachPanel();
+        }
+
+        function createCoachPanel() {
+            const existing = document.getElementById('tutorialCoach');
+            if (existing) existing.remove();
+
+            const container = document.querySelector('.game-board-container');
+            const panel = document.createElement('div');
+            panel.id = 'tutorialCoach';
+            panel.className = 'tutorial-coach';
+            panel.innerHTML = `
+                <div class="tutorial-coach-step">
+                    <span id="tutorialStepLabel"></span>
+                    <span class="tutorial-coach-skip" onclick="skipTutorial()">Skip</span>
+                </div>
+                <div class="tutorial-coach-main" id="tutorialMainMsg"></div>
+                <div class="tutorial-coach-hint" id="tutorialHintMsg"></div>
+            `;
+            container.appendChild(panel);
+        }
+
+        function updateCoachPanel() {
+            const stepLabel = document.getElementById('tutorialStepLabel');
+            const mainMsg = document.getElementById('tutorialMainMsg');
+            const hintMsg = document.getElementById('tutorialHintMsg');
+            if (!mainMsg) return;
+
+            // Clear previous principle highlights
+            document.querySelectorAll('.principle-card.tutorial-highlight')
+                .forEach(el => el.classList.remove('tutorial-highlight'));
+
+            const messages = {
+                0: {
+                    step: 'Step 1 of 3',
+                    main: 'Pick a stone from your hand below.',
+                    hint: 'Click a card or press 1\u20135 to select.',
+                    principle: null
+                },
+                1: {
+                    step: 'Step 1 of 3',
+                    main: 'Use \u2190 \u2192 to position, Space to drop.',
+                    hint: 'Stones score best when laid flat \u2014 wider than tall.',
+                    principle: 'principle-layflat'
+                },
+                2: {
+                    step: 'Step 2 of 3',
+                    main: 'Pick another stone.',
+                    hint: 'Place it right beside your first stone.',
+                    principle: null
+                },
+                3: {
+                    step: 'Step 2 of 3',
+                    main: 'Drop it next to your first stone.',
+                    hint: 'Good walls avoid zipper patterns \u2014 2 into 1.',
+                    principle: 'principle-2into1'
+                },
+                4: {
+                    step: 'Step 3 of 3',
+                    main: 'Now pick a stone to go on top.',
+                    hint: 'The golden rule: bridge across two stones below.',
+                    principle: null
+                },
+                5: {
+                    step: 'Step 3 of 3',
+                    main: 'Bridge across your two foundation stones!',
+                    hint: '1 over 2 is the most important rule \u2014 worth +35 points.',
+                    principle: 'principle-1over2'
+                },
+                6: {
+                    step: 'Tutorial Complete',
+                    main: 'You\'re ready to build! Check the sidebar for guidance.',
+                    hint: 'The timer will now count down \u2014 pick stones before time runs out!',
+                    principle: null
+                }
+            };
+
+            const msg = messages[tutorialStep] || messages[0];
+            stepLabel.textContent = msg.step;
+            mainMsg.textContent = msg.main;
+            hintMsg.textContent = msg.hint;
+
+            if (msg.principle) {
+                const card = document.getElementById(msg.principle);
+                if (card) card.classList.add('tutorial-highlight');
+            }
+
+            // Pulse hand row on "pick a card" steps
+            const handRow = document.getElementById('handRow');
+            if (handRow) {
+                if (tutorialStep === 0 || tutorialStep === 2 || tutorialStep === 4) {
+                    handRow.classList.add('tutorial-highlight');
+                } else {
+                    handRow.classList.remove('tutorial-highlight');
+                }
+            }
+        }
+
+        function advanceTutorial(stonesPlaced) {
+            if (stonesPlaced >= 3) {
+                tutorialStep = 6;
+                updateCoachPanel();
+                setTimeout(() => endTutorial(), 100);
+                return;
+            }
+            // stonesPlaced=1 -> step 2, stonesPlaced=2 -> step 4
+            const nextStep = stonesPlaced * 2;
+            setTimeout(() => {
+                if (!tutorialActive) return;
+                tutorialStep = nextStep;
+                updateCoachPanel();
+            }, 2000);
+        }
+
+        function endTutorial() {
+            tutorialActive = false;
+            localStorage.setItem('sbs_tutorial_done', '1');
+
+            // Remove hand row highlight
+            const handRow = document.getElementById('handRow');
+            if (handRow) handRow.classList.remove('tutorial-highlight');
+
+            // Clear principle highlights
+            document.querySelectorAll('.principle-card.tutorial-highlight')
+                .forEach(el => el.classList.remove('tutorial-highlight'));
+
+            // Fade out and remove coach panel
+            setTimeout(() => {
+                const panel = document.getElementById('tutorialCoach');
+                if (panel) {
+                    panel.classList.add('tutorial-fade-out');
+                    setTimeout(() => panel.remove(), 500);
+                }
+            }, 3000);
+
+            // Start card timer for normal play
+            if (awaitingCardSelection && !cardSelectDeadline) {
+                startCardSelectTimer();
+            }
+        }
+
+        function skipTutorial() {
+            endTutorial();
+        }
+
+        function drawTutorialOverlay() {
+            // On step 5 (placing 3rd stone), highlight the bridging zone
+            if (tutorialStep !== 5 || !currentStone) return;
+
+            // Find the two placed stones
+            const groundRow = ROWS - 2;
+            let minStoneX = COLS, maxStoneX = 0;
+            const placedIds = new Set();
+
+            for (let c = 0; c < COLS; c++) {
+                for (let r = groundRow; r >= groundRow - 6; r--) {
+                    const id = stoneInfo[r] && stoneInfo[r][c];
+                    if (id && id > 0) {
+                        placedIds.add(id);
+                        minStoneX = Math.min(minStoneX, c);
+                        maxStoneX = Math.max(maxStoneX, c);
+                    }
+                }
+            }
+
+            if (placedIds.size >= 2) {
+                // Find top of placed stones
+                let topRow = groundRow;
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = minStoneX; c <= maxStoneX; c++) {
+                        if (stoneInfo[r] && stoneInfo[r][c] > 0) {
+                            topRow = Math.min(topRow, r);
+                        }
+                    }
+                }
+
+                const highlightY = (topRow - currentStone.height) * BLOCK_SIZE;
+                const highlightX = minStoneX * BLOCK_SIZE;
+                const highlightW = (maxStoneX - minStoneX + 1) * BLOCK_SIZE;
+                const highlightH = currentStone.height * BLOCK_SIZE;
+
+                ctx.fillStyle = 'rgba(42, 138, 42, 0.08)';
+                ctx.fillRect(highlightX, highlightY, highlightW, highlightH);
+                ctx.strokeStyle = 'rgba(42, 138, 42, 0.25)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.strokeRect(highlightX, highlightY, highlightW, highlightH);
+                ctx.setLineDash([]);
+            }
+        }
+
+        function cleanupTutorial() {
+            tutorialActive = false;
+            tutorialStep = 0;
+            const panel = document.getElementById('tutorialCoach');
+            if (panel) panel.remove();
+            const handRow = document.getElementById('handRow');
+            if (handRow) handRow.classList.remove('tutorial-highlight');
+            document.querySelectorAll('.principle-card.tutorial-highlight')
+                .forEach(el => el.classList.remove('tutorial-highlight'));
+        }
+
         // ============ DESIGN MODE FUNCTIONS ============
 
         function buildStonePalette() {
@@ -1388,6 +1686,7 @@
         }
 
         function switchMode(mode) {
+            if (tutorialActive) return; // Block mode switch during tutorial
             const isDesign = mode === 'design';
             if (designMode === isDesign) return; // Already in this mode
 
@@ -2543,6 +2842,11 @@
                 awaitingCardSelection = true;
                 document.getElementById('handRow').style.display = 'flex';
                 renderHandRow();
+
+                // Start tutorial on first play
+                if (!localStorage.getItem('sbs_tutorial_done')) {
+                    startTutorial();
+                }
                 return;
             }
 
@@ -3075,6 +3379,9 @@
                 ctx.stroke();
             }
 
+            // Tutorial overlay (bridge highlight on step 5)
+            if (tutorialActive) drawTutorialOverlay();
+
             // Phase-specific messages
             if (gamePhase === 'showing') {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -3222,6 +3529,11 @@
             analyzeStone(positions, currentStone);
             stats.stonesPlaced++;
             document.getElementById('stonesPlaced').textContent = stats.stonesPlaced;
+
+            // Tutorial progression
+            if (tutorialActive) {
+                advanceTutorial(stats.stonesPlaced);
+            }
 
             // Update course display
             const highestRow = Math.min(...positions.map(p => p.y));
@@ -3646,7 +3958,7 @@
                     case '4': onCardClicked(3); break;
                     case '5': onCardClicked(4); break;
                     case 'r':
-                    case 'R': redrawHandAndRefresh(); break;
+                    case 'R': if (!tutorialActive) redrawHandAndRefresh(); break;
                 }
                 return;
             }
@@ -3682,6 +3994,7 @@
         function confirmReset() {
             document.getElementById('resetConfirmOverlay').classList.remove('show');
             gamePaused = false;
+            cleanupTutorial();
             // Reset to title state with pre-built wall displayed
             if (deconstructTimer) { clearTimeout(deconstructTimer); deconstructTimer = null; }
             if (copingTimer) { clearTimeout(copingTimer); copingTimer = null; }
@@ -3726,6 +4039,8 @@
         }
 
         function startGame() {
+            cleanupTutorial();
+
             // Clear any pending deconstruction
             if (deconstructTimer) {
                 clearTimeout(deconstructTimer);
