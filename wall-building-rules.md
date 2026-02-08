@@ -1,6 +1,43 @@
 # Dry Stone Wall Building Rules & Algorithm
 
-## Your "Starter Example" Wall Analysis
+> **NOTE (Inch-Based Overhaul):** The game now uses **inch-based dimensions** conforming to DSWA Level I test wall specs. 1 grid cell = 1 inch. Wall: 54" tall × 72" wide (at midpoint). Stones: 2–12" tall × 4–20" wide. Through stones at 27" midpoint. The stone distributions and example wall analysis below reference the **old abstract grid system** (BLOCK_SIZE=20, 48×30 grid) and are preserved for historical reference. The actual game now uses `generateAlgorithmicWall()` with inch-based stones.
+
+---
+
+## Current Scoring System (Inch-Based)
+
+### Seven Principles & Bonuses
+| Principle | Bonus | Stability (Good) | Stability (Bad) |
+|-----------|-------|-------------------|-----------------|
+| LAY FLAT | +15 | +2 | -18 (stone on end) |
+| 1 OVER 2 | +35 | +3 (sits on 2) | -10 (sits on 3+), -5 (stacking) |
+| MIDDLE THIRD | +40 | +3 (centered) | -5 (off-center) |
+| 2 INTO 1 | +20 | +2 (no zipper) | -8 (zipper: 2+ aligned joints) |
+| COURSING | +15 | +1 (right thickness) | -6 (thickness mismatch ≥2) |
+| COPING | +50 | +3 | — |
+| THROUGH STONE | +60 (spans line) / +30 (within 3") | +4 / +2 | -10 (misplaced) |
+
+**Base score formula:** `Math.round(stone.width * stone.height * 0.3) + bonuses`
+
+### Coursing Thresholds (Inch-Based)
+| Course Level (inches from ground) | Expected Thickness |
+|---|---|
+| 0–17" (foundation) | 3 (thick) |
+| 18–35" (body) | 2 (medium) |
+| 36"+ (upper) | 1 (thin) |
+
+### Stone Categories (Inch-Based)
+| Category | Heights | Widths | Thickness |
+|---|---|---|---|
+| Thin | 2", 3", 4" | 4"–12" | 1 |
+| Medium | 5", 6", 7", 8" | 8"–16" | 2 |
+| Thick | 9", 10", 11", 12" | 14"–20" | 3 |
+| Through | 4", 5", 6" | 18"–20" | 2–3 |
+| Coping | 6", 8" | 3"–4" | 1 (stood on end) |
+
+---
+
+## Historical: Starter Example Wall Analysis (Old Grid System)
 
 ### Stone Count Summary
 | Section | Count | % of Wall |
@@ -58,9 +95,9 @@
 | COURSING | +15 | -6 stability |
 | COPING | +50 | none |
 
-**Base Score:** 4 × width × height per stone
+**Base Score:** `Math.round(width × height × 0.3)` per stone (max 72 for 20×12")
 
-**Maximum bonus per stone: +210 points** (15+35+40+20+25+10+15+50)
+**Maximum bonus per stone: +235 points** (15+35+40+20+15+50+60)
 
 ---
 
@@ -199,12 +236,12 @@ if stone.width <= 2:
 ### 5. COURSING (Stone Size by Height)
 **Rule:** Heavier/thicker stones at base, thinner stones toward top.
 
-**Expected Thickness by Course:**
-| Course Level (from ground) | Expected Thickness |
-|---------------------------|-------------------|
-| 0-5 (foundation) | 3 (thick) |
-| 6-13 (body) | 2 (medium) |
-| 14+ (upper) | 1 (thin) |
+**Expected Thickness by Course (inch-based):**
+| Course Level (inches from ground) | Expected Thickness |
+|---|---|
+| 0–17" (foundation) | 3 (thick) |
+| 18–35" (body) | 2 (medium) |
+| 36"+ (upper) | 1 (thin) |
 
 **Tolerance:** ±1 thickness is acceptable
 **Penalty:** Heavy stones placed high up lose -6 stability
@@ -323,8 +360,8 @@ function evaluatePlacement(stone, x, y, board) {
         score += 20;
     }
 
-    // 5. COURSING CHECK
-    const expectedThickness = courseLevel < 6 ? 3 : (courseLevel < 14 ? 2 : 1);
+    // 5. COURSING CHECK (inch-based thresholds)
+    const expectedThickness = courseLevel < 18 ? 3 : (courseLevel < 36 ? 2 : 1);
     if (Math.abs(stone.thickness - expectedThickness) <= 1) {
         score += 15;
     } else if (stone.thickness > expectedThickness + 1) {
@@ -376,24 +413,28 @@ function findGaps(board) {
 
 ### When to Select Each Stone Type
 
-**Select THICK stones (3-height) when:**
-- Building foundation (courses 0-5)
+**Select THICK stones (9–12" tall, thickness 3) when:**
+- Building foundation (0–17" from ground)
 - Need to create a jumper for structural bonding
-- Filling a 3+ high gap
+- Filling a large gap
 
-**Select MEDIUM stones (2-height) when:**
-- Building mid-wall (courses 6-13)
+**Select MEDIUM stones (5–8" tall, thickness 2) when:**
+- Building mid-wall (18–35" from ground)
 - Need to bridge over a joint
-- Gap is 2 high
+- Medium-height gaps
 
-**Select THIN stones (1-height) when:**
-- Building upper wall (courses 14+)
+**Select THIN stones (2–4" tall, thickness 1) when:**
+- Building upper wall (36"+)
 - Filling narrow gaps
 - Leveling uneven course tops
 
-**Select COPING stones when:**
-- Reached top 3 rows
-- Wall body is complete
+**Select THROUGH stones (18–20" wide, dark) when:**
+- Wall progress is around 40–60% (near the 27" midpoint)
+- Need to span the through stone line for the +60 bonus
+
+**Select COPING stones (3–4" wide × 6–8" tall) when:**
+- Wall body is ~90% filled (auto-triggered via coping wave animation)
+- Fills the top 6" zone
 
 ### Optimal Stone Width Selection
 
@@ -441,25 +482,27 @@ function selectOptimalWidth(gap, stonesBelow) {
 
 ### Key Data Structures
 ```javascript
-// Stone object
+// Stone object (inch-based)
 {
     id: number,
-    x: number,      // left column
-    y: number,      // top row
-    width: number,  // horizontal blocks
-    height: number, // vertical blocks
-    thickness: number, // visual weight (usually = height)
-    isCoping: boolean
+    x: number,      // left column (inches from left edge)
+    y: number,      // top row (inches from top of canvas)
+    width: number,  // horizontal inches
+    height: number, // vertical inches
+    thickness: number, // visual weight: 1 (thin), 2 (medium), 3 (thick)
+    isCoping: boolean,
+    isThroughStone: boolean  // NEW: dark through stone for midpoint
 }
 
 // Board: 2D array where board[row][col] = thickness (0 = empty)
 // StoneInfo: 2D array where stoneInfo[row][col] = stone ID
+// StoneRegistry: { id → { minR, maxR, minC, maxC, thickness, isCoping, isThroughStone } }
 ```
 
 ### Performance Optimizations
-1. Pre-calculate stone boundaries for quick lookup
-2. Cache stones-below relationships
-3. Use bitmask for gap detection
+1. **Stone Registry:** `stoneRegistry{}` maps ID → bounding box for O(numStones) rendering (critical with 88×72 grid)
+2. Pre-calculate stone boundaries for quick lookup
+3. Cache stones-below relationships
 4. Sort deck once at game start
 
 ---

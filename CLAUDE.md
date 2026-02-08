@@ -6,7 +6,7 @@
 
 ## Architecture
 
-Single-file monolithic application — everything lives in `dry-stone-walling-game.html` (~3,850 lines of embedded HTML/CSS/JS). No build system, no external dependencies, no frameworks. Pure vanilla JavaScript with Canvas 2D API.
+Single-file monolithic application — everything lives in `dry-stone-walling-game.html` (~4,180 lines of embedded HTML/CSS/JS). No build system, no external dependencies, no frameworks. Pure vanilla JavaScript with Canvas 2D API.
 
 ```
 Stone By Stone/
@@ -52,22 +52,43 @@ Open `dry-stone-walling-game.html` in any modern web browser. No build step, no 
 
 ## Key Constants
 
+All dimensions are **inch-based** — 1 grid cell = 1 inch. Conforms to **DSWA Level I test wall** specifications.
+
 | Constant | Value | Description |
 |---|---|---|
-| `BLOCK_SIZE` | 20 | Pixels per grid cell |
-| `COLS` | 48 | Grid width (960px) |
-| `ROWS` | 30 | Grid height (600px) |
-| `WALL_HEIGHT` | 18 | Rows available for wall |
-| `COPING_HEIGHT` | 3 | Top rows reserved for coping |
-| `CHEEK_BASE_WIDTH` | 8 | Wall width at base |
+| `BLOCK_SIZE` | 10 | Pixels per inch (1 grid cell = 1") |
+| `COLS` | 88 | Grid width (880px) — 72" face + cheeks |
+| `ROWS` | 72 | Grid height (720px) — 54" wall + ground + sky |
+| `WALL_HEIGHT` | 54 | Wall height in inches (4'6") including coping |
+| `COPING_HEIGHT` | 6 | Top 6" reserved for coping stones stood on end |
+| `CHEEK_BASE_WIDTH` | 13 | Cheek width at ground level (inches) |
+| `CHEEK_TOP_WIDTH` | 3 | Cheek width at wall top (inches) |
+| `THROUGH_STONE_ROW` | 27 | Through stone line: 27" from ground (midpoint) |
 | `HAND_SIZE` | 5 | Cards shown to player |
 | `MAX_REDRAWS` | 3 | Hand redraw limit |
 | `CARD_SELECT_TIME` | 15 | Seconds before auto-select |
-| `COPING_WAVE_DELAY` | 120 | ms between coping stones in wave animation |
+| `COPING_WAVE_DELAY` | 80 | ms between coping stones in wave animation |
+
+### DSWA Level I Dimensions
+- **Wall face width:** 72" (6') measured at the **halfway height** (27" from ground)
+- **Cheek taper formula:** `cheekWidth(row) = round(13 - (rowFromGround / 54) * 10)`
+  - At ground: 13" each side → face = 62"
+  - At midpoint (27"): 8" each side → face = **72"** ✓
+  - At top: 3" each side → face = 82"
+- **Canvas:** 880×720 pixels
+
+### Stone Size Ranges (inches)
+| Category | Heights | Widths | Thickness |
+|---|---|---|---|
+| Thin | 2", 3", 4" | 4"–12" | 1 |
+| Medium | 5", 6", 7", 8" | 8"–16" | 2 |
+| Thick | 9", 10", 11", 12" | 14"–20" | 3 |
+| Through | 4", 5", 6" | 18"–20" | 2–3 |
+| Coping | 6", 8" | 3"–4" | 1 (stood on end) |
 
 ## Core Game Principles (Scoring & Integrity)
 
-The game scores placement based on 6 dry stone walling rules (displayed as "How to Wall" cards in the sidebar). Each principle can award **score bonuses** and also affects **integrity (stability)** — the wall's structural health.
+The game scores placement based on **7 dry stone walling rules** (displayed as "How to Wall" cards in the sidebar). Each principle can award **score bonuses** and also affects **integrity (stability)** — the wall's structural health.
 
 ### Score Bonuses
 
@@ -77,8 +98,9 @@ The game scores placement based on 6 dry stone walling rules (displayed as "How 
 4. **2 Into 1** (+20) — No zipper patterns at vertical edges
 5. **Coursing** (+15) — Larger stones at base, smaller toward top
 6. **Coping** (+50) — Top course stones stood on end
+7. **Through Stone** (+60) — Dark through stone spans the 27" through line; +30 if within 3"
 
-Max per stone: **210 points** (base: 4 × width × height, plus bonuses above).
+**Base score formula:** `Math.round(stone.width * stone.height * 0.3) + bonuses` (max base: 72 for 20×12").
 
 ### Integrity (Stability) System
 
@@ -92,6 +114,7 @@ Integrity starts at 100% and changes dynamically based on placement quality. If 
 | 2 Into 1 | +2 (no zipper) | -8 (zipper: 2+ aligned joints at edge) |
 | Coursing | +1 (right thickness) | -6 (thickness mismatch of 2+) |
 | Coping | +3 | — |
+| Through Stone | +4 (spans line) / +2 (near line) | -10 (misplaced far from line) |
 
 Key design: penalties are larger than recoveries, so bad building is punishing but good play can recover.
 
@@ -127,7 +150,13 @@ When the wall body is ~90% filled, coping stones auto-animate in a left-to-right
 Key functions: `startCopingAnimation()`, `generateCopingPlacements()`, `animateCopingWave()`
 
 ### Cheek Walls (Side Walls)
-`buildRackedBackCheeks()` generates properly coursed side walls — thick (3) stones at base, medium (2) in middle, thin (1) at top. Each multi-row stone gets a single negative ID. Uses a `stepPattern` array defining rows, widths, stone heights, and thickness for each tier.
+`buildRackedBackCheeks()` generates properly coursed side walls with a **linear taper** — thick (3) stones at base, medium (2) in middle, thin (1) at top. Each multi-row stone gets a single negative ID. Cheek width at each row is computed by `getCheekWidthAtRow()` using the taper formula, then consecutive rows with identical widths are grouped into tiers for multi-row stone placement.
+
+### Through Stones
+Dark charcoal-colored stones (`#3a3a3a`) that span the **through stone line** at 27" from ground (wall midpoint). Visually distinct from regular stones. Scored as a 7th principle: +60 bonus if spanning the line, +30 if within 3", -10 stability penalty if misplaced. Through stones appear in the deck with boosted weight when wall progress is 40–60%, and `getRandomStone()` has a 12% peak chance at midpoint.
+
+### Stone Registry (Performance Optimization)
+The inch-based grid (88×72 = 6,336 cells) made the old O(ROWS²×COLS²) rendering approach too slow. A `stoneRegistry{}` maps each stone ID to its bounding box (`minR, maxR, minC, maxC`) plus metadata (`thickness, isCoping, isThroughStone`). `drawBoardStones()` and `drawStoneLabels()` iterate the registry in O(numStones) time. All stone placement/removal paths register/deregister stones.
 
 ### Stone Asset Rendering
 SVG artwork in `stone_assets/` is loaded at init via `loadStoneImages()` into the `stoneImages{}` map (keyed as `'WxH'`, e.g. `'2x3'`). `drawStoneBlock()` checks for an asset match (trying both orientations — e.g., a 3×2 stone will find and rotate the `2x3` image). Falls back to the procedural hatching renderer if no asset exists.
@@ -143,14 +172,14 @@ To add a new stone asset: place the SVG in `stone_assets/`, add an entry to the 
 Left-aligned title "STONE BY STONE", centered stats row (Score, Integrity bar, Stones placed, Course number). Wrapped in `.game-wrapper` so the header width matches the game area below it.
 
 ### Main Area (`main-game-area`)
-- **Left:** Canvas (960×600) in `.game-board-container` with decorative double-border
+- **Left:** Canvas (880×720) in `.game-board-container` with decorative double-border
 - **Right:** `.side-panel` (200px wide) containing:
   1. **Mode switcher** — segmented control `[ Challenge | Design ]` (`.mode-switcher`)
   2. **Controls** — Start/Pause buttons (Start becomes "Reset" during gameplay, with confirmation popup)
   3. **Controls panel** — keyboard shortcut reference
-  4. **"How to Wall" section label** — above 6 principle cards
-  5. **Principle cards** — highlight on stone placement
-  6. **Design panel** (hidden unless Design mode active) — stone palette, labels, save/load
+  4. **"How to Wall" section label** — above 7 principle cards
+  5. **Principle cards** — highlight on stone placement (includes Through Stone)
+  6. **Design panel** (hidden unless Design mode active) — stone palette, labels (incl. 1st/2nd Lift), cheek design sub-mode, save/load
 
 ### Hand Row (`#handRow`)
 Below the canvas. Shows up to 5 card divs with stone previews at 1:1 play-area size, dimensions, type labels. Cards auto-size to fit their stone (min-width: 80px). Includes deck count, redraw count/button, and a full-width timer bar. Cards animate out (fade + collapse) when winnowed.
@@ -170,8 +199,8 @@ Below the canvas. Shows up to 5 card divs with stone previews at 1:1 play-area s
 | `confirmReset()` / `cancelReset()` | Handle reset confirmation overlay; reset restores pre-built wall |
 | `switchMode(mode)` | Toggle between 'challenge' and 'design' modes; challenge restores wall |
 | `toggleDesignMode()` | Wrapper around `switchMode()` |
-| `generateCompletedWall()` | Load the starter example wall (~151 stones) |
-| `generateAndShowAlgorithmicWall()` | Generate a reference "good wall" (button removed, code kept) |
+| `generateCompletedWall()` | Delegates to `generateAlgorithmicWall()` (legacy starter stones preserved but unused) |
+| `generateAlgorithmicWall()` | Build a complete reference wall algorithmically with inch-based stones + through stones |
 | `startDeconstruction()` | Animate wall break-apart into deck |
 | `deconstructNextStone()` | Remove one stone per tick, separate coping to `copingDeck` |
 | `drawWeightedCard()` | Weighted random draw from deck based on progress |
@@ -180,11 +209,15 @@ Below the canvas. Shows up to 5 card divs with stone previews at 1:1 play-area s
 | `gameLoop()` | Main loop (falling, collision, rendering) |
 | `lockStone()` | Place stone, analyze, refill hand to HAND_SIZE |
 | `analyzeStone()` | Check all principles, award points, adjust integrity |
-| `drawBoard()` / `drawStoneBlock()` / `drawBoardStones()` | Rendering |
-| `drawStoneBlock()` | Renders a stone — uses SVG asset if available, else procedural hatching |
-| `buildRackedBackCheeks()` | Generate coursed side walls with proper stone sizes |
+| `drawBoard()` / `drawStoneBlock()` / `drawBoardStones()` | Rendering (registry-based for performance) |
+| `drawStoneBlock()` | Renders a stone — through stones dark charcoal, else SVG asset or procedural hatching |
+| `registerStone()` | Add stone to stoneRegistry for O(1) rendering lookup |
+| `buildRackedBackCheeks()` | Generate coursed side walls with linear taper |
+| `getCheekWidthAtRow()` | Linear taper formula: 13" base → 3" top |
+| `getRandomStone()` | Generate random stone with through stone chance at midpoint |
 | `togglePause()` | Pause/resume game loop and card timer |
-| `saveDesign()` / `loadDesign()` | JSON export/import of custom wall designs |
+| `saveDesign()` / `loadDesign()` | JSON export/import with version 2 format + old format migration |
+| `enterCheekDesignMode()` / `exitCheekDesignMode()` | Cheek end design sub-mode |
 
 ## Game Phases
 
@@ -202,7 +235,24 @@ No automated test suite. Test by opening the HTML file in a browser. Design Mode
 
 This section tracks major changes for continuity across sessions.
 
-### Integrity Scoring Overhaul (this session)
+### Inch-Based DSWA Level I Overhaul (this session)
+**Major overhaul** converting the entire game from abstract grid units to inch-based stone sizing conforming to DSWA Level I test wall dimensions (54" × 72" at midpoint).
+
+**Key changes:**
+- Grid: 88×72 cells at 10px/inch (was 48×30 at 20px/cell)
+- Canvas: 880×720 pixels (was 960×600)
+- Stones: 27 types ranging 2–12" tall × 4–20" wide (was ~20 abstract types)
+- Through stones: New stone type + 7th scoring principle at 27" midpoint
+- Cheek taper: Linear formula `getCheekWidthAtRow()` (13" base → 3" top)
+- Stone registry: Performance optimization — `stoneRegistry{}` for O(numStones) rendering
+- Wall generation: `generateAlgorithmicWall()` fully rewritten with inch-based coursing and through stone insertion
+- Scoring: Base formula `0.3 * w * h`, coursing thresholds at 18"/36"
+- Labels: Added "1st Lift" and "2nd Lift" to Design Mode
+- Cheek design sub-mode: New feature for designing cheek end patterns
+- Save format: Version 2 with gridSpec; old format auto-migrates
+- Drop speed: 1200ms (was 1800ms), coping wave: 80ms (was 120ms)
+
+### Integrity Scoring Overhaul (earlier session)
 **Problem:** Integrity (stability) was a one-way street — started at 100%, only decreased from violations, never responded to good play. Most violation conditions were also too narrow to ever trigger.
 
 **Fixes:**
@@ -296,7 +346,8 @@ Implementation details:
 
 - All game logic, rendering, and UI are in one file — edits must be careful about scope and side effects
 - The `wall-building-rules.md` file is the authoritative reference for scoring algorithms and stone distributions
-- Stone types: Regular (1H thin, 2H medium, 3H thick laid flat) and Coping (1×3, 2×3 stood on end)
+- Stone types: Regular (thin 2–4", medium 5–8", thick 9–12"), Through (18–20" wide, dark charcoal), and Coping (3–4" wide × 6–8" tall, stood on end)
 - Browser APIs used: Canvas 2D, requestAnimationFrame, FileReader, URL.createObjectURL, JSON serialization, Image (for SVG loading), localStorage
-- The `generateAndShowAlgorithmicWall()` function still exists but its button was removed — may be useful for future features
-- The tutorial on `feature/onboarding-tutorial` is ready to merge when approved
+- `stoneRegistry` is the performance-critical data structure — all stone add/remove paths must update it
+- Save format is version 2 with `gridSpec` field; old saves auto-migrate with coordinate/size scaling
+- The tutorial on `feature/onboarding-tutorial` is ready to merge when approved (uses pre-overhaul grid dimensions)
