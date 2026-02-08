@@ -626,6 +626,38 @@
             border-right: 2px solid #2a2a2a;
         }
 
+        /* Wall size selector */
+        .wall-size-selector {
+            display: flex;
+            border: 2px solid #2a2a2a;
+            border-top: none;
+            overflow: hidden;
+        }
+        .wall-size-selector button {
+            flex: 1;
+            padding: 4px 0;
+            font-size: 9px;
+            font-family: 'Georgia', serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            background: #fffdf7;
+            color: #2a2a2a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .wall-size-selector button.active {
+            background: #2a2a2a;
+            color: #fffdf7;
+        }
+        .wall-size-selector button:not(:last-child) {
+            border-right: 2px solid #2a2a2a;
+        }
+        .wall-size-selector button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         /* Persistent hand row below canvas */
         .hand-row {
             display: flex;
@@ -911,6 +943,10 @@
                 <button id="challengeBtn" class="active">Challenge</button>
                 <button id="designBtn">Design</button>
             </div>
+            <div id="wallSizeSelector" class="wall-size-selector">
+                <button id="wallSize12" class="active">12'</button>
+                <button id="wallSize6">6'</button>
+            </div>
 
             <div class="controls" id="gameControls">
                 <button class="btn" id="startBtn">Start</button>
@@ -1023,6 +1059,7 @@
                     <button class="btn" id="saveCheekBtn" style="width:100%;margin-bottom:4px;display:none;">Save Cheek</button>
                     <button class="btn" id="exitCheekBtn" style="width:100%;display:none;">Back to Wall</button>
                     <p style="font-size:9px;color:#666;">Design the cheek end pattern for challenge mode</p>
+                    <button class="btn" id="exportRefWallBtn" style="width:100%;margin-top:8px;font-size:9px;">Export Reference Wall</button>
                 </div>
                 <div class="panel instructions">
                     <p><strong>Click</strong> canvas to place stone</p>
@@ -1137,7 +1174,7 @@
         const ROWS = 72;   // 54" wall + 1" ground + 17" sky
 
         // Wall dimensions (all in inches)
-        const WALL_HEIGHT = 54;    // 4'6" = 54 inches (DSWA Level I)
+        const WALL_HEIGHT = 53;    // 53 inches (~4'5") — 1" shorter for proper stone bonding
         const COPING_HEIGHT = 6;   // ~6" coping stones stood on end
 
         // Racked back / stair-stepped cheek configuration
@@ -1145,6 +1182,35 @@
         const CHEEK_TOP_WIDTH = 16;    // Width at wall top (inches)
         const THROUGH_STONE_ROW = 27;  // Row from ground for through stone line (midpoint)
         const RACK_BACK_INTERVAL = 1;  // Step back every row for proper stair-stepping
+
+        // Wall size configurations — same cheek shape, different position (offset from canvas edge)
+        // cheekOffset: how far inward (in inches) each cheek is shifted from the canvas edge
+        // 12' mode: offset=0 → face=144" at midpoint (cheeks at edges)
+        // 6' mode: offset=36 → face=72" at midpoint (36" background on each side)
+        const WALL_SIZES = {
+            '12ft': {
+                label: "12' Wall",
+                cheekOffset: 0,
+                referenceWall: null,  // set in initReferenceWalls()
+                localStorageKey: 'sbs_cheek_design_12ft'
+            },
+            '6ft': {
+                label: "6' Wall",
+                cheekOffset: 36,
+                referenceWall: null,  // algorithmic fallback until designed
+                localStorageKey: 'sbs_cheek_design_6ft'
+            }
+        };
+        let activeWallSize = '12ft';
+
+        function getWallConfig() {
+            return WALL_SIZES[activeWallSize];
+        }
+
+        // Cheek offset helper — returns the inward offset for the active wall size
+        function getCheekOffset() {
+            return getWallConfig().cheekOffset;
+        }
 
         // Stone shapes - inch-based dimensions (height" x width")
         // Heights: {2, 3, 4, 6, 8, 12}, Widths: {2, 3, 4, 6, 8, 10, 12, 14, 16, 18, 20}
@@ -1342,7 +1408,20 @@
             document.getElementById('editCheekBtn').addEventListener('click', enterCheekDesignMode);
             document.getElementById('saveCheekBtn').addEventListener('click', saveCheekDesign);
             document.getElementById('exitCheekBtn').addEventListener('click', exitCheekDesignMode);
+            document.getElementById('exportRefWallBtn').addEventListener('click', exportReferenceWall);
+            document.getElementById('wallSize12').addEventListener('click', () => setWallSize('12ft'));
+            document.getElementById('wallSize6').addEventListener('click', () => setWallSize('6ft'));
             document.addEventListener('keydown', handleKeyPress);
+
+            // Migrate old localStorage cheek design key to 12ft-specific key
+            const oldCheek = localStorage.getItem('sbs_cheek_design');
+            if (oldCheek && !localStorage.getItem('sbs_cheek_design_12ft')) {
+                localStorage.setItem('sbs_cheek_design_12ft', oldCheek);
+                localStorage.removeItem('sbs_cheek_design');
+            }
+
+            // Initialize reference wall data
+            initReferenceWalls();
 
             // (Old popup and hand canvas listeners removed — replaced by persistent hand row)
 
@@ -1369,8 +1448,8 @@
             // Custom label dropdown
             initCustomSelect();
 
-            // Show the pre-built wall on first load
-            createBoard();
+            // Show the pre-built wall on first load (skipCheeks — cheeks baked into REFERENCE_WALL)
+            createBoard(true);
             generateCompletedWall();
             drawBoard();
         }
@@ -2172,8 +2251,8 @@
                 designPanel.style.display = 'none';
                 playPanels.forEach(p => p.style.display = '');
 
-                // Reset to title state with pre-built wall
-                createBoard();
+                // Reset to title state with pre-built wall (skipCheeks — cheeks baked into REFERENCE_WALL)
+                createBoard(true);
                 generateCompletedWall();
             }
 
@@ -2182,6 +2261,35 @@
 
         function toggleDesignMode() {
             switchMode(designMode ? 'challenge' : 'design');
+        }
+
+        function setWallSize(size) {
+            if (activeWallSize === size) return;
+            if (gamePhase === 'playing' || gamePhase === 'deconstructing') return;
+
+            activeWallSize = size;
+            document.getElementById('wallSize12').classList.toggle('active', size === '12ft');
+            document.getElementById('wallSize6').classList.toggle('active', size === '6ft');
+
+            if (gamePhase === 'title') {
+                // Rebuild title screen wall with new size
+                createBoard(true);
+                generateCompletedWall();
+                drawBoard();
+            } else if (designMode) {
+                // Reset design canvas with new cheek positions
+                if (cheekDesignMode) {
+                    cheekDesignMode = false;
+                    savedDesignState = null;
+                    document.getElementById('editCheekBtn').style.display = '';
+                    document.getElementById('saveCheekBtn').style.display = 'none';
+                    document.getElementById('exitCheekBtn').style.display = 'none';
+                }
+                createBoard();
+                designStones = [];
+                stoneLabels = {};
+                drawBoard();
+            }
         }
 
         function canvasMouseToGrid(event) {
@@ -2419,6 +2527,8 @@
         function drawCheekDesignGuide() {
             // Draw the taper guide for the left cheek — purely a visual reference, not a constraint
             const groundRow = ROWS - 2;
+            const offset = getCheekOffset();
+            const offsetPx = offset * BLOCK_SIZE;
             ctx.save();
 
             // Taper guide line — dashed green (reference only, not a hard boundary)
@@ -2429,7 +2539,7 @@
             for (let rowFromGround = 0; rowFromGround <= WALL_HEIGHT; rowFromGround++) {
                 const row = groundRow - rowFromGround;
                 const cheekW = getCheekWidthAtRow(row);
-                const x = cheekW * BLOCK_SIZE;
+                const x = (offset + cheekW) * BLOCK_SIZE;
                 const y = row * BLOCK_SIZE;
                 if (rowFromGround === 0) {
                     ctx.moveTo(x, y + BLOCK_SIZE);
@@ -2440,21 +2550,21 @@
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Through stone reference line at 27" from ground — spans full width
+            // Through stone reference line at 27" from ground — spans cheek width
             const throughRow = groundRow - THROUGH_STONE_ROW;
             ctx.strokeStyle = 'rgba(138, 106, 74, 0.5)';
             ctx.lineWidth = 1;
             ctx.setLineDash([4, 3]);
             ctx.beginPath();
-            ctx.moveTo(0, throughRow * BLOCK_SIZE);
-            ctx.lineTo(COLS * BLOCK_SIZE, throughRow * BLOCK_SIZE);
+            ctx.moveTo(offsetPx, throughRow * BLOCK_SIZE);
+            ctx.lineTo((offset + CHEEK_BASE_WIDTH) * BLOCK_SIZE, throughRow * BLOCK_SIZE);
             ctx.stroke();
             ctx.setLineDash([]);
 
             // "Through" label
             ctx.font = '8px Georgia';
             ctx.fillStyle = 'rgba(138, 106, 74, 0.6)';
-            ctx.fillText('through line', 4, throughRow * BLOCK_SIZE - 3);
+            ctx.fillText('through line', offsetPx + 4, throughRow * BLOCK_SIZE - 3);
 
             // Cope line — marks top of wall body / bottom of coping course
             const copeRow = groundRow - (WALL_HEIGHT - COPING_HEIGHT);
@@ -2462,15 +2572,15 @@
             ctx.lineWidth = 1;
             ctx.setLineDash([4, 3]);
             ctx.beginPath();
-            ctx.moveTo(0, copeRow * BLOCK_SIZE);
-            ctx.lineTo(COLS * BLOCK_SIZE, copeRow * BLOCK_SIZE);
+            ctx.moveTo(offsetPx, copeRow * BLOCK_SIZE);
+            ctx.lineTo((offset + CHEEK_BASE_WIDTH) * BLOCK_SIZE, copeRow * BLOCK_SIZE);
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.font = '8px Georgia';
             ctx.fillStyle = 'rgba(90, 138, 90, 0.6)';
-            ctx.fillText('cope line', 4, copeRow * BLOCK_SIZE - 3);
+            ctx.fillText('cope line', offsetPx + 4, copeRow * BLOCK_SIZE - 3);
 
-            // Height markers every 6 inches along left edge
+            // Height markers every 6 inches along left edge of cheek
             ctx.fillStyle = 'rgba(42, 42, 42, 0.4)';
             ctx.textAlign = 'left';
             for (let h = 0; h <= WALL_HEIGHT; h += 6) {
@@ -2478,14 +2588,14 @@
                 const y = row * BLOCK_SIZE;
                 // Small tick mark
                 ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(4, y);
+                ctx.moveTo(offsetPx, y);
+                ctx.lineTo(offsetPx + 4, y);
                 ctx.strokeStyle = 'rgba(42, 42, 42, 0.25)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 // Height label
                 if (h > 0) {
-                    ctx.fillText(h + '"', 6, y + 3);
+                    ctx.fillText(h + '"', offsetPx + 6, y + 3);
                 }
             }
 
@@ -2515,13 +2625,14 @@
                 }
             }
 
-            // Save to localStorage
-            localStorage.setItem('sbs_cheek_design', JSON.stringify({
+            // Save to localStorage (per wall size)
+            const config = getWallConfig();
+            localStorage.setItem(config.localStorageKey, JSON.stringify({
                 stones: cheekStones,
                 taperProfile: { baseWidth: CHEEK_BASE_WIDTH, topWidth: CHEEK_TOP_WIDTH, height: WALL_HEIGHT }
             }));
 
-            showFeedback('Cheek design saved! (' + cheekStones.length + ' stones)', 'positive');
+            showFeedback('Cheek design saved for ' + config.label + '! (' + cheekStones.length + ' stones)', 'positive');
         }
 
         function exitCheekDesignMode() {
@@ -2639,6 +2750,73 @@
             event.target.value = ''; // Reset for next load
         }
 
+        function exportReferenceWall() {
+            // Generate a complete wall (body + cheeks) and output as REFERENCE_WALL constant
+            // Uses saved cheek design from localStorage if available
+
+            // 1. Deep-save current state (must be true copies, not references)
+            const savedBoard = board.map(r => r.slice());
+            const savedStoneInfo = stoneInfo.map(r => r.slice());
+            const savedRegistry = {};
+            for (const id in stoneRegistry) {
+                savedRegistry[id] = Object.assign({}, stoneRegistry[id]);
+            }
+            const savedOriginal = originalWallStones ? originalWallStones.slice() : [];
+            const savedIdCounter = stoneIdCounter;
+
+            // 2. Generate fresh wall on clean board (cheeks + algorithmic body)
+            createBoard();  // builds cheeks from localStorage
+            generateAlgorithmicWall();  // fills wall body
+
+            // 3. Collect ALL stones from stoneRegistry into REFERENCE_WALL format
+            const entries = [];
+            let bodyCount = 0;
+            let cheekCount = 0;
+            for (const id in stoneRegistry) {
+                const s = stoneRegistry[id];
+                const x = s.minC;
+                const y = s.minR;
+                const w = s.maxC - s.minC + 1;
+                const h = s.maxR - s.minR + 1;
+                const t = s.thickness;
+
+                if (parseInt(id) < 0) cheekCount++;
+                else bodyCount++;
+
+                if (s.isThroughStone) {
+                    entries.push('[' + x + ',' + y + ',' + w + ',' + h + ',' + t + ',"t"]');
+                } else if (parseInt(id) < 0) {
+                    entries.push('[' + x + ',' + y + ',' + w + ',' + h + ',' + t + ',"c"]');
+                } else {
+                    entries.push('[' + x + ',' + y + ',' + w + ',' + h + ',' + t + ']');
+                }
+            }
+
+            // 4. Build the JS constant string
+            const config = getWallConfig();
+            const output = 'const REFERENCE_WALL = [' + entries.join(',') + '];';
+
+            // 5. Copy to clipboard, fallback to console
+            console.log('Export (' + config.label + '): ' + entries.length + ' stones (' + cheekCount + ' cheek, ' + bodyCount + ' body)');
+            console.log(output);
+            navigator.clipboard.writeText(output).then(function() {
+                showFeedback('Copied ' + config.label + '! ' + entries.length + ' stones (' + cheekCount + ' cheek + ' + bodyCount + ' body)', 'positive');
+            }).catch(function() {
+                showFeedback('Logged ' + config.label + '! ' + entries.length + ' stones (' + cheekCount + ' cheek + ' + bodyCount + ' body)', 'positive');
+            });
+
+            // 6. Restore original state
+            board = savedBoard;
+            stoneInfo = savedStoneInfo;
+            stoneRegistry = {};
+            for (const id in savedRegistry) {
+                stoneRegistry[id] = savedRegistry[id];
+            }
+            originalWallStones = savedOriginal;
+            stoneIdCounter = savedIdCounter;
+            drawBoard();
+        }
+
         // ============ END DESIGN MODE FUNCTIONS ============
 
         function createBoard(skipCheeks) {
@@ -2666,8 +2844,11 @@
         }
 
         function buildRackedBackCheeks() {
-            // Check for a user-designed cheek in localStorage
-            const savedCheek = localStorage.getItem('sbs_cheek_design');
+            const config = getWallConfig();
+            const offset = config.cheekOffset;
+
+            // Check for a user-designed cheek in localStorage (per wall size)
+            const savedCheek = localStorage.getItem(config.localStorageKey);
             if (savedCheek) {
                 try {
                     const design = JSON.parse(savedCheek);
@@ -2680,9 +2861,44 @@
                 }
             }
 
+            // Fallback: try the 12' cheek design (localStorage or baked into reference wall)
+            // This ensures all wall sizes share the same hand-designed cheek shape
+            if (activeWallSize !== '12ft') {
+                const saved12 = localStorage.getItem(WALL_SIZES['12ft'].localStorageKey);
+                if (saved12) {
+                    try {
+                        const design12 = JSON.parse(saved12);
+                        if (design12.stones && design12.stones.length > 0) {
+                            // Shift stone positions from 12' offset (0) to current offset
+                            const shifted = design12.stones.map(s => ({
+                                x: s.x + offset,
+                                y: s.y,
+                                width: s.width,
+                                height: s.height,
+                                thickness: s.thickness
+                            }));
+                            applySavedCheekDesign({ stones: shifted });
+                            return;
+                        }
+                    } catch (e) { /* fall through */ }
+                }
+                // Extract cheek stones from the 12' reference wall data
+                const refWall12 = WALL_SIZES['12ft'].referenceWall;
+                if (refWall12) {
+                    const cheekStones = refWall12
+                        .filter(s => s[5] === 'c')
+                        .filter(s => s[0] < COLS / 2)  // left cheek only (right is mirrored)
+                        .map(s => ({ x: s[0] + offset, y: s[1], width: s[2], height: s[3], thickness: s[4] }));
+                    if (cheekStones.length > 0) {
+                        applySavedCheekDesign({ stones: cheekStones });
+                        return;
+                    }
+                }
+            }
+
             // Dynamic taper-based cheek ends using getCheekWidthAtRow()
             // Linear taper: 36" at ground → 16" at wall top
-            // At midpoint (27"): 26" each side → 72" face (6')
+            // Offset shifts cheeks inward from canvas edges (0 for 12', 36 for 6')
 
             const groundRow = ROWS - 2;
             let cheekId = -1;
@@ -2718,29 +2934,32 @@
                     const h = Math.min(maxStoneH, row - topRow + 1);
                     const stoneTop = row - h + 1;
 
-                    // Left cheek stone
+                    // Left cheek stone (shifted inward by offset)
                     const leftId = cheekId--;
+                    const leftStart = offset;
                     for (let r = stoneTop; r <= row; r++) {
-                        for (let c = 0; c < tier.width; c++) {
-                            if (!board[r][c]) {
+                        for (let c = leftStart; c < leftStart + tier.width; c++) {
+                            if (c < COLS && !board[r][c]) {
                                 board[r][c] = thickness;
                                 stoneInfo[r][c] = leftId;
                             }
                         }
                     }
-                    registerStone(leftId, stoneTop, row, 0, tier.width - 1, thickness, false, false);
+                    registerStone(leftId, stoneTop, row, leftStart, leftStart + tier.width - 1, thickness, false, false);
 
-                    // Right cheek stone
+                    // Right cheek stone (shifted inward by offset)
                     const rightId = cheekId--;
+                    const rightEnd = COLS - 1 - offset;
+                    const rightStart = rightEnd - tier.width + 1;
                     for (let r = stoneTop; r <= row; r++) {
-                        for (let c = COLS - tier.width; c < COLS; c++) {
-                            if (!board[r][c]) {
+                        for (let c = rightStart; c <= rightEnd; c++) {
+                            if (c >= 0 && !board[r][c]) {
                                 board[r][c] = thickness;
                                 stoneInfo[r][c] = rightId;
                             }
                         }
                     }
-                    registerStone(rightId, stoneTop, row, COLS - tier.width, COLS - 1, thickness, false, false);
+                    registerStone(rightId, stoneTop, row, rightStart, rightEnd, thickness, false, false);
 
                     row = stoneTop - 1; // Move up past this stone
                 }
@@ -2750,8 +2969,9 @@
         function applySavedCheekDesign(design) {
             // Apply a user-designed cheek pattern to both sides of the wall
             // Left cheek: stones placed at their original positions
-            // Right cheek: mirrored horizontally
-            const groundRow = ROWS - 2;
+            // Right cheek: mirrored horizontally relative to wall center
+            const offset = getCheekOffset();
+            const wallRight = COLS - 1 - offset;  // rightmost column of the wall
             let cheekId = -1;
 
             for (const stone of design.stones) {
@@ -2769,10 +2989,11 @@
                 }
                 registerStone(leftId, stone.y, stone.y + stone.height - 1, stone.x, stone.x + stone.width - 1, stone.thickness, false, false);
 
-                // Right cheek — mirror: column X becomes COLS - 1 - X
-                // Stone left edge at X with width W → right cheek left edge at COLS - X - W
+                // Right cheek — mirror relative to wall boundaries
+                // Left stone at offset-relative position X → right stone mirrored within wall
+                const relX = stone.x - offset;  // position relative to left wall edge
+                const mirrorX = wallRight - relX - stone.width + 1;
                 const rightId = cheekId--;
-                const mirrorX = COLS - stone.x - stone.width;
                 for (let dr = 0; dr < stone.height; dr++) {
                     for (let dc = 0; dc < stone.width; dc++) {
                         const r = stone.y + dr;
@@ -2787,19 +3008,37 @@
             }
         }
 
+        function initReferenceWalls() {
+            // 12' wall: hand-designed reference wall with baked-in cheek stones + body + coping
+            // Format: [x, y, width, height, thickness, label?] — 't' = through stone, 'c' = cheek stone
+            WALL_SIZES['12ft'].referenceWall = [[0,17,6,6,2,"c"],[190,17,6,6,2,"c"],[6,17,4,6,2,"c"],[186,17,4,6,2,"c"],[0,23,8,6,2,"c"],[188,23,8,6,2,"c"],[8,23,4,2,1,"c"],[184,23,4,2,1,"c"],[8,25,6,4,1,"c"],[182,25,6,4,1,"c"],[0,29,16,4,1,"c"],[180,29,16,4,1,"c"],[0,33,10,8,2,"c"],[186,33,10,8,2,"c"],[10,33,8,2,1,"c"],[178,33,8,2,1,"c"],[10,35,10,6,2,"c"],[176,35,10,6,2,"c"],[0,41,16,6,2,"c"],[180,41,16,6,2,"c"],[16,41,6,6,2,"c"],[174,41,6,6,2,"c"],[0,47,12,12,3,"c"],[184,47,12,12,3,"c"],[12,47,8,6,2,"c"],[176,47,8,6,2,"c"],[20,47,6,4,1,"c"],[170,47,6,4,1,"c"],[20,51,8,2,1,"c"],[168,51,8,2,1,"c"],[12,53,16,6,2,"c"],[168,53,16,6,2,"c"],[0,59,20,12,3,"c"],[176,59,20,12,3,"c"],[20,59,18,12,3,"c"],[158,59,18,12,3,"c"],[126,59,20,12,3],[50,59,20,12,3],[82,59,12,12,3],[70,59,12,12,3],[94,59,20,12,3],[114,59,12,12,3],[88,47,18,12,3],[106,51,16,8,2],[122,51,8,8,2],[130,53,12,6,2],[142,53,12,6,2],[130,51,8,2,1],[150,45,8,8,2],[158,45,4,4,1],[138,47,12,6,2],[126,47,12,4,1],[74,53,14,6,2],[58,53,16,6,2],[42,53,16,6,2],[80,47,8,6,2],[68,49,12,4,1],[54,45,8,8,2],[62,49,6,4,2],[62,45,10,4,1],[72,47,8,2,1],[114,47,12,4,1],[144,45,6,2,1],[134,41,10,6,2],[164,41,6,4,2],[166,37,6,4,2],[168,33,6,4,2],[106,47,8,4,1],[122,41,12,6,2],[110,43,12,4,1],[100,43,10,4,1],[72,45,4,2,1],[76,41,8,6,2],[84,41,12,6,2],[96,43,4,4,1],[96,41,8,2,1],[104,37,8,6,2,"t"],[38,47,10,6,2],[48,47,6,6,2],[34,47,4,2,1],[34,45,10,2,1],[44,45,10,2,1],[66,41,10,4,1],[92,37,12,4,1],[44,37,10,6,2,"t"],[38,43,10,2,1],[48,43,10,2,1],[58,43,8,2,1],[54,39,6,4,2],[60,41,6,2,1],[60,39,10,2,1],[54,37,10,2,1],[50,33,8,4,1],[26,41,12,4,1],[38,41,6,2,1],[32,37,12,4,1],[24,37,8,4,1],[22,33,6,4,2],[28,33,8,4,1],[40,33,10,4,1],[36,33,4,4,1],[18,31,6,2,1],[24,31,8,2,1],[18,29,10,2,1],[14,27,8,2,1],[32,29,6,4,2],[28,29,4,2,1],[22,27,8,2,1],[20,22,6,5,2],[15,22,5,3,1],[112,41,10,2,1],[112,37,4,4,1],[116,37,12,4,1],[128,37,12,4,1],[140,37,8,4,1],[164,35,4,2,1],[160,35,4,2,1],[162,33,6,2,1],[152,35,8,2,1],[156,31,6,4,2],[162,31,10,2,1],[172,31,6,2,1],[144,35,8,2,1],[148,31,8,4,1],[136,33,8,4,1],[144,33,4,2,1],[140,31,8,2,1],[122,35,14,2,1],[128,33,8,2,1],[132,31,8,2,1],[160,41,4,2,1],[154,37,6,6,2,"t"],[160,37,6,4,2],[156,43,8,2,1],[148,43,8,2,1],[144,43,4,2,1],[144,41,10,2,1],[148,37,6,4,2],[70,39,10,2,1],[80,37,6,4,2],[86,37,6,4,2],[74,37,6,2,1],[64,35,10,4,1],[58,35,6,2,1],[58,33,10,2,1],[38,29,6,4,2],[44,29,10,4,1],[54,29,10,4,1],[74,33,10,4,1],[68,33,6,2,1],[64,31,6,2,1],[70,31,8,2,1],[64,29,10,2,1],[30,24,6,5,2],[26,24,4,3,1],[26,22,8,2,1],[36,26,5,3,1],[41,26,8,3,1],[36,24,10,2,1],[34,22,8,2,1],[49,26,8,3,1],[57,26,4,3,1],[61,24,8,5,2],[53,24,8,2,1],[46,24,7,2,1],[42,22,7,2,1],[49,22,7,2,1],[84,33,4,4,1],[88,33,10,4,1],[98,33,10,4,1],[108,33,6,4,2],[114,33,8,4,1],[122,33,6,2,1],[78,29,8,4,1],[86,29,8,4,1],[94,29,8,4,1],[74,29,4,2,1],[69,27,7,2,1],[76,27,7,2,1],[69,24,4,3,1],[73,24,6,3,1],[56,22,8,2,1],[64,22,7,2,1],[71,22,6,2,1],[102,31,4,2,1],[106,31,6,2,1],[112,31,4,2,1],[91,24,8,5,2],[83,27,8,2,1],[79,24,8,3,1],[87,24,4,3,1],[81,22,8,2,1],[77,22,4,2,1],[89,22,4,2,1],[102,29,8,2,1],[124,31,8,2,1],[116,31,8,2,1],[110,29,4,2,1],[114,29,4,2,1],[118,29,10,2,1],[128,29,8,2,1],[136,26,8,5,2],[126,26,10,3,1],[144,28,8,3,1],[168,27,10,4,1],[178,27,4,2,1],[160,25,8,6,2],[152,28,8,3,1],[154,25,6,3,1],[144,26,4,2,1],[116,26,10,3,1],[112,26,4,3,1],[114,22,10,4,1],[148,22,6,6,2],[140,22,8,4,1],[130,24,10,2,1],[124,24,6,2,1],[134,22,6,2,1],[124,22,10,2,1],[106,26,6,3,1],[99,24,7,5,2],[106,24,8,2,1],[93,22,8,2,1],[101,22,7,2,1],[108,22,6,2,1],[154,22,4,3,1],[158,22,5,3,1],[174,25,7,2,1],[168,25,6,2,1],[178,22,4,3,1],[163,22,8,3,1],[171,22,7,3,1],[181,16,3,6,1],[177,16,4,6,1],[173,16,4,6,1],[169,16,4,6,1],[165,16,4,6,1],[162,16,3,6,1],[159,16,3,6,1],[156,16,3,6,1],[153,16,3,6,1],[150,16,3,6,1],[146,16,4,6,1],[142,16,4,6,1],[138,16,4,6,1],[135,16,3,6,1],[132,16,3,6,1],[128,16,4,6,1],[125,16,3,6,1],[121,16,4,6,1],[118,16,3,6,1],[115,16,3,6,1],[112,16,3,6,1],[109,16,3,6,1],[106,16,3,6,1],[103,16,3,6,1],[100,16,3,6,1],[97,16,3,6,1],[94,16,3,6,1],[90,16,4,6,1],[87,16,3,6,1],[84,16,3,6,1],[80,16,4,6,1],[76,16,4,6,1],[72,16,4,6,1],[68,16,4,6,1],[65,16,3,6,1],[62,16,3,6,1],[59,16,3,6,1],[55,16,4,6,1],[52,16,3,6,1],[48,16,4,6,1],[44,16,4,6,1],[41,16,3,6,1],[38,16,3,6,1],[35,16,3,6,1],[32,16,3,6,1],[29,16,3,6,1],[25,16,4,6,1],[22,16,3,6,1],[19,16,3,6,1],[16,16,3,6,1],[13,16,3,6,1]];
+            // 6' wall: hand-designed reference wall from "6' Wall Final Test" design file
+            // 36 cheek stones (permanent design) + 115 body stones (2 through) + 30 coping stones
+            WALL_SIZES['6ft'].referenceWall = [[36,17,6,6,2,"c"],[42,17,4,6,2,"c"],[36,23,8,6,2,"c"],[44,23,4,2,1,"c"],[44,25,6,4,1,"c"],[36,29,16,4,1,"c"],[36,33,10,8,2,"c"],[46,33,8,2,1,"c"],[46,35,10,6,2,"c"],[36,41,16,6,2,"c"],[52,41,6,6,2,"c"],[36,47,12,12,3,"c"],[48,47,8,6,2,"c"],[56,47,6,4,1,"c"],[56,51,8,2,1,"c"],[48,53,16,6,2,"c"],[36,59,20,12,3,"c"],[56,59,18,12,3,"c"],[154,17,6,6,2,"c"],[150,17,4,6,2,"c"],[152,23,8,6,2,"c"],[148,23,4,2,1,"c"],[146,25,6,4,1,"c"],[144,29,16,4,1,"c"],[150,33,10,8,2,"c"],[142,33,8,2,1,"c"],[140,35,10,6,2,"c"],[144,41,16,6,2,"c"],[138,41,6,6,2,"c"],[148,47,12,12,3,"c"],[140,47,8,6,2,"c"],[134,47,6,4,1,"c"],[132,51,8,2,1,"c"],[132,53,16,6,2,"c"],[140,59,20,12,3,"c"],[122,59,18,12,3,"c"],[74,59,20,12,3],[106,59,16,12,3],[94,59,12,12,3],[88,51,14,8,2],[102,55,16,4,1],[102,51,8,4,1],[110,53,8,2,1],[80,53,8,6,2],[64,51,16,8,2],[124,51,8,8,2],[118,53,6,6,2],[116,51,8,2,1],[110,51,6,2,1],[62,47,12,4,1],[128,47,6,4,1],[130,41,8,6,2],[80,51,8,2,1],[74,47,10,4,1],[106,43,8,8,2],[94,45,12,6,2],[84,47,10,4,1],[114,47,6,4,1],[120,47,8,4,1],[114,43,10,4,1],[124,43,6,4,1],[58,41,12,6,2],[90,45,4,2,1],[74,41,3,2,1],[77,37,6,6,2,"t"],[126,41,4,2,1],[118,37,8,6,2,"t"],[71,37,6,4,1],[56,37,8,4,1],[64,37,7,4,1],[56,35,12,2,1],[54,33,8,2,1],[83,39,6,4,1],[109,39,9,4,1],[103,39,6,4,1],[97,39,6,4,1],[89,39,8,4,1],[80,43,10,4,1],[70,43,10,4,1],[70,41,4,2,1],[90,43,8,2,1],[98,43,8,2,1],[134,35,6,6,2],[126,37,8,4,1],[122,35,12,2,1],[136,33,6,2,1],[126,31,10,4,1],[136,31,8,2,1],[112,37,6,2,1],[114,35,8,2,1],[106,37,6,2,1],[108,31,6,6,2],[114,31,12,4,1],[100,37,6,2,1],[92,35,8,4,1],[100,35,8,2,1],[96,31,12,4,1],[83,37,9,2,1],[86,35,6,2,1],[80,35,6,2,1],[88,29,8,6,2],[74,35,6,2,1],[68,33,6,4,1],[82,33,6,2,1],[74,33,8,2,1],[62,33,6,2,1],[52,29,8,4,1],[60,29,6,4,1],[66,29,6,4,1],[72,31,6,2,1],[78,31,10,2,1],[72,29,8,2,1],[80,29,8,2,1],[50,25,8,4,1],[48,23,8,2,1],[58,27,6,2,1],[64,27,6,2,1],[70,27,6,2,1],[76,23,8,6,2],[58,25,8,2,1],[66,25,10,2,1],[56,23,8,2,1],[64,23,8,2,1],[72,23,4,2,1],[96,29,4,2,1],[100,29,10,2,1],[84,27,8,2,1],[92,27,6,2,1],[84,23,4,4,1],[88,23,6,4,1],[98,25,6,4,1],[94,25,4,2,1],[94,23,8,2,1],[110,29,8,2,1],[118,29,12,2,1],[130,29,8,2,1],[138,29,6,2,1],[104,27,10,2,1],[114,27,10,2,1],[104,25,6,2,1],[110,25,10,2,1],[102,23,6,2,1],[108,23,6,2,1],[124,27,10,2,1],[134,27,6,2,1],[140,27,6,2,1],[120,25,8,2,1],[128,25,8,2,1],[136,25,10,2,1],[114,23,10,2,1],[124,23,8,2,1],[132,23,8,2,1],[140,23,8,2,1],[46,17,4,6,2],[50,17,4,6,2],[54,17,4,6,2],[58,17,4,6,2],[62,17,3,6,2],[65,17,3,6,2],[68,17,3,6,2],[71,17,3,6,2],[74,17,4,6,2],[78,17,4,6,2],[82,17,4,6,2],[86,17,4,6,2],[90,17,3,6,2],[93,17,3,6,2],[96,17,4,6,2],[100,17,4,6,2],[104,17,3,6,2],[107,17,3,6,2],[110,17,3,6,2],[113,17,3,6,2],[116,17,3,6,2],[119,17,3,6,2],[122,17,4,6,2],[126,17,4,6,2],[130,17,4,6,2],[134,17,3,6,2],[137,17,4,6,2],[141,17,3,6,2],[144,17,3,6,2],[147,17,3,6,2]];
+        }
+
         function generateCompletedWall() {
-            // Load the hand-designed reference wall (Wall Model 1)
-            // Format: [x, y, width, height, thickness, label?] — label 't' = through stone
-            const REFERENCE_WALL = [[126,59,20,12,3],[50,59,20,12,3],[82,59,12,12,3],[70,59,12,12,3],[94,59,20,12,3],[114,59,12,12,3],[88,47,18,12,3],[106,51,16,8,2],[122,51,8,8,2],[130,53,12,6,2],[142,53,12,6,2],[130,51,8,2,1],[150,45,8,8,2],[158,45,4,4,1],[138,47,12,6,2],[126,47,12,4,1],[74,53,14,6,2],[58,53,16,6,2],[42,53,16,6,2],[80,47,8,6,2],[68,49,12,4,1],[54,45,8,8,2],[62,49,6,4,2],[62,45,10,4,1],[72,47,8,2,1],[114,47,12,4,1],[144,45,6,2,1],[134,41,10,6,2],[164,41,6,4,2],[166,37,6,4,2],[168,33,6,4,2],[106,47,8,4,1],[122,41,12,6,2],[110,43,12,4,1],[100,43,10,4,1],[72,45,4,2,1],[76,41,8,6,2],[84,41,12,6,2],[96,43,4,4,1],[96,41,8,2,1],[104,37,8,6,2,"t"],[38,47,10,6,2],[48,47,6,6,2],[34,47,4,2,1],[34,45,10,2,1],[44,45,10,2,1],[66,41,10,4,1],[92,37,12,4,1],[44,37,10,6,2,"t"],[38,43,10,2,1],[48,43,10,2,1],[58,43,8,2,1],[54,39,6,4,2],[60,41,6,2,1],[60,39,10,2,1],[54,37,10,2,1],[50,33,8,4,1],[26,41,12,4,1],[38,41,6,2,1],[32,37,12,4,1],[24,37,8,4,1],[22,33,6,4,2],[28,33,8,4,1],[40,33,10,4,1],[36,33,4,4,1],[18,31,6,2,1],[24,31,8,2,1],[18,29,10,2,1],[14,27,8,2,1],[10,22,5,3,1],[32,29,6,4,2],[28,29,4,2,1],[22,27,8,2,1],[12,25,8,2,1],[20,22,6,5,2],[15,22,5,3,1],[112,41,10,2,1],[112,37,4,4,1],[116,37,12,4,1],[128,37,12,4,1],[140,37,8,4,1],[164,35,4,2,1],[160,35,4,2,1],[162,33,6,2,1],[152,35,8,2,1],[156,31,6,4,2],[162,31,10,2,1],[172,31,6,2,1],[144,35,8,2,1],[148,31,8,4,1],[136,33,8,4,1],[144,33,4,2,1],[140,31,8,2,1],[122,35,14,2,1],[128,33,8,2,1],[132,31,8,2,1],[160,41,4,2,1],[154,37,6,6,2,"t"],[160,37,6,4,2],[156,43,8,2,1],[148,43,8,2,1],[144,43,4,2,1],[144,41,10,2,1],[148,37,6,4,2],[70,39,10,2,1],[80,37,6,4,2],[86,37,6,4,2],[74,37,6,2,1],[64,35,10,4,1],[58,35,6,2,1],[58,33,10,2,1],[38,29,6,4,2],[44,29,10,4,1],[54,29,10,4,1],[74,33,10,4,1],[68,33,6,2,1],[64,31,6,2,1],[70,31,8,2,1],[64,29,10,2,1],[30,24,6,5,2],[26,24,4,3,1],[26,22,8,2,1],[36,26,5,3,1],[41,26,8,3,1],[36,24,10,2,1],[34,22,8,2,1],[49,26,8,3,1],[57,26,4,3,1],[61,24,8,5,2],[53,24,8,2,1],[46,24,7,2,1],[42,22,7,2,1],[49,22,7,2,1],[84,33,4,4,1],[88,33,10,4,1],[98,33,10,4,1],[108,33,6,4,2],[114,33,8,4,1],[122,33,6,2,1],[78,29,8,4,1],[86,29,8,4,1],[94,29,8,4,1],[74,29,4,2,1],[69,27,7,2,1],[76,27,7,2,1],[69,24,4,3,1],[73,24,6,3,1],[56,22,8,2,1],[64,22,7,2,1],[71,22,6,2,1],[102,31,4,2,1],[106,31,6,2,1],[112,31,4,2,1],[91,24,8,5,2],[83,27,8,2,1],[79,24,8,3,1],[87,24,4,3,1],[81,22,8,2,1],[77,22,4,2,1],[89,22,4,2,1],[102,29,8,2,1],[124,31,8,2,1],[116,31,8,2,1],[110,29,4,2,1],[114,29,4,2,1],[118,29,10,2,1],[128,29,8,2,1],[136,26,8,5,2],[126,26,10,3,1],[144,28,8,3,1],[168,27,10,4,1],[178,27,4,2,1],[160,25,8,6,2],[152,28,8,3,1],[154,25,6,3,1],[144,26,4,2,1],[116,26,10,3,1],[112,26,4,3,1],[114,22,10,4,1],[148,22,6,6,2],[140,22,8,4,1],[130,24,10,2,1],[124,24,6,2,1],[134,22,6,2,1],[124,22,10,2,1],[106,26,6,3,1],[99,24,7,5,2],[106,24,8,2,1],[93,22,8,2,1],[101,22,7,2,1],[108,22,6,2,1],[154,22,4,3,1],[158,22,5,3,1],[181,25,3,2,1],[174,25,7,2,1],[168,25,6,2,1],[182,22,4,3,1],[178,22,4,3,1],[163,22,8,3,1],[171,22,7,3,1],[184,16,3,6,1],[181,16,3,6,1],[177,16,4,6,1],[173,16,4,6,1],[169,16,4,6,1],[165,16,4,6,1],[162,16,3,6,1],[159,16,3,6,1],[156,16,3,6,1],[153,16,3,6,1],[150,16,3,6,1],[146,16,4,6,1],[142,16,4,6,1],[138,16,4,6,1],[135,16,3,6,1],[132,16,3,6,1],[128,16,4,6,1],[125,16,3,6,1],[121,16,4,6,1],[118,16,3,6,1],[115,16,3,6,1],[112,16,3,6,1],[109,16,3,6,1],[106,16,3,6,1],[103,16,3,6,1],[100,16,3,6,1],[97,16,3,6,1],[94,16,3,6,1],[90,16,4,6,1],[87,16,3,6,1],[84,16,3,6,1],[80,16,4,6,1],[76,16,4,6,1],[72,16,4,6,1],[68,16,4,6,1],[65,16,3,6,1],[62,16,3,6,1],[59,16,3,6,1],[55,16,4,6,1],[52,16,3,6,1],[48,16,4,6,1],[44,16,4,6,1],[41,16,3,6,1],[38,16,3,6,1],[35,16,3,6,1],[32,16,3,6,1],[29,16,3,6,1],[25,16,4,6,1],[22,16,3,6,1],[19,16,3,6,1],[16,16,3,6,1],[13,16,3,6,1],[9,16,4,6,1]];
+            // Load the reference wall for the active wall size
+            const config = getWallConfig();
+            const refWall = config.referenceWall;
+
+            if (!refWall) {
+                // No hand-designed wall for this size — generate algorithmically
+                createBoard();  // builds cheeks at correct offset
+                generateAlgorithmicWall();
+                return;
+            }
 
             originalWallStones = [];
             let wallStoneId = 1000;
+            let cheekStoneId = -1;
 
-            for (const s of REFERENCE_WALL) {
+            for (const s of refWall) {
                 const [x, y, width, height, thickness, label] = s;
                 const isThroughStone = label === 't';
+                const isCheek = label === 'c';
                 const isCoping = (y <= (ROWS - 2) - WALL_HEIGHT + COPING_HEIGHT);
-                const id = wallStoneId++;
+                const id = isCheek ? cheekStoneId-- : wallStoneId++;
 
                 for (let dr = 0; dr < height; dr++) {
                     for (let dc = 0; dc < width; dc++) {
@@ -2813,10 +3052,12 @@
                 }
 
                 registerStone(id, y, y + height - 1, x, x + width - 1, thickness, isCoping, isThroughStone);
-                originalWallStones.push({
-                    id, x, y, width, height, thickness,
-                    isCoping, isThroughStone
-                });
+                if (!isCheek) {
+                    originalWallStones.push({
+                        id, x, y, width, height, thickness,
+                        isCoping, isThroughStone
+                    });
+                }
             }
         }
 
@@ -4739,7 +4980,7 @@
             awaitingCardSelection = false;
             copingAnimationActive = false;
             gamePhase = 'title';
-            createBoard();
+            createBoard(true);
             generateCompletedWall();
             score = 0;
             stability = 100;
@@ -4771,6 +5012,9 @@
             document.getElementById('cutOverlay').classList.remove('show');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('pauseBtn').textContent = 'Pause';
+            // Re-enable wall size toggle
+            document.getElementById('wallSize12').disabled = false;
+            document.getElementById('wallSize6').disabled = false;
             drawBoard();
         }
 
@@ -4797,8 +5041,8 @@
                 deconstructTimer = null;
             }
 
-            // Reset game state
-            createBoard();
+            // Reset game state (skipCheeks — cheeks baked into REFERENCE_WALL)
+            createBoard(true);
             score = 0;
             stability = 100;
             dropInterval = 1200;
@@ -4838,6 +5082,10 @@
             document.getElementById('currentCourse').textContent = '1';
             document.getElementById('handRow').style.display = 'none';
             document.getElementById('copingBankStrip').style.display = 'none';
+
+            // Disable wall size toggle during gameplay
+            document.getElementById('wallSize12').disabled = true;
+            document.getElementById('wallSize6').disabled = true;
 
             gameRunning = false;
             gamePaused = false;
@@ -4911,6 +5159,10 @@
             }
 
             document.getElementById('gameOverOverlay').classList.add('show');
+
+            // Re-enable wall size toggle after game ends
+            document.getElementById('wallSize12').disabled = false;
+            document.getElementById('wallSize6').disabled = false;
         }
 
         function gameLoop(ts) {
