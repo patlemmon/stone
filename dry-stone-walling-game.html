@@ -4387,7 +4387,7 @@
                 // If nothing placed, try smaller stones (prefer wider first!)
                 if (!placed) {
                     const fallbackOptions = inCopingZone
-                        ? [{ width: 4, height: 6, thickness: 1 }, { width: 3, height: 6, thickness: 1 }]
+                        ? [{ width: 4, height: 10, thickness: 1 }, { width: 3, height: 10, thickness: 1 }]
                         : [
                             { width: 8, height: 4, thickness: 1 },   // Try 8" wide first
                             { width: 6, height: 2, thickness: 1 },   // Then 6×2
@@ -5853,8 +5853,8 @@
 
         function generateCopingPlacements(topRow) {
             // Place banked stones as coping from left to right.
-            // Stones are stored FLAT (wider than tall) in copingBank.
-            // Stand them on end for placement: swap width ↔ height.
+            // Stones may be stored in any orientation — stand them on end
+            // so the narrow dimension is horizontal and the tall dimension is vertical.
             // Each stone drops down to the lowest row where it can sit
             // (gravity — like the player-placed stones).
             const placements = [];
@@ -5867,14 +5867,14 @@
             while (col < playable.right && available.length > 0) {
                 let placed = false;
 
-                // Sort by stood-on-end width (= original height), prefer narrower for tight packing
-                available.sort((a, b) => a.height - b.height);
+                // Sort by stood-on-end width (= narrow dimension), prefer narrower for tight packing
+                available.sort((a, b) => Math.min(a.width, a.height) - Math.min(b.width, b.height));
 
                 for (let i = 0; i < available.length; i++) {
                     const stone = available[i];
-                    // Stand on end: original height becomes coping width, original width becomes coping height
-                    const copeW = stone.height; // narrow dimension = horizontal
-                    const copeH = stone.width;  // wide dimension = vertical (stood on end)
+                    // Stand on end: narrow dimension = width, tall dimension = height
+                    const copeW = Math.min(stone.width, stone.height); // narrow = horizontal
+                    const copeH = Math.max(stone.width, stone.height); // tall = vertical (stood on end)
 
                     if (col + copeW > playable.right) continue;
 
@@ -5952,7 +5952,7 @@
                 } else if (placements.length > 0) {
                     showFeedback('Sparse coping: ' + coverage + '% coverage', 'negative');
                 } else {
-                    showFeedback('No coping stones banked!', 'negative');
+                    showFeedback('No coping stones placed!', 'negative');
                 }
                 updateUI();
                 drawBoard();
@@ -5965,34 +5965,59 @@
             }
 
             const { col, row, stone } = placements[index];
-            const id = ++stoneIdCounter;
 
-            // Place on board
-            for (let r = row; r < row + stone.height; r++) {
-                for (let c = col; c < col + stone.width; c++) {
-                    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
-                        board[r][c] = stone.thickness;
-                        stoneInfo[r][c] = id;
+            // Animate the stone dropping from above the wall to its landing row
+            const startRow = 0; // Start from very top of canvas
+            let currentRow = startRow;
+            const dropSpeed = 2; // rows per frame (inches per frame)
+
+            function dropFrame() {
+                // Erase previous position by redrawing board
+                drawBoard();
+
+                if (currentRow + stone.height >= row + stone.height) {
+                    // Reached landing position — lock it in place
+                    const id = ++stoneIdCounter;
+                    for (let r = row; r < row + stone.height; r++) {
+                        for (let c = col; c < col + stone.width; c++) {
+                            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                                board[r][c] = stone.thickness;
+                                stoneInfo[r][c] = id;
+                            }
+                        }
                     }
+
+                    // Register in stone registry (placed as coping)
+                    registerStone(id, row, row + stone.height - 1, col, col + stone.width - 1, stone.thickness, true, false);
+
+                    // Award coping bonus (60 base + area)
+                    score += 60 + Math.round(stone.width * stone.height * 0.3);
+                    stats.copingStones++;
+                    stats.stonesPlaced++;
+                    updateUI();
+
+                    // Highlight coping principle card
+                    highlightPrinciple('principle-coping', 'good');
+
+                    drawBoard();
+
+                    // Schedule next stone in wave
+                    copingTimer = setTimeout(() => animateCopingWave(placements, index + 1), COPING_WAVE_DELAY);
+                    return;
                 }
+
+                // Draw the falling coping stone at its current position
+                const x = col * BLOCK_SIZE;
+                const y = currentRow * BLOCK_SIZE;
+                const w = stone.width * BLOCK_SIZE;
+                const h = stone.height * BLOCK_SIZE;
+                drawStoneBlock(ctx, x, y, w, h, stone.thickness, false, false, true, stone.width, stone.height, false, index + 90000);
+
+                currentRow += dropSpeed;
+                requestAnimationFrame(dropFrame);
             }
 
-            // Register in stone registry (placed as coping)
-            registerStone(id, row, row + stone.height - 1, col, col + stone.width - 1, stone.thickness, false, false);
-
-            // Award coping bonus with +10 banking bonus (60 base + area)
-            score += 60 + Math.round(stone.width * stone.height * 0.3);
-            stats.copingStones++;
-            stats.stonesPlaced++;
-            updateUI();
-
-            // Highlight coping principle card
-            highlightPrinciple('principle-coping', 'good');
-
-            drawBoard();
-
-            // Schedule next stone in wave
-            copingTimer = setTimeout(() => animateCopingWave(placements, index + 1), COPING_WAVE_DELAY);
+            requestAnimationFrame(dropFrame);
         }
 
         function analyzeStone(positions, stone) {
