@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>9-Slice Stone Asset Test</title>
+<style>
+    body {
+        background: #e8e0d0;
+        font-family: Georgia, serif;
+        padding: 20px;
+        color: #3a3020;
+    }
+    h1 { margin: 0 0 8px 0; font-size: 22px; }
+    h2 { margin: 20px 0 8px 0; font-size: 16px; color: #6a5a4a; }
+    .note { font-size: 12px; color: #888; margin-bottom: 16px; }
+    canvas { border: 1px solid #aaa; background: #f5f0e8; display: block; margin: 8px 0; }
+    .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+    .stone-label { font-size: 11px; color: #666; text-align: center; margin-top: 2px; }
+    .section { margin-bottom: 24px; padding: 12px; background: #f5f0e8; border-radius: 6px; border: 1px solid #c8bda6; }
+    .controls { margin: 12px 0; }
+    .controls label { font-size: 13px; margin-right: 12px; }
+    .controls input[type=range] { width: 120px; vertical-align: middle; }
+    .controls span { font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>9-Slice Stone Asset Prototype</h1>
+<p class="note">Testing whether a single hand-drawn 2x3 SVG can be 9-slice scaled to render all stone sizes.</p>
+
+<div class="controls">
+    <label>Corner size: <input type="range" id="cornerSlider" min="5" max="45" value="15"> <span id="cornerVal">15%</span></label>
+</div>
+
+<div class="section">
+    <h2>Original 2x3 (reference)</h2>
+    <div class="row">
+        <div>
+            <canvas id="originalCanvas" width="300" height="200"></canvas>
+            <div class="stone-label">Original SVG at 300x200</div>
+        </div>
+        <div>
+            <canvas id="slicedOriginal" width="300" height="200"></canvas>
+            <div class="stone-label">9-sliced at same size (should match)</div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Thin Stones (thickness 1) - 10px per inch</h2>
+    <div class="row" id="thinRow"></div>
+</div>
+
+<div class="section">
+    <h2>Medium Stones (thickness 2) - 10px per inch</h2>
+    <div class="row" id="mediumRow"></div>
+</div>
+
+<div class="section">
+    <h2>Thick Stones (thickness 3) - 10px per inch</h2>
+    <div class="row" id="thickRow"></div>
+</div>
+
+<div class="section">
+    <h2>Cut Stone Examples (odd sizes from cutting)</h2>
+    <div class="row" id="cutRow"></div>
+</div>
+
+<div class="section">
+    <h2>Scaled up 3x (to see detail)</h2>
+    <div class="row" id="bigRow"></div>
+</div>
+
+<script>
+    const BLOCK_SIZE = 10; // px per inch, same as game
+    const SCALE_3X = 3;
+
+    // Stone sizes from the game
+    const thinStones = [
+        [2,2], [4,2], [6,2], [8,2], [10,2],
+        [4,4], [6,4], [8,4], [10,4], [12,4]
+    ];
+    const mediumStones = [
+        [6,6], [8,6], [10,6], [12,6], [14,6], [16,6],
+        [8,8], [10,8], [12,8], [14,8], [16,8], [18,8]
+    ];
+    const thickStones = [
+        [12,12], [14,12], [16,12], [18,12], [20,12]
+    ];
+    const cutStones = [
+        [3,4], [5,6], [7,4], [3,2], [9,8], [11,6], [1,2]
+    ];
+    const bigStones = [
+        [4,2], [8,4], [10,6], [14,8], [20,12]
+    ];
+
+    let stoneImg = null;
+    let cornerPct = 0.15; // fraction of source image for corner regions
+
+    function loadSVG() {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.src = '2x3_A.svg';
+        });
+    }
+
+    /**
+     * 9-slice draw: renders sourceImg into a target rectangle by splitting
+     * the source into 9 regions and stretching the edges/center.
+     *
+     * cornerPct: fraction of source w/h used for corner regions (e.g. 0.25 = 25%)
+     */
+    function drawStone9Slice(ctx, dx, dy, dw, dh, img, cornerFrac) {
+        const sw = img.naturalWidth || img.width;
+        const sh = img.naturalHeight || img.height;
+
+        // Corner sizes in source pixels
+        const cLeft = Math.floor(sw * cornerFrac);
+        const cRight = Math.floor(sw * cornerFrac);
+        const cTop = Math.floor(sh * cornerFrac);
+        const cBot = Math.floor(sh * cornerFrac);
+
+        // Middle region in source
+        const smw = sw - cLeft - cRight;   // source middle width
+        const smh = sh - cTop - cBot;      // source middle height
+
+        // Corner sizes in destination pixels — scale proportionally but cap
+        // so corners don't exceed half the destination
+        const scaleX = dw / sw;
+        const scaleY = dh / sh;
+        const cornerScale = Math.min(scaleX, scaleY, 1.0); // don't enlarge corners beyond 1:1
+
+        let dcLeft = Math.floor(cLeft * cornerScale);
+        let dcRight = Math.floor(cRight * cornerScale);
+        let dcTop = Math.floor(cTop * cornerScale);
+        let dcBot = Math.floor(cBot * cornerScale);
+
+        // Ensure corners don't exceed half the target
+        if (dcLeft + dcRight > dw) {
+            const ratio = dw / (dcLeft + dcRight);
+            dcLeft = Math.floor(dcLeft * ratio);
+            dcRight = Math.floor(dcRight * ratio);
+        }
+        if (dcTop + dcBot > dh) {
+            const ratio = dh / (dcTop + dcBot);
+            dcTop = Math.floor(dcTop * ratio);
+            dcBot = Math.floor(dcBot * ratio);
+        }
+
+        // Middle region in destination
+        const dmw = dw - dcLeft - dcRight;
+        const dmh = dh - dcTop - dcBot;
+
+        // Skip drawing if regions are zero-size
+        const canDrawMiddleW = dmw > 0 && smw > 0;
+        const canDrawMiddleH = dmh > 0 && smh > 0;
+
+        // --- Draw 9 slices ---
+
+        // 1. Top-left corner
+        ctx.drawImage(img, 0, 0, cLeft, cTop, dx, dy, dcLeft, dcTop);
+
+        // 2. Top edge (stretch horizontally)
+        if (canDrawMiddleW) {
+            ctx.drawImage(img, cLeft, 0, smw, cTop, dx + dcLeft, dy, dmw, dcTop);
+        }
+
+        // 3. Top-right corner
+        ctx.drawImage(img, sw - cRight, 0, cRight, cTop, dx + dw - dcRight, dy, dcRight, dcTop);
+
+        // 4. Left edge (stretch vertically)
+        if (canDrawMiddleH) {
+            ctx.drawImage(img, 0, cTop, cLeft, smh, dx, dy + dcTop, dcLeft, dmh);
+        }
+
+        // 5. Center (stretch both)
+        if (canDrawMiddleW && canDrawMiddleH) {
+            ctx.drawImage(img, cLeft, cTop, smw, smh, dx + dcLeft, dy + dcTop, dmw, dmh);
+        }
+
+        // 6. Right edge (stretch vertically)
+        if (canDrawMiddleH) {
+            ctx.drawImage(img, sw - cRight, cTop, cRight, smh, dx + dw - dcRight, dy + dcTop, dcRight, dmh);
+        }
+
+        // 7. Bottom-left corner
+        ctx.drawImage(img, 0, sh - cBot, cLeft, cBot, dx, dy + dh - dcBot, dcLeft, dcBot);
+
+        // 8. Bottom edge (stretch horizontally)
+        if (canDrawMiddleW) {
+            ctx.drawImage(img, cLeft, sh - cBot, smw, cBot, dx + dcLeft, dy + dh - dcBot, dmw, dcBot);
+        }
+
+        // 9. Bottom-right corner
+        ctx.drawImage(img, sw - cRight, sh - cBot, cRight, cBot, dx + dw - dcRight, dy + dh - dcBot, dcRight, dcBot);
+    }
+
+    function renderAll() {
+        if (!stoneImg) return;
+
+        // Original
+        const origCtx = document.getElementById('originalCanvas').getContext('2d');
+        origCtx.clearRect(0, 0, 300, 200);
+        origCtx.drawImage(stoneImg, 0, 0, 300, 200);
+
+        // 9-sliced at same size
+        const slicedCtx = document.getElementById('slicedOriginal').getContext('2d');
+        slicedCtx.clearRect(0, 0, 300, 200);
+        drawStone9Slice(slicedCtx, 0, 0, 300, 200, stoneImg, cornerPct);
+
+        // Render stone rows
+        renderRow('thinRow', thinStones, BLOCK_SIZE);
+        renderRow('mediumRow', mediumStones, BLOCK_SIZE);
+        renderRow('thickRow', thickStones, BLOCK_SIZE);
+        renderRow('cutRow', cutStones, BLOCK_SIZE);
+        renderRow('bigRow', bigStones, BLOCK_SIZE * SCALE_3X);
+    }
+
+    function renderRow(containerId, stones, scale) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+
+        for (const [w, h] of stones) {
+            const pw = w * scale;
+            const ph = h * scale;
+
+            const wrapper = document.createElement('div');
+
+            const cvs = document.createElement('canvas');
+            cvs.width = pw + 4;  // +4 for 2px padding each side
+            cvs.height = ph + 4;
+            const ctx = cvs.getContext('2d');
+
+            // Draw 9-sliced stone
+            drawStone9Slice(ctx, 2, 2, pw, ph, stoneImg, cornerPct);
+
+            const label = document.createElement('div');
+            label.className = 'stone-label';
+            label.textContent = w + '"x' + h + '" (' + pw + 'x' + ph + 'px)';
+
+            wrapper.appendChild(cvs);
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
+        }
+    }
+
+    // Slider control
+    document.getElementById('cornerSlider').addEventListener('input', (e) => {
+        cornerPct = parseInt(e.target.value) / 100;
+        document.getElementById('cornerVal').textContent = e.target.value + '%';
+        renderAll();
+    });
+
+    // Load and render
+    loadSVG().then(img => {
+        stoneImg = img;
+        console.log('SVG loaded:', img.naturalWidth, 'x', img.naturalHeight);
+        renderAll();
+    });
+</script>
+
+</body>
+</html>

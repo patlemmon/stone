@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sketchy Stone Mockups</title>
+<style>
+    body {
+        font-family: Georgia, serif;
+        background: #f5f0e8;
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    h1 { color: #2a2a2a; margin-bottom: 5px; }
+    h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #c8bda6; padding-bottom: 5px; }
+    p.desc { color: #666; font-style: italic; margin-top: 2px; margin-bottom: 15px; }
+    .row {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        margin-bottom: 20px;
+    }
+    .stone-box { text-align: center; }
+    .stone-box canvas { border: 1px solid #ddd; background: #fff; }
+    .stone-box .label { font-size: 11px; color: #888; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<h1>Sketchy Stone Mockups — Masked to Stone Shape</h1>
+<p>All effects are composited via <code>source-atop</code> so they <b>only appear inside the stone artwork</b>, not the empty background.</p>
+
+<div id="loading">Loading stone images...</div>
+<div id="content" style="display:none;">
+
+    <h2>Original (Current)</h2>
+    <p class="desc">The stones as they currently render via 9-slice.</p>
+    <div class="row" id="original"></div>
+
+    <h2>Approach 1: Roughen Edges (jittered outline)</h2>
+    <p class="desc">Wobbly stroke around the stone perimeter — this one draws ON TOP (not masked) since it's an edge effect.</p>
+    <div class="row" id="approach1"></div>
+
+    <h2>Approach 2: Pencil Hatching (masked)</h2>
+    <p class="desc">Fine diagonal hatching — only visible inside the stone shape.</p>
+    <div class="row" id="approach2"></div>
+
+    <h2>Approach 3: Paper Grain (masked)</h2>
+    <p class="desc">Scattered dot noise — only visible inside the stone shape.</p>
+    <div class="row" id="approach3"></div>
+
+    <h2>Approach 4: Edges + Hatching (masked)</h2>
+    <p class="desc">Rough edges (on top) + pencil hatching (masked inside stone).</p>
+    <div class="row" id="approach4"></div>
+
+    <h2>Approach 5: Cross-Hatch (masked)</h2>
+    <p class="desc">Two crossing layers of fine lines — only visible inside the stone shape.</p>
+    <div class="row" id="approach5"></div>
+
+    <h2>Side-by-side at Game Scale</h2>
+    <p class="desc">How each approach looks at actual in-game pixel sizes.</p>
+    <div class="row" id="gameScale"></div>
+
+</div>
+
+<script>
+const NINE_SLICE_CORNER = 0.15;
+
+const testSizes = [
+    { w: 80, h: 40, label: '8×4 (1:2)' },
+    { w: 120, h: 60, label: '12×6 (1:2)' },
+    { w: 40, h: 40, label: '4×4 (1:1)' },
+    { w: 60, h: 60, label: '6×6 (1:1)' },
+];
+
+const gameSizes = [
+    { w: 40, h: 20, label: '4×2' },
+    { w: 60, h: 20, label: '6×2' },
+    { w: 80, h: 40, label: '8×4' },
+    { w: 40, h: 40, label: '4×4' },
+];
+
+const images = {};
+let loaded = 0;
+const toLoad = [
+    { key: '1:2', src: '1_2 A.svg' },
+    { key: '1:1', src: '1_1 A.svg' },
+];
+
+toLoad.forEach(({ key, src }) => {
+    const img = new Image();
+    img.onload = () => { images[key] = img; loaded++; if (loaded >= toLoad.length) init(); };
+    img.onerror = () => { console.error('Failed:', src); loaded++; if (loaded >= toLoad.length) init(); };
+    img.src = src;
+});
+
+function drawStone9Slice(ctx, dx, dy, dw, dh, img, cornerFrac) {
+    const sw = img.naturalWidth || img.width;
+    const sh = img.naturalHeight || img.height;
+    const cLeft = Math.floor(sw * cornerFrac);
+    const cRight = Math.floor(sw * cornerFrac);
+    const cTop = Math.floor(sh * cornerFrac);
+    const cBot = Math.floor(sh * cornerFrac);
+    const smw = sw - cLeft - cRight;
+    const smh = sh - cTop - cBot;
+    const cornerScale = Math.min(dw / sw, dh / sh, 1.0);
+    const dcLeft = Math.floor(cLeft * cornerScale);
+    const dcRight = Math.floor(cRight * cornerScale);
+    const dcTop = Math.floor(cTop * cornerScale);
+    const dcBot = Math.floor(cBot * cornerScale);
+    const dmw = dw - dcLeft - dcRight;
+    const dmh = dh - dcTop - dcBot;
+    const canDrawMidW = dmw > 0;
+    const canDrawMidH = dmh > 0;
+    ctx.drawImage(img, 0, 0, cLeft, cTop, dx, dy, dcLeft, dcTop);
+    ctx.drawImage(img, sw - cRight, 0, cRight, cTop, dx + dw - dcRight, dy, dcRight, dcTop);
+    ctx.drawImage(img, 0, sh - cBot, cLeft, cBot, dx, dy + dh - dcBot, dcLeft, dcBot);
+    ctx.drawImage(img, sw - cRight, sh - cBot, cRight, cBot, dx + dw - dcRight, dy + dh - dcBot, dcRight, dcBot);
+    if (canDrawMidW) ctx.drawImage(img, cLeft, 0, smw, cTop, dx + dcLeft, dy, dmw, dcTop);
+    if (canDrawMidW) ctx.drawImage(img, cLeft, sh - cBot, smw, cBot, dx + dcLeft, dy + dh - dcBot, dmw, dcBot);
+    if (canDrawMidH) ctx.drawImage(img, 0, cTop, cLeft, smh, dx, dy + dcTop, dcLeft, dmh);
+    if (canDrawMidH) ctx.drawImage(img, sw - cRight, cTop, cRight, smh, dx + dw - dcRight, dy + dcTop, dcRight, dmh);
+    if (canDrawMidW && canDrawMidH) ctx.drawImage(img, cLeft, cTop, smw, smh, dx + dcLeft, dy + dcTop, dmw, dmh);
+}
+
+// Render stone base onto a canvas, return the context
+function renderBase(canvas, w, h, img) {
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d');
+    drawStone9Slice(ctx, 0, 0, w, h, img, NINE_SLICE_CORNER);
+    return ctx;
+}
+
+// KEY HELPER: Apply an effect ONLY inside the stone shape.
+// 1. Create offscreen canvas same size
+// 2. Draw the stone onto it (creates the alpha mask)
+// 3. Switch to source-atop — now only pixels where stone exists will be drawn
+// 4. Run the effectFn to draw hatching/grain/etc on the offscreen canvas
+// 5. Composite the result back onto the main canvas
+function maskedEffect(ctx, w, h, img, effectFn) {
+    const off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    const octx = off.getContext('2d');
+
+    // Draw stone to create the alpha mask
+    drawStone9Slice(octx, 0, 0, w, h, img, NINE_SLICE_CORNER);
+
+    // Now only draw where stone pixels exist
+    octx.globalCompositeOperation = 'source-atop';
+
+    // Run the effect drawing function
+    effectFn(octx, w, h);
+
+    // Stamp the masked effect onto the main canvas
+    ctx.drawImage(off, 0, 0);
+}
+
+// === APPROACH 1: Jittery outline (drawn ON TOP, not masked) ===
+function roughEdges(ctx, w, h, intensity) {
+    const jitter = intensity || 1.5;
+    const perimeter = 2 * w + 2 * h;
+    const steps = Math.max(40, Math.floor(perimeter / 2));
+    ctx.save();
+    ctx.strokeStyle = 'rgba(23, 22, 18, 0.5)';
+    ctx.lineWidth = 1.0;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const margin = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const pos = t * perimeter;
+        const pw = w - 2 * margin;
+        const ph = h - 2 * margin;
+        let x, y;
+        if (pos < pw) { x = margin + pos; y = margin; }
+        else if (pos < pw + ph) { x = w - margin; y = margin + (pos - pw); }
+        else if (pos < 2 * pw + ph) { x = w - margin - (pos - pw - ph); y = h - margin; }
+        else { x = margin; y = h - margin - (pos - 2 * pw - ph); }
+        x += (Math.random() - 0.5) * jitter * 2;
+        y += (Math.random() - 0.5) * jitter * 2;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+}
+
+// === APPROACH 2: Pencil hatching (to be used inside maskedEffect) ===
+function drawHatching(ctx, w, h) {
+    ctx.strokeStyle = 'rgba(60, 55, 40, 0.18)';
+    ctx.lineWidth = 0.8;
+    const spacing = 4;
+    const angleBase = -Math.PI / 6;
+    for (let i = -h; i < w + h; i += spacing) {
+        const aj = (Math.random() - 0.5) * 0.1;
+        const ox = (Math.random() - 0.5) * 1.5;
+        const oy = (Math.random() - 0.5) * 1.5;
+        ctx.beginPath();
+        ctx.moveTo(i + ox, oy);
+        ctx.lineTo(i + Math.cos(angleBase + aj) * (h + 20) + ox, h + oy);
+        ctx.stroke();
+    }
+}
+
+// === APPROACH 3: Paper grain dots (to be used inside maskedEffect) ===
+function drawGrain(ctx, w, h) {
+    const dotCount = Math.floor(w * h * 0.15);
+    for (let i = 0; i < dotCount; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        const alpha = Math.random() * 0.15;
+        const size = Math.random() * 1.2 + 0.3;
+        ctx.fillStyle = 'rgba(40, 35, 25, ' + alpha + ')';
+        ctx.fillRect(x, y, size, size);
+    }
+    for (let i = 0; i < dotCount * 0.4; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        const alpha = Math.random() * 0.1;
+        const size = Math.random() * 1.0 + 0.3;
+        ctx.fillStyle = 'rgba(255, 255, 245, ' + alpha + ')';
+        ctx.fillRect(x, y, size, size);
+    }
+}
+
+// === APPROACH 5: Cross-hatching (to be used inside maskedEffect) ===
+function drawCrossHatch(ctx, w, h) {
+    ctx.strokeStyle = 'rgba(50, 45, 35, 0.10)';
+    ctx.lineWidth = 0.6;
+    for (let i = -h; i < w + h; i += 5) {
+        const jx = (Math.random() - 0.5) * 1;
+        const jy = (Math.random() - 0.5) * 1;
+        ctx.beginPath();
+        ctx.moveTo(i + jx, jy);
+        ctx.lineTo(i + h * 0.6 + jx, h + jy);
+        ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(50, 45, 35, 0.07)';
+    ctx.lineWidth = 0.5;
+    for (let i = -h; i < w + h; i += 7) {
+        const jx = (Math.random() - 0.5) * 1;
+        const jy = (Math.random() - 0.5) * 1;
+        ctx.beginPath();
+        ctx.moveTo(i + jx, h + jy);
+        ctx.lineTo(i + h * 0.5 + jx, jy);
+        ctx.stroke();
+    }
+}
+
+function getImg(size) {
+    return size.w === size.h ? images['1:1'] : images['1:2'];
+}
+
+function makeBox(w, h, label) {
+    const box = document.createElement('div');
+    box.className = 'stone-box';
+    const canvas = document.createElement('canvas');
+    box.appendChild(canvas);
+    const lbl = document.createElement('div');
+    lbl.className = 'label';
+    lbl.textContent = label;
+    box.appendChild(lbl);
+    return { box, canvas };
+}
+
+function init() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    // === ORIGINAL ===
+    testSizes.forEach(size => {
+        const img = getImg(size); if (!img) return;
+        const { box, canvas } = makeBox(size.w, size.h, size.label);
+        renderBase(canvas, size.w, size.h, img);
+        document.getElementById('original').appendChild(box);
+    });
+
+    // === APPROACH 1: Rough edges (on top, not masked) ===
+    testSizes.forEach(size => {
+        const img = getImg(size); if (!img) return;
+        const { box, canvas } = makeBox(size.w, size.h, size.label);
+        const ctx = renderBase(canvas, size.w, size.h, img);
+        roughEdges(ctx, size.w, size.h, 1.5);
+        document.getElementById('approach1').appendChild(box);
+    });
+
+    // === APPROACH 2: Pencil hatching (masked inside stone) ===
+    testSizes.forEach(size => {
+        const img = getImg(size); if (!img) return;
+        const { box, canvas } = makeBox(size.w, size.h, size.label);
+        const ctx = renderBase(canvas, size.w, size.h, img);
+        maskedEffect(ctx, size.w, size.h, img, drawHatching);
+        document.getElementById('approach2').appendChild(box);
+    });
+
+    // === APPROACH 3: Paper grain (masked inside stone) ===
+    testSizes.forEach(size => {
+        const img = getImg(size); if (!img) return;
+        const { box, canvas } = makeBox(size.w, size.h, size.label);
+        const ctx = renderBase(canvas, size.w, size.h, img);
+        maskedEffect(ctx, size.w, size.h, img, drawGrain);
+        document.getElementById('approach3').appendChild(box);
+    });
+
+    // === APPROACH 4: Rough edges + Hatching masked ===
+    testSizes.forEach(size => {
+        const img = getImg(size); if (!img) return;
+        const { box, canvas } = makeBox(size.w, size.h, size.label);
+        const ctx = renderBase(canvas, size.w, size.h, img);
+        maskedEffect(ctx, size.w, size.h, img, drawHatching);
+        roughEdges(ctx, size.w, size.h, 1.5);
+        document.getElementById('approach4').appendChild(box);
+    });
+
+    // === APPROACH 5: Cross-hatch (masked inside stone) ===
+    testSizes.forEach(size => {
+        const img = getImg(size); if (!img) return;
+        const { box, canvas } = makeBox(size.w, size.h, size.label);
+        const ctx = renderBase(canvas, size.w, size.h, img);
+        maskedEffect(ctx, size.w, size.h, img, drawCrossHatch);
+        document.getElementById('approach5').appendChild(box);
+    });
+
+    // === GAME SCALE comparison ===
+    const gsRow = document.getElementById('gameScale');
+    const approaches = [
+        { name: 'Original', fn: null },
+        { name: 'Rough Edges', fn: (ctx, w, h, img) => roughEdges(ctx, w, h, 1.2) },
+        { name: 'Hatching', fn: (ctx, w, h, img) => maskedEffect(ctx, w, h, img, drawHatching) },
+        { name: 'Grain', fn: (ctx, w, h, img) => maskedEffect(ctx, w, h, img, drawGrain) },
+        { name: 'Edges+Hatching', fn: (ctx, w, h, img) => { maskedEffect(ctx, w, h, img, drawHatching); roughEdges(ctx, w, h, 1.2); } },
+        { name: 'Cross-Hatch', fn: (ctx, w, h, img) => maskedEffect(ctx, w, h, img, drawCrossHatch) },
+    ];
+
+    approaches.forEach(approach => {
+        const section = document.createElement('div');
+        section.style.marginRight = '30px';
+        const title = document.createElement('div');
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '5px';
+        title.style.fontSize = '12px';
+        title.textContent = approach.name;
+        section.appendChild(title);
+
+        const miniRow = document.createElement('div');
+        miniRow.style.display = 'flex';
+        miniRow.style.gap = '3px';
+        miniRow.style.alignItems = 'flex-end';
+        miniRow.style.background = '#eee';
+        miniRow.style.padding = '5px';
+        miniRow.style.borderRadius = '3px';
+
+        gameSizes.forEach(size => {
+            const img = getImg(size); if (!img) return;
+            const canvas = document.createElement('canvas');
+            const ctx = renderBase(canvas, size.w, size.h, img);
+            if (approach.fn) approach.fn(ctx, size.w, size.h, img);
+            miniRow.appendChild(canvas);
+        });
+        section.appendChild(miniRow);
+        gsRow.appendChild(section);
+    });
+}
+</script>
+</body>
+</html>

@@ -103,13 +103,17 @@
             align-items: flex-start;
         }
 
-        .game-board-container {
-            background: #fffdf7;
-            padding: 8px;
-            border: 3px solid #2a2a2a;
-            position: relative;
+        .game-board-column {
+            display: flex;
+            flex-direction: column;
             flex-shrink: 1;
             min-width: 0;
+        }
+        .game-board-container {
+            background: #fffdf7;
+            padding: 8px 8px 2px 8px;
+            border: 3px solid #2a2a2a;
+            position: relative;
         }
 
         .game-board-container canvas {
@@ -123,7 +127,7 @@
             top: 4px;
             left: 4px;
             right: -4px;
-            bottom: -4px;
+            bottom: -2px;
             border: 2px solid #2a2a2a;
             z-index: -1;
         }
@@ -308,6 +312,23 @@
             letter-spacing: 1px;
         }
 
+        .help-btn {
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: bold;
+            line-height: 22px;
+            text-align: center;
+            color: #666;
+            border-color: #999;
+        }
+        .help-btn:hover {
+            color: #2a2a2a;
+            border-color: #2a2a2a;
+        }
+
         .btn:hover {
             background: #2a2a2a;
             color: #fffdf7;
@@ -474,6 +495,119 @@
             display: flex;
             justify-content: center;
             gap: 10px;
+        }
+
+        /* Tutorial Overlay */
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(42, 42, 42, 0.92);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .tutorial-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .tutorial-content {
+            background: #fffdf7;
+            border: 3px solid #2a2a2a;
+            max-width: 520px;
+            width: 90%;
+            padding: 28px 32px 20px;
+            position: relative;
+        }
+        .tutorial-step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .tutorial-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: background 0.2s;
+        }
+        .tutorial-dot.active {
+            background: #2a2a2a;
+        }
+        .tutorial-dot.completed {
+            background: #8a8a8a;
+        }
+        .tutorial-title {
+            font-family: 'Georgia', serif;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            color: #2a2a2a;
+            margin-bottom: 14px;
+        }
+        .tutorial-body {
+            font-family: 'Georgia', serif;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #3a3a3a;
+            margin-bottom: 20px;
+        }
+        .tutorial-body p {
+            margin-bottom: 10px;
+        }
+        .tutorial-body .rule-name {
+            font-weight: bold;
+            color: #2a2a2a;
+        }
+        .tutorial-body .key-hint {
+            display: inline-block;
+            background: #2a2a2a;
+            color: #fffdf7;
+            padding: 1px 6px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            border-radius: 2px;
+            margin: 0 2px;
+        }
+        .tutorial-diagram {
+            background: #f5f1e8;
+            border: 2px solid #d4c9b0;
+            padding: 14px;
+            margin: 12px 0 16px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #4a4a4a;
+            white-space: pre;
+        }
+        .tutorial-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tutorial-buttons .btn {
+            min-width: 90px;
+        }
+        .tutorial-skip {
+            font-size: 10px;
+            color: #888;
+            cursor: pointer;
+            text-decoration: underline;
+            border: none;
+            background: none;
+            font-family: 'Georgia', serif;
+        }
+        .tutorial-skip:hover {
+            color: #444;
         }
 
         /* Card Selection Popup */
@@ -664,10 +798,10 @@
             flex-wrap: wrap;
             justify-content: center;
             align-items: flex-end;
-            gap: 12px;
-            margin-top: 10px;
-            min-height: 100px;
-            padding: 8px 0;
+            gap: 10px;
+            margin-top: 2px;
+            min-height: 80px;
+            padding: 2px 0;
         }
 
         .hand-card {
@@ -678,15 +812,26 @@
             cursor: pointer;
             transition: all 0.35s ease, opacity 0.4s ease, transform 0.4s ease;
             position: relative;
-            padding: 6px 8px;
+            padding: 4px 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
+            gap: 1px;
         }
 
-        /* .winnowing removed — cards no longer winnow (fresh hand each turn) */
+        .hand-card.winnowing {
+            opacity: 0;
+            transform: scale(0.7) translateY(10px);
+            max-width: 0 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-width: 0 !important;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
 
         .hand-card:hover {
             border-color: #2a8a2a;
@@ -778,40 +923,100 @@
         }
 
         /* Stone Bank strip — full-scale stones stood on end between canvas and hand */
+        #throughBankStrip {
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            padding: 4px 4px 3px 4px;
+            margin-top: 2px;
+            min-height: 24px;
+            background: #eae5dc;
+            border: 2px solid #8a7a6a;
+            border-radius: 4px;
+            position: relative;
+        }
+        .through-bank-label-area {
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+            gap: 8px;
+            padding-bottom: 0;
+        }
+        .through-bank-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #3a3a3a;
+            white-space: nowrap;
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+        }
+        .through-bank-count {
+            font-size: 13px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #3a3a3a;
+            white-space: nowrap;
+        }
+        .through-bank-stones {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            overflow-x: auto;
+            padding: 0;
+        }
+        .through-bank-stone {
+            border-radius: 1px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .through-bank-stone:hover {
+            outline: 2px solid #8a6a4a;
+            outline-offset: 1px;
+        }
+        .through-bank-stone.filled {
+            border: 1px solid rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .through-bank-stone.filled canvas {
+            display: block;
+        }
+        .through-bank-stone.new {
+            animation: bankStoneIn 0.3s ease-out;
+        }
         #copingBankStrip {
             display: none;
-            align-items: flex-end;
-            gap: 0;
-            padding: 6px 4px 4px 4px;
-            margin-top: 6px;
-            min-height: 32px;
+            flex-direction: column;
+            gap: 2px;
+            padding: 4px 4px 3px 4px;
+            margin-top: 2px;
+            min-height: 28px;
             background: #f8f5ec;
             border: 2px solid #c8bda6;
             border-radius: 4px;
+            position: relative;
         }
         .bank-label-area {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 2px;
-            margin-right: 8px;
-            min-width: 50px;
-            padding-bottom: 2px;
+            flex-direction: row;
+            align-items: baseline;
+            gap: 8px;
+            padding-bottom: 0;
         }
         .cope-bank-label {
-            font-size: 8px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: #666;
+            color: #444;
             white-space: nowrap;
             font-family: 'Georgia', serif;
+            font-weight: bold;
         }
         .cope-bank-stones {
             display: flex;
             gap: 2px;
             align-items: flex-end;
-            flex: 1;
             overflow-x: auto;
             padding: 0;
         }
@@ -835,10 +1040,44 @@
             to { transform: scale(1) translateY(0); opacity: 1; }
         }
         .cope-bank-count {
-            font-size: 10px;
+            font-size: 13px;
             font-family: monospace;
-            color: #555;
+            font-weight: bold;
+            color: #444;
             white-space: nowrap;
+        }
+        .cope-bank-hint {
+            font-size: 12px;
+            font-style: italic;
+            font-weight: bold;
+            color: #4a7a4a;
+            white-space: nowrap;
+        }
+        .set-copes-btn {
+            font-size: 11px;
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 3px 14px;
+            background: #e8f0e8;
+            border: 2px solid #5a8a5a;
+            border-radius: 3px;
+            color: #2a5a2a;
+            cursor: pointer;
+            white-space: nowrap;
+            margin-left: auto;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .set-copes-btn:hover {
+            background: #d0e8d0;
+            border-color: #3a6a3a;
+        }
+        .set-copes-btn:disabled {
+            opacity: 0.4;
+            cursor: default;
+            background: #e8e8e8;
+            border-color: #aaa;
         }
         .hand-card-bank-btn {
             font-size: 8px;
@@ -934,9 +1173,26 @@
     </div>
 
     <div class="main-game-area">
+        <div class="game-board-column">
         <div class="game-board-container">
-            <canvas id="gameCanvas" width="1960" height="720"></canvas>
+            <canvas id="gameCanvas" width="1960" height="760"></canvas>
         </div>
+
+        <!-- Through Stone Bank — shows banked through stones flat, between canvas and coping bank -->
+        <div id="throughBankStrip">
+            <!-- Dynamically generated by renderThroughBank() -->
+        </div>
+
+        <!-- Cope Bank visual — shows banked coping stones stood on end at full scale -->
+        <div id="copingBankStrip">
+            <!-- Dynamically generated by renderCopingBank() -->
+        </div>
+
+        <!-- Persistent hand row below bank -->
+        <div id="handRow" class="hand-row" style="display:none;">
+            <!-- Dynamically generated by renderHandRow() -->
+        </div>
+        </div><!-- .game-board-column -->
 
         <div class="side-panel">
             <div class="mode-switcher">
@@ -944,25 +1200,27 @@
                 <button id="designBtn">Design</button>
             </div>
             <div id="wallSizeSelector" class="wall-size-selector">
-                <button id="wallSize12" class="active">12'</button>
-                <button id="wallSize6">6'</button>
+                <button id="wallSize12">12'</button>
+                <button id="wallSize6" class="active">6'</button>
             </div>
 
             <div class="controls" id="gameControls">
                 <button class="btn" id="startBtn">Start</button>
                 <button class="btn" id="pauseBtn">Pause</button>
+                <button class="btn help-btn" id="helpBtn" title="How to play">?</button>
             </div>
 
             <div class="panel instructions" id="controlsPanel">
                 <h3>Controls</h3>
                 <p><span class="key">1</span>-<span class="key">5</span> Select card</p>
-                <p><span class="key">←</span><span class="key">→</span> Move stone</p>
-                <p><span class="key">↑</span> Rotate stone</p>
-                <p><span class="key">↓</span> Drop faster</p>
+                <p><span class="key">←</span><span class="key">→</span> / <span class="key">A</span><span class="key">D</span> Move stone</p>
+                <p><span class="key">↑</span> / <span class="key">W</span> Rotate stone</p>
+                <p><span class="key">↓</span> / <span class="key">S</span> Drop faster</p>
                 <p><span class="key">Space</span> Hard drop</p>
                 <p><span class="key">B</span> Bank stone (while dropping)</p>
                 <p><span class="key">C</span> Cut stone (while dropping)</p>
-                <p><span class="key">F</span> Face pin (fills 2×2 void)</p>
+                <p><span class="key">F</span> Face pin (fills void)</p>
+                <p><span class="key">T</span> Place through stone (from bank)</p>
             </div>
 
             <div class="section-label" id="rulesLabel">How to Wall</div>
@@ -1069,19 +1327,26 @@
             </div>
         </div>
     </div>
+
+
     </div><!-- .game-wrapper -->
 
-    <!-- Stone Bank visual between canvas and hand — shows banked stones stood on end at full scale -->
-    <div id="copingBankStrip">
-        <!-- Dynamically generated by renderCopingBank() -->
-    </div>
-
-    <!-- Persistent hand row below bank -->
-    <div id="handRow" class="hand-row" style="display:none;">
-        <!-- Dynamically generated by renderHandRow() -->
-    </div>
-
     <div class="feedback-toast" id="feedbackToast"></div>
+
+    <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-content">
+            <div class="tutorial-step-indicator" id="tutorialDots"></div>
+            <div class="tutorial-title" id="tutorialTitle"></div>
+            <div class="tutorial-body" id="tutorialBody"></div>
+            <div class="tutorial-buttons">
+                <button class="tutorial-skip" id="tutorialSkip">Skip tutorial</button>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn" id="tutorialPrev" style="display:none;">Back</button>
+                    <button class="btn" id="tutorialNext">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="confirm-overlay" id="resetConfirmOverlay">
         <div class="confirm-content">
@@ -1098,7 +1363,7 @@
             <h3 style="margin:0 0 8px 0; font-family:Georgia,serif; color:#5a4a3a;">Cut Stone</h3>
             <div id="cutPhasePosition">
                 <canvas id="cutPreviewCanvas" style="border:1px solid #8b7355; border-radius:4px;"></canvas>
-                <p style="font-size:11px; color:#666; margin:6px 0;">&larr; &rarr; to position cut line, Enter to cut</p>
+                <p style="font-size:11px; color:#666; margin:6px 0;">&larr; &rarr; to position cut line, &uarr; to toggle H/V, Enter to cut</p>
                 <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
                     <button class="btn" id="cutConfirmBtn" onclick="confirmCut()">Cut Here</button>
                     <button class="btn" id="cutCancelBtn" onclick="cancelCut()">Cancel</button>
@@ -1156,6 +1421,10 @@
                     <div class="end-stat-value" id="statCuts">0</div>
                 </div>
                 <div class="end-stat">
+                    <div class="end-stat-label">Through Banked</div>
+                    <div class="end-stat-value" id="statThroughBanked">0</div>
+                </div>
+                <div class="end-stat">
                     <div class="end-stat-label">Final Integrity</div>
                     <div class="end-stat-value" id="statStability">0%</div>
                 </div>
@@ -1171,11 +1440,11 @@
         // 1 grid cell = 1 inch, 1 inch = 10 pixels
         const BLOCK_SIZE = 10;
         const COLS = 196;  // 144" face + 26" cheek each side at midpoint = 196"
-        const ROWS = 72;   // 54" wall + 1" ground + 17" sky
+        const ROWS = 76;   // 57" wall + 1" ground + 18" sky
 
         // Wall dimensions (all in inches)
-        const WALL_HEIGHT = 53;    // 53 inches (~4'5") — 1" shorter for proper stone bonding
-        const COPING_HEIGHT = 6;   // ~6" coping stones stood on end
+        const WALL_HEIGHT = 57;    // 57 inches (~4'9") — body + 10" coping
+        const COPING_HEIGHT = 10;  // ~10" coping stones stood on end
 
         // Racked back / stair-stepped cheek configuration
         const CHEEK_BASE_WIDTH = 36;   // Width at ground level (inches) — 3 feet
@@ -1201,7 +1470,7 @@
                 localStorageKey: 'sbs_cheek_design_6ft'
             }
         };
-        let activeWallSize = '12ft';
+        let activeWallSize = '6ft';
 
         function getWallConfig() {
             return WALL_SIZES[activeWallSize];
@@ -1219,17 +1488,10 @@
         const STONES = [
             // Thin stones (2" tall, thickness 1)
             { width: 2, height: 2, thickness: 1 },
-            { width: 3, height: 2, thickness: 1 },
             { width: 4, height: 2, thickness: 1 },
             { width: 6, height: 2, thickness: 1 },
             { width: 8, height: 2, thickness: 1 },
             { width: 10, height: 2, thickness: 1 },
-            // Thin stones (3" tall, thickness 1)
-            { width: 3, height: 3, thickness: 1 },
-            { width: 4, height: 3, thickness: 1 },
-            { width: 6, height: 3, thickness: 1 },
-            { width: 8, height: 3, thickness: 1 },
-            { width: 10, height: 3, thickness: 1 },
             // Thin stones (4" tall, thickness 1)
             { width: 4, height: 4, thickness: 1 },
             { width: 6, height: 4, thickness: 1 },
@@ -1272,7 +1534,9 @@
 
         // Game state
         let canvas, ctx;
-        const stoneImages = {}; // key: 'HxW' e.g. '3x2', value: loaded Image
+        const stoneImages = {}; // key: 'WxH' e.g. '3x2', value: array of loaded Images (variants A, B, C...)
+        const NINE_SLICE_CORNER = 0.15; // 15% corner region for 9-slice rendering
+        const _overlayCache = {}; // Cache composited cheek/through stone canvases by key
         let board = [];
         let stoneInfo = [];
         let currentStone = null;
@@ -1292,7 +1556,7 @@
         let totalDeckSize = 0; // Initial deck size at start of play, for weighted draw progress
         const HAND_SIZE = 5;
         const MAX_REDRAWS = 3;
-        const COPING_WAVE_DELAY = 80; // ms between each coping stone in wave animation (faster for wider wall)
+        const COPING_WAVE_DELAY = 250; // ms between each coping stone in wave animation
         const CARD_SELECT_TIME = 15; // Seconds to choose a card before auto-select
 
         // Game phases
@@ -1314,12 +1578,12 @@
         const PALETTE_STONES = [
             // Small stones (for cheek ends and fine work)
             { width: 2, height: 2, thickness: 1, name: '2"×2"' },
-            { width: 3, height: 2, thickness: 1, name: '2"×3"' },
-            { width: 4, height: 3, thickness: 1, name: '3"×4"' },
+            { width: 4, height: 2, thickness: 1, name: '2"×4"' },
+            { width: 4, height: 4, thickness: 1, name: '4"×4"' },
             { width: 6, height: 4, thickness: 1, name: '4"×6"' },
             // Thin stones
             { width: 6, height: 2, thickness: 1, name: '2"×6"' },
-            { width: 8, height: 3, thickness: 1, name: '3"×8"' },
+            { width: 8, height: 4, thickness: 1, name: '4"×8"' },
             { width: 10, height: 4, thickness: 1, name: '4"×10"' },
             // Medium stones
             { width: 8, height: 6, thickness: 2, name: '6"×8"' },
@@ -1355,6 +1619,8 @@
         let copingBank = []; // Stones banked by player for coping (any non-through stone)
         let copingBankTarget = 0; // Approx coping stones needed (computed after deconstruction)
         let totalBankedCount = 0; // Lifetime count (not decremented by coping wave)
+        let throughBank = []; // Through stones banked by player for later placement
+        let throughBankUsedCount = 0; // Count of through stones retrieved from bank and placed
         let copingTimer = null; // For pause support during coping animation
         let cardSelectTimer = null; // Auto-select countdown timer
         let cardSelectDeadline = 0; // Timestamp when auto-select fires
@@ -1364,29 +1630,272 @@
         let cardTimerRemaining = 0; // Stored remaining ms when paused
 
         // Face Pin state
-        const FACE_PIN_SIZE = 2; // 2×2 inch pinning stone
-        let facePinsRemaining = 3;
+        // Face pin sizes — voids are detected in this order (largest first for dedup)
+        const FACE_PIN_SIZES = [
+            { w: 2, h: 2 },
+            { w: 2, h: 1 },
+            { w: 1, h: 2 },
+            { w: 1, h: 1 }
+        ];
+        let facePinsRemaining = 5;
         let facePinMode = false;
         let facePinVoids = []; // Array of {row, col} for valid void top-left corners
 
+        // Void preview state — tracks which hand card is hovered for gap visualization
+        let hoveredCardIndex = -1;
+
         // Cut mechanic state
-        let cutsRemaining = 3;
+        let cutsRemaining = 10;
         let cutMode = false;
         let cutStone = null;
         let cutLineX = 0;
         let cutPhase = 'position'; // 'position' or 'select'
+        let cutOrientation = 'horizontal'; // 'horizontal' splits width, 'vertical' splits height
         let cutLeftPiece = null;
         let cutRightPiece = null;
 
         function loadStoneImages() {
+            // Asset naming convention: stone_assets/{H}_{W} {variant}.svg
+            // H:W ratio is the reduced aspect ratio (height:width)
+            // 9-slice scaling stretches one asset to render any stone with a matching ratio
+            // Multiple variants (A, B, C, D) per ratio are randomly assigned per stone ID
             const assets = [
-                // { key: '2x3', src: 'stone_assets/2x3 Stone A.svg' },
+                // 1:1 — squares (covers 2x2, 4x4, 6x6, 8x8, 12x12)
+                { ratio: '1:1', src: 'stone_assets/1_1 A.svg' },
+                { ratio: '1:1', src: 'stone_assets/1_1 B.svg' },
+                { ratio: '1:1', src: 'stone_assets/1_1 C 2.svg' },
+                { ratio: '1:1', src: 'stone_assets/1_1 D.svg' },
+
+                // 1:2 — 2:1 wide (covers 2x4, 4x8, 6x12, 8x16)
+                { ratio: '1:2', src: 'stone_assets/1_2 A.svg' },
+                { ratio: '1:2', src: 'stone_assets/1_2 B.svg' },
+                { ratio: '1:2', src: 'stone_assets/1_2 C.svg' },
+                { ratio: '1:2', src: 'stone_assets/1_2 D.svg' },
+
+                // 1:3 — 3:1 wide (covers 2x6, 4x12)
+                { ratio: '1:3', src: 'stone_assets/1_3 A.svg' },
+                { ratio: '1:3', src: 'stone_assets/1_3 B.svg' },
+                { ratio: '1:3', src: 'stone_assets/1_3 C.svg' },
+                { ratio: '1:3', src: 'stone_assets/1_3 D.svg' },
+
+                // 1:4 — 4:1 wide (covers 2x8)
+                { ratio: '1:4', src: 'stone_assets/1_4 A.svg' },
+                { ratio: '1:4', src: 'stone_assets/1_4 B.svg' },
+                { ratio: '1:4', src: 'stone_assets/1_4 C.svg' },
+
+                // 1:5 — 5:1 wide (covers 2x10, 4x20 through stones)
+                { ratio: '1:5', src: 'stone_assets/1_5 A.svg' },
+                { ratio: '1:5', src: 'stone_assets/1_5 B.svg' },
+                { ratio: '1:5', src: 'stone_assets/1_5 C.svg' },
+
+                // 1:6 — 6:1 wide
+                { ratio: '1:6', src: 'stone_assets/1_6 A.svg' },
+
+                // 2:3 — 3:2 wide (covers 4x6, 6x10, 8x12, 12x18)
+                { ratio: '2:3', src: 'stone_assets/2_3 A.svg' },
+                { ratio: '2:3', src: 'stone_assets/2_3 B.svg' },
+                { ratio: '2:3', src: 'stone_assets/2_3 C.svg' },
+                { ratio: '2:3', src: 'stone_assets/2_3 D.svg' },
             ];
-            assets.forEach(({ key, src }) => {
+            let loadedCount = 0;
+            const totalAssets = assets.length;
+            assets.forEach(({ ratio, src }) => {
                 const img = new Image();
-                img.onload = () => { stoneImages[key] = img; };
+                img.onload = () => {
+                    if (!stoneImages[ratio]) stoneImages[ratio] = [];
+                    stoneImages[ratio].push(img);
+                    loadedCount++;
+                    // Once all assets are loaded, show the canvas and draw with art
+                    if (loadedCount >= totalAssets) {
+                        canvas.style.visibility = 'visible';
+                        drawBoard();
+                    }
+                };
                 img.src = src;
             });
+        }
+
+        // Reduce a fraction to its simplest form: e.g. 4,8 -> '1:2'
+        function reduceRatio(a, b) {
+            const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
+            const g = gcd(a, b);
+            return (a / g) + ':' + (b / g);
+        }
+
+        // Find the best matching stone image for a given stone (height, width)
+        // Tries exact ratio first, then closest ratio from available assets
+        function findStoneImage(stoneW, stoneH) {
+            // stoneW/stoneH are game dimensions (width, height in inches)
+            // Asset keys use H:W format
+            const exactRatio = reduceRatio(stoneH, stoneW);
+            const exact = stoneImages[exactRatio];
+            if (exact && exact.length > 0) return exact;
+
+            // Try flipped ratio (the image can be rotated in drawStoneBlock)
+            const flippedRatio = reduceRatio(stoneW, stoneH);
+            const flipped = stoneImages[flippedRatio];
+            if (flipped && flipped.length > 0) return flipped;
+
+            // Find closest aspect ratio from available assets
+            const targetRatio = stoneW / stoneH; // wide = > 1
+            let bestKey = null;
+            let bestDiff = Infinity;
+
+            for (const key of Object.keys(stoneImages)) {
+                if (!stoneImages[key] || stoneImages[key].length === 0) continue;
+                const parts = key.split(':');
+                const kh = parseInt(parts[0]); // height
+                const kw = parseInt(parts[1]); // width
+                // Try both orientations of the asset
+                const ratio1 = kw / kh;
+                const ratio2 = kh / kw;
+                const diff = Math.min(Math.abs(targetRatio - ratio1), Math.abs(targetRatio - ratio2));
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    bestKey = key;
+                }
+            }
+
+            if (bestKey) return stoneImages[bestKey];
+            return null;
+        }
+
+        // Pick a random variant from an image array (seeded by stone ID for consistency)
+        function pickVariant(images, stoneId) {
+            if (!images || images.length === 0) return null;
+            if (images.length === 1) return images[0];
+            // Use stone ID as simple seed so same stone always gets same variant
+            return images[Math.abs(stoneId || 0) % images.length];
+        }
+
+        // ─── Tutorial System ───
+        let tutorialStep = 0;
+        const TUTORIAL_STEPS = [
+            {
+                title: 'Welcome to Stone By Stone',
+                body: `<p>Learn the ancient craft of <strong>dry stone walling</strong> — building walls without mortar, held together only by the skill of the waller and the weight of the stones.</p>
+<p>This game teaches the real principles used by wallers certified under the <strong>Dry Stone Walling Association (DSWA)</strong>.</p>
+<div class="tutorial-diagram">    ╔══════════════════════════════╗
+    ║   COPING (cap stones)        ║
+    ║ ┌──────────────────────────┐ ║
+    ║ │      2ND LIFT            │ ║
+    ║ │ ─ ─ THROUGH LINE ─ ─ ─  │ ║
+    ║ │      1ST LIFT            │ ║
+    ║ └──────────────────────────┘ ║
+    ║ CHEEK                  CHEEK ║
+    ╚══════════════════════════════╝</div>`
+            },
+            {
+                title: 'How The Game Works',
+                body: `<p>A reference wall is built, then <strong>deconstructed</strong> stone by stone. Your job is to <strong>rebuild it</strong> using the same stones.</p>
+<p>You'll be dealt a hand of <strong>5 cards</strong> — each card is a stone. Pick one, and it drops Tetris-style from the top. Position it in the wall using:</p>
+<p><span class="key-hint">A</span> <span class="key-hint">D</span> or <span class="key-hint">←</span> <span class="key-hint">→</span> Move left/right</p>
+<p><span class="key-hint">W</span> or <span class="key-hint">↑</span> Rotate the stone</p>
+<p><span class="key-hint">S</span> or <span class="key-hint">↓</span> Drop faster</p>
+<p><span class="key-hint">Space</span> Hard drop (instant placement)</p>`
+            },
+            {
+                title: 'The Golden Rules',
+                body: `<p>Score points by following the real rules of dry stone walling:</p>
+<p><span class="rule-name">Lay Flat</span> — Stones should be wider than tall. Gravity is your mortar.</p>
+<p><span class="rule-name">1 Over 2</span> — Each stone should sit on exactly two stones below, bridging the joint. This is the most important rule.</p>
+<p><span class="rule-name">2 Into 1</span> — Avoid "zipper joints" where vertical gaps line up.</p>
+<p><span class="rule-name">Coursing</span> — Large, heavy stones go at the base. Lighter stones go higher.</p>`
+            },
+            {
+                title: 'Special Stones & Lines',
+                body: `<p><span class="rule-name">Through Stones</span> — Dark stones that span the wall\'s full width at the <strong>through line</strong> (halfway up). They tie the wall together.</p>
+<p><span class="rule-name">Coping Stones</span> — The cap on top. Press <span class="key-hint">B</span> while a stone is dropping to <strong>bank</strong> it for coping. Coping stones are stood on end — you\'ll need to <span class="key-hint">↑</span> rotate them! Once enough are banked, they auto-place in a wave. The stone bank shows the expected cope height.</p>
+<div class="tutorial-diagram">  Coping:  ┃│┃│┃│┃│┃│┃│┃ (stood on end)
+           ─────────────────
+  Through: ████████████████ (dark, spans width)
+           ─────────────────</div>`
+            },
+            {
+                title: 'Your Tools',
+                body: `<p>You have special tools to help fit stones precisely:</p>
+<p><span class="key-hint">C</span> <span class="rule-name">Cut</span> — Split a dropping stone into two pieces. Keep one, the other goes back in the deck. You get <strong>10 cuts</strong> per game.</p>
+<p><span class="key-hint">F</span> <span class="rule-name">Face Pin</span> — Fill a small void with a pinning stone (1×1, 1×2, 2×1, or 2×2). Use these to patch holes. You get <strong>5 face pins</strong> per game.</p>
+<p><span class="key-hint">T</span> <span class="rule-name">Through Stone</span> — Retrieve a banked through stone and place it on the through line.</p>
+<p>Watch the <strong>Integrity bar</strong> at the top — bad placement drains it. If it hits 0%, the wall collapses!</p>
+<p style="margin-top:12px;font-size:11px;color:#666;">Cuts and face pins remaining are shown in the top-right of the game field.</p>`
+            },
+            {
+                title: 'Ready to Build',
+                body: `<p>Study the reference wall on screen before you begin. Notice how stones are laid, where the through stones sit, and how the cheek ends taper.</p>
+<p>The <strong>"How to Wall"</strong> cards in the sidebar will light up <span style="color:#2a8a2a;">green</span> when you place well, or <span style="color:#cc4444;">red</span> when you violate a rule.</p>
+<p>Good luck, waller. Build it <strong>stone by stone</strong>.</p>`
+            }
+        ];
+
+        function showTutorial() {
+            tutorialStep = 0;
+            document.getElementById('tutorialOverlay').classList.add('show');
+            renderTutorialStep();
+        }
+
+        function showHelp() {
+            // Pause if a game is active, then show tutorial
+            if (gameRunning || awaitingCardSelection || copingAnimationActive) {
+                if (!gamePaused) togglePause();
+            }
+            showTutorial();
+        }
+
+        function renderTutorialStep() {
+            const step = TUTORIAL_STEPS[tutorialStep];
+            document.getElementById('tutorialTitle').textContent = step.title;
+            document.getElementById('tutorialBody').innerHTML = step.body;
+
+            // Step dots
+            const dotsEl = document.getElementById('tutorialDots');
+            dotsEl.innerHTML = '';
+            for (let i = 0; i < TUTORIAL_STEPS.length; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'tutorial-dot';
+                if (i === tutorialStep) dot.classList.add('active');
+                else if (i < tutorialStep) dot.classList.add('completed');
+                dotsEl.appendChild(dot);
+            }
+
+            // Back button
+            document.getElementById('tutorialPrev').style.display = tutorialStep > 0 ? 'inline-block' : 'none';
+
+            // Next/Start button
+            const nextBtn = document.getElementById('tutorialNext');
+            if (tutorialStep === TUTORIAL_STEPS.length - 1) {
+                nextBtn.textContent = 'Start Building';
+            } else {
+                nextBtn.textContent = 'Next';
+            }
+        }
+
+        function nextTutorialStep() {
+            if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+                tutorialStep++;
+                renderTutorialStep();
+            } else {
+                closeTutorial();
+                localStorage.setItem('sbs_tutorial_done', '1');
+                startGame();
+            }
+        }
+
+        function prevTutorialStep() {
+            if (tutorialStep > 0) {
+                tutorialStep--;
+                renderTutorialStep();
+            }
+        }
+
+        function skipTutorial() {
+            closeTutorial();
+            localStorage.setItem('sbs_tutorial_done', '1');
+            startGame();
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorialOverlay').classList.remove('show');
         }
 
         function init() {
@@ -1411,6 +1920,10 @@
             document.getElementById('exportRefWallBtn').addEventListener('click', exportReferenceWall);
             document.getElementById('wallSize12').addEventListener('click', () => setWallSize('12ft'));
             document.getElementById('wallSize6').addEventListener('click', () => setWallSize('6ft'));
+            document.getElementById('tutorialNext').addEventListener('click', nextTutorialStep);
+            document.getElementById('tutorialPrev').addEventListener('click', prevTutorialStep);
+            document.getElementById('tutorialSkip').addEventListener('click', skipTutorial);
+            document.getElementById('helpBtn').addEventListener('click', showHelp);
             document.addEventListener('keydown', handleKeyPress);
 
             // Migrate old localStorage cheek design key to 12ft-specific key
@@ -1448,10 +1961,11 @@
             // Custom label dropdown
             initCustomSelect();
 
-            // Show the pre-built wall on first load (skipCheeks — cheeks baked into REFERENCE_WALL)
+            // Build the pre-built wall data but DON'T draw yet — wait for
+            // stone assets to finish loading so we never flash generic blocks.
+            canvas.style.visibility = 'hidden';
             createBoard(true);
             generateCompletedWall();
-            drawBoard();
         }
 
         function getSelectedLabel() {
@@ -1511,6 +2025,8 @@
                 }
 
                 card.onclick = () => onCardClicked(index);
+                card.onmouseenter = () => { hoveredCardIndex = index; drawBoard(); };
+                card.onmouseleave = () => { hoveredCardIndex = -1; drawBoard(); };
 
                 // Create preview canvas for stone (scaled to fit card)
                 const previewCanvas = document.createElement('canvas');
@@ -1526,15 +2042,18 @@
 
                 // Draw stone at scaled size
                 const isThroughStone = stone.isThroughStone || false;
-                previewCtx.fillStyle = isThroughStone ? '#3a3a3a' : '#fffdf7';
-                previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+                if (isThroughStone) {
+                    // Through stones use procedural dark charcoal — need background fill
+                    previewCtx.fillStyle = '#3a3a3a';
+                    previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+                }
                 drawStoneBlock(previewCtx, 0, 0, previewCanvas.width, previewCanvas.height, stone.thickness, false, false, false, stone.width, stone.height, isThroughStone);
 
                 // Type label — only through stones get a label, others just show dimensions
                 const typeLabel = isThroughStone ? 'Through' : '';
 
                 // Bank button visible on non-through cards while a stone is dropping
-                const showBank = !awaitingCardSelection && gameRunning && !isThroughStone && index === selectedCardIndex;
+                const showBank = !awaitingCardSelection && gameRunning && index === selectedCardIndex;
                 const bankBtn = showBank
                     ? `<button class="hand-card-bank-btn" onclick="event.stopPropagation(); bankStone()">Bank</button>`
                     : '';
@@ -1560,9 +2079,13 @@
             const pinBtnHtml = (awaitingCardSelection && facePinsRemaining > 0)
                 ? `<button class="hand-action-btn" onclick="startFacePinMode()">Pin (F) <strong>${facePinsRemaining}</strong></button>`
                 : (facePinsRemaining > 0 ? `<button class="hand-action-btn" disabled>Pin (F) <strong>${facePinsRemaining}</strong></button>` : '');
+            const throughBtnHtml = (awaitingCardSelection && throughBank.length > 0)
+                ? `<button class="hand-action-btn" style="background:#eae5dc;border-color:#8a7a6a;color:#3a3a3a;" onclick="retrieveThroughStone(0)">Through (T) <strong>${throughBank.length}</strong></button>`
+                : (throughBank.length > 0 ? `<button class="hand-action-btn" style="background:#eae5dc;border-color:#8a7a6a;color:#3a3a3a;" disabled>Through (T) <strong>${throughBank.length}</strong></button>` : '');
             info.innerHTML = `
                 <span><strong>${deck.length}</strong> in deck</span>
                 ${pinBtnHtml}
+                ${throughBtnHtml}
             `;
             handRow.appendChild(info);
 
@@ -1588,6 +2111,7 @@
             clearCardSelectTimer();
             selectedCardIndex = index;
             awaitingCardSelection = false;
+            hoveredCardIndex = -1;
 
             // Spawn the stone
             selectCard(index);
@@ -1605,11 +2129,6 @@
         function bankStone() {
             // Bank the currently falling stone — works during stone drop phase
             if (!gameRunning || !currentStone || gamePhase !== 'playing') return;
-            // Through stones cannot be banked
-            if (currentStone.isThroughStone) {
-                showFeedback('Through stones cannot be banked!', 'negative');
-                return;
-            }
 
             // Get the stone data from the selected card in hand
             const stone = hand[selectedCardIndex];
@@ -1619,17 +2138,17 @@
             currentStone = null;
             gameRunning = false;
 
-            // Store cope stones stood on end (taller than wide)
-            if (stone.width > stone.height) {
-                const tmp = stone.width;
-                stone.width = stone.height;
-                stone.height = tmp;
+            // Route to the correct bank based on stone type
+            if (stone.isThroughStone) {
+                // Through stones go to the through bank
+                throughBank.push(stone);
+                showFeedback('Through stone banked! (' + throughBank.length + ')', 'positive');
+            } else {
+                // Regular stones go to the coping bank
+                copingBank.push(stone);
+                totalBankedCount++;
+                showFeedback('Stone banked! (' + copingBank.length + ' of ' + copingBankTarget + 'ish)', 'positive');
             }
-
-            // Bank the card
-            copingBank.push(stone);
-            totalBankedCount++;
-            showFeedback('Stone banked! (' + copingBank.length + '/' + copingBankTarget + ')', 'positive');
 
             // Remove the used card, return rest to deck, draw fresh hand
             hand.splice(selectedCardIndex, 1);
@@ -1638,6 +2157,7 @@
             // Return to card selection
             awaitingCardSelection = true;
             renderHandRow();
+            renderThroughBank();
             renderCopingBank();
             drawBoard();
         }
@@ -1651,49 +2171,198 @@
                 return;
             }
             strip.style.display = 'flex';
+            // Force reflow so getBoundingClientRect returns valid positions
+            strip.offsetHeight;
 
             const banked = copingBank.length;
 
-            // Build the bank visual — stones already stored stood on end (taller than wide)
-            let html = '<div class="bank-label-area">';
-            html += '<span class="cope-bank-label">STONE BANK</span>';
-            html += '<span class="cope-bank-count">' + banked + ' / ~' + copingBankTarget + '</span>';
+            // Calculate where the coping zone's left face edge is on the canvas,
+            // then translate that into CSS pixels so banked stones align directly
+            // under the left-most coping void (right where the cheek end stops).
+            const _groundRow = ROWS - 2;
+            const _wallTopRow = _groundRow - WALL_HEIGHT + 1;
+            const _cheekOffset = getCheekOffset();
+            const _cheekWidthAtTop = getCheekWidthAtRow(_wallTopRow);
+            const copingLeftCol = _cheekOffset + _cheekWidthAtTop; // first face column at wall top
+            const copingLeftCanvasPx = copingLeftCol * BLOCK_SIZE; // native canvas pixels
+
+            // The canvas is CSS-scaled (native width → rendered width).
+            const canvasEl = document.getElementById('gameCanvas');
+            const canvasRect = canvasEl.getBoundingClientRect();
+            const scale = canvasRect.width / canvasEl.width;
+
+            // Compute offset from the strip's content-box left edge to the coping zone.
+            // The strip and canvas container are both children of .game-wrapper.
+            const stripRect = strip.getBoundingClientRect();
+            // Strip border-box to content-box: border-left(2) + padding-left(4) = 6px
+            const stripContentLeft = stripRect.left + 6;
+            const stonesLeftPad = Math.max(0, (canvasRect.left - stripContentLeft) + copingLeftCanvasPx * scale);
+
+            // Build the bank visual — stones stored flat but displayed stood on end
+            let html = '<div class="bank-label-area" style="padding-left:' + stonesLeftPad + 'px;">';
+            html += '<span class="cope-bank-label">COPE BANK</span>';
+            html += '<span class="cope-bank-count">' + banked + ' of ' + copingBankTarget + 'ish</span>';
+            html += '<span class="cope-bank-hint">Expected cope: ' + COPING_HEIGHT + '"</span>';
+            if (banked > 0) {
+                html += '<button class="set-copes-btn" onclick="triggerSetCopes()">Set Copes</button>';
+            }
             html += '</div>';
-            html += '<div class="cope-bank-stones">';
+            html += '<div class="cope-bank-stones" style="padding-left:' + stonesLeftPad + 'px;">';
 
             for (let i = 0; i < banked; i++) {
                 const stone = copingBank[i];
-                // Stones are already stored stood on end — use dimensions directly
-                const visualW = stone.width * BLOCK_SIZE;
-                const visualH = stone.height * BLOCK_SIZE;
+                // Display stood on end: narrow dim = width, tall dim = height
+                const copeW = Math.min(stone.width, stone.height);
+                const copeH = Math.max(stone.width, stone.height);
+                const visualW = copeW * BLOCK_SIZE;
+                const visualH = copeH * BLOCK_SIZE;
                 const isNew = (i === banked - 1);
                 const cls = 'cope-bank-stone filled' + (isNew ? ' new' : '');
-                html += '<div class="' + cls + '" style="width:' + visualW + 'px; height:' + visualH + 'px;" title="' + stone.width + '"×' + stone.height + '""></div>';
+                html += '<div class="' + cls + '" style="width:' + visualW + 'px; height:' + visualH + 'px;" title="' + copeW + '"×' + copeH + '" (stood on end)"></div>';
             }
 
             html += '</div>';
             strip.innerHTML = html;
 
-            // Now draw each stone using canvas for proper rendering
+            // Draw each stone using canvas for proper rendering (stood on end)
             const stoneEls = strip.querySelectorAll('.cope-bank-stone.filled');
             stoneEls.forEach((el, i) => {
                 const stone = copingBank[i];
-                const visualW = stone.width * BLOCK_SIZE;
-                const visualH = stone.height * BLOCK_SIZE;
+                const copeW = Math.min(stone.width, stone.height);
+                const copeH = Math.max(stone.width, stone.height);
+                const visualW = copeW * BLOCK_SIZE;
+                const visualH = copeH * BLOCK_SIZE;
                 const c = document.createElement('canvas');
                 c.width = visualW;
                 c.height = visualH;
                 c.style.width = visualW + 'px';
                 c.style.height = visualH + 'px';
                 const cCtx = c.getContext('2d');
-                // Draw the stone block using game renderer
-                cCtx.fillStyle = '#fffdf7';
-                cCtx.fillRect(0, 0, visualW, visualH);
-                drawStoneBlock(cCtx, 0, 0, visualW, visualH, stone.thickness, false, false, false, stone.width, stone.height, false);
+                drawStoneBlock(cCtx, 0, 0, visualW, visualH, stone.thickness, false, false, false, copeW, copeH, false);
                 el.innerHTML = '';
                 el.style.background = 'none';
                 el.appendChild(c);
             });
+        }
+
+        function renderThroughBank() {
+            const strip = document.getElementById('throughBankStrip');
+            if (!strip) return;
+
+            if (gamePhase !== 'playing' || throughBank.length === 0) {
+                strip.style.display = 'none';
+                return;
+            }
+            strip.style.display = 'flex';
+            // Force reflow so getBoundingClientRect returns valid positions
+            strip.offsetHeight;
+
+            const banked = throughBank.length;
+
+            // Calculate horizontal alignment: face left edge at the through stone row
+            const _groundRow = ROWS - 2;
+            const _throughRow = _groundRow - THROUGH_STONE_ROW;
+            const _cheekOffset = getCheekOffset();
+            const _cheekWidthAtThrough = getCheekWidthAtRow(_throughRow);
+            const throughLeftCol = _cheekOffset + _cheekWidthAtThrough;
+            const throughLeftCanvasPx = throughLeftCol * BLOCK_SIZE;
+
+            const canvasEl = document.getElementById('gameCanvas');
+            const canvasRect = canvasEl.getBoundingClientRect();
+            const scale = canvasRect.width / canvasEl.width;
+
+            const stripRect = strip.getBoundingClientRect();
+            const stripContentLeft = stripRect.left + 6; // border(2) + padding(4)
+            const stonesLeftPad = Math.max(0, (canvasRect.left - stripContentLeft) + throughLeftCanvasPx * scale);
+
+            // Build the bank visual — through stones displayed flat
+            let html = '<div class="through-bank-label-area" style="padding-left:' + stonesLeftPad + 'px;">';
+            html += '<span class="through-bank-label">THROUGH BANK</span>';
+            html += '<span class="through-bank-count">' + banked + ' banked</span>';
+            html += '</div>';
+            html += '<div class="through-bank-stones" style="padding-left:' + stonesLeftPad + 'px;">';
+
+            // Scale through stones to fit in the strip (they're 180-200px wide at native size)
+            const maxH = 40; // Max display height in pixels
+            for (let i = 0; i < banked; i++) {
+                const stone = throughBank[i];
+                const nativeW = stone.width * BLOCK_SIZE;
+                const nativeH = stone.height * BLOCK_SIZE;
+                const displayScale = Math.min(1, maxH / nativeH);
+                const visualW = Math.round(nativeW * displayScale);
+                const visualH = Math.round(nativeH * displayScale);
+                const isNew = (i === banked - 1);
+                const cls = 'through-bank-stone filled' + (isNew ? ' new' : '');
+                html += '<div class="' + cls + '" style="width:' + visualW + 'px; height:' + visualH + 'px;" '
+                    + 'title="Through ' + stone.height + '"×' + stone.width + '" — click or press T to place" '
+                    + 'onclick="retrieveThroughStone(' + i + ')"></div>';
+            }
+
+            html += '</div>';
+            strip.innerHTML = html;
+
+            // Render each stone using canvas (dark charcoal through stone style)
+            const stoneEls = strip.querySelectorAll('.through-bank-stone.filled');
+            stoneEls.forEach((el, i) => {
+                const stone = throughBank[i];
+                const nativeW = stone.width * BLOCK_SIZE;
+                const nativeH = stone.height * BLOCK_SIZE;
+                const displayScale = Math.min(1, maxH / nativeH);
+                const visualW = Math.round(nativeW * displayScale);
+                const visualH = Math.round(nativeH * displayScale);
+                const c = document.createElement('canvas');
+                c.width = visualW;
+                c.height = visualH;
+                c.style.width = visualW + 'px';
+                c.style.height = visualH + 'px';
+                c.style.cursor = 'pointer';
+                const cCtx = c.getContext('2d');
+                cCtx.fillStyle = '#3a3a3a';
+                cCtx.fillRect(0, 0, visualW, visualH);
+                drawStoneBlock(cCtx, 0, 0, visualW, visualH, stone.thickness, false, false, false, stone.width, stone.height, true);
+                el.innerHTML = '';
+                el.style.background = 'none';
+                el.appendChild(c);
+            });
+        }
+
+        function retrieveThroughStone(index) {
+            // Retrieve a banked through stone and spawn it as a falling piece
+            if (!awaitingCardSelection || gamePhase !== 'playing') return;
+            if (index < 0 || index >= throughBank.length) return;
+
+            // Remove stone from bank
+            const stone = throughBank.splice(index, 1)[0];
+            if (!stone) return;
+
+            clearCardSelectTimer();
+            throughBankUsedCount++;
+
+            // Mark that no hand card is being used (sentinel value)
+            selectedCardIndex = -1;
+            awaitingCardSelection = false;
+            hoveredCardIndex = -1;
+
+            // Spawn the stone as a falling piece (same as selectCard logic)
+            const playable = getPlayableArea(0);
+            const spawnX = Math.floor((playable.left + playable.right - stone.width) / 2);
+            currentStone = {
+                ...stone,
+                shape: createStoneShape(stone.width, stone.height),
+                id: ++stoneIdCounter,
+                x: spawnX,
+                y: 0
+            };
+
+            // Update displays
+            renderHandRow();
+            renderThroughBank();
+
+            // Start the game loop for this stone's drop
+            gameRunning = true;
+            gamePaused = false;
+            lastDrop = performance.now();
+            requestAnimationFrame(gameLoop);
         }
 
         // redrawHandAndRefresh() removed — hand is fresh each turn
@@ -1714,28 +2383,62 @@
         }
 
         function findFaceVoids() {
+            // Scan for voids of all supported sizes (2×2, 2×1, 1×2, 1×1).
+            // For each column, scan BOTTOM-UP so the pin drops to the lowest
+            // valid position in the void (gravity). Prefer largest sizes first.
+            // Track covered cells to prevent overlapping voids.
             const voids = [];
             const groundRow = ROWS - 2;
+            const covered = new Set(); // "r,c" strings for cells already in a larger void
 
-            for (let r = 0; r < groundRow - 1; r++) {
-                for (let c = 0; c < COLS - 1; c++) {
-                    // Check all 4 cells are empty
-                    if (board[r][c] || board[r][c+1] || board[r+1][c] || board[r+1][c+1]) continue;
+            for (const size of FACE_PIN_SIZES) {
+                // Scan bottom-up: start from the lowest row where this size can fit
+                for (let r = groundRow - size.h; r >= 0; r--) {
+                    for (let c = 0; c <= COLS - size.w; c++) {
+                        // Skip if any cell in this rect is already covered by a larger void
+                        let anyCovered = false;
+                        for (let dr = 0; dr < size.h && !anyCovered; dr++) {
+                            for (let dc = 0; dc < size.w && !anyCovered; dc++) {
+                                if (covered.has((r + dr) + ',' + (c + dc))) anyCovered = true;
+                            }
+                        }
+                        if (anyCovered) continue;
 
-                    // Must be within playable wall area (between cheeks)
-                    const playable = getPlayableArea(r);
-                    if (c < playable.left || c + 2 > playable.right) continue;
+                        // Check all cells in the rect are empty
+                        let allEmpty = true;
+                        for (let dr = 0; dr < size.h && allEmpty; dr++) {
+                            for (let dc = 0; dc < size.w && allEmpty; dc++) {
+                                if (board[r + dr][c + dc]) allEmpty = false;
+                            }
+                        }
+                        if (!allEmpty) continue;
 
-                    // Must have at least one adjacent placed stone (not floating in empty space)
-                    if (!hasAdjacentStone(r, c, 2, 2)) continue;
+                        // Must be within playable wall area (between cheeks)
+                        const playable = getPlayableArea(r);
+                        if (c < playable.left || c + size.w > playable.right) continue;
 
-                    // Must have support below (stones or ground underneath)
-                    const belowRow = r + 2;
-                    if (belowRow < groundRow && !board[belowRow][c] && !board[belowRow][c+1]) {
-                        continue; // Nothing below — skip
+                        // Must have at least one adjacent placed stone
+                        if (!hasAdjacentStone(r, c, size.w, size.h)) continue;
+
+                        // Must have support below (stones or ground)
+                        const belowRow = r + size.h;
+                        if (belowRow < groundRow) {
+                            let hasSupport = false;
+                            for (let dc = 0; dc < size.w; dc++) {
+                                if (board[belowRow][c + dc]) { hasSupport = true; break; }
+                            }
+                            if (!hasSupport) continue;
+                        }
+
+                        voids.push({ row: r, col: c, width: size.w, height: size.h });
+
+                        // Mark these cells as covered so smaller voids won't overlap
+                        for (let dr = 0; dr < size.h; dr++) {
+                            for (let dc = 0; dc < size.w; dc++) {
+                                covered.add((r + dr) + ',' + (c + dc));
+                            }
+                        }
                     }
-
-                    voids.push({ row: r, col: c });
                 }
             }
             return voids;
@@ -1746,11 +2449,12 @@
 
             facePinVoids = findFaceVoids();
             if (facePinVoids.length === 0) {
-                showFeedback('No valid 2\u00d72 voids found!', 'negative');
+                showFeedback('No valid voids found!', 'negative');
                 return;
             }
 
             facePinMode = true;
+            awaitingCardSelection = false;
             clearCardSelectTimer();
             showFeedback('Click a highlighted void to place face pin (' + facePinVoids.length + ' available)', 'neutral');
             drawBoard();
@@ -1760,6 +2464,9 @@
             const valid = facePinVoids.find(v => v.row === row && v.col === col);
             if (!valid) return;
 
+            const vw = valid.width;
+            const vh = valid.height;
+
             facePinMode = false;
             facePinVoids = [];
             facePinsRemaining--;
@@ -1768,21 +2475,22 @@
             const pinId = ++stoneIdCounter;
             const thickness = 1;
 
-            for (let r = row; r < row + FACE_PIN_SIZE; r++) {
-                for (let c = col; c < col + FACE_PIN_SIZE; c++) {
+            for (let r = row; r < row + vh; r++) {
+                for (let c = col; c < col + vw; c++) {
                     board[r][c] = thickness;
                     stoneInfo[r][c] = pinId;
                 }
             }
 
             // Register in stone registry with isFacePin flag
-            registerStone(pinId, row, row + FACE_PIN_SIZE - 1, col, col + FACE_PIN_SIZE - 1, thickness, false, false);
+            registerStone(pinId, row, row + vh - 1, col, col + vw - 1, thickness, false, false);
             stoneRegistry[pinId].isFacePin = true;
 
             stats.stonesPlaced++;
             document.getElementById('stonesPlaced').textContent = stats.stonesPlaced;
-            score += 25;
-            showFeedback('Face pin placed! +25  (' + facePinsRemaining + ' remaining)', 'positive');
+            const pinScore = 15 + (vw * vh * 5); // Larger pins score more
+            score += pinScore;
+            showFeedback('Face pin placed! +' + pinScore + '  (' + facePinsRemaining + ' remaining)', 'positive');
 
             // Resume card selection
             awaitingCardSelection = true;
@@ -1811,14 +2519,21 @@
 
         function startCut() {
             if (cutsRemaining <= 0 || !gameRunning || !currentStone || gamePhase !== 'playing') return;
-            if (currentStone.width <= 2) {
-                showFeedback('Stone too narrow to cut!', 'negative');
+            if (currentStone.width <= 2 && currentStone.height <= 2) {
+                showFeedback('Stone too small to cut!', 'negative');
                 return;
             }
 
             cutMode = true;
             cutStone = { width: currentStone.width, height: currentStone.height, thickness: currentStone.thickness, isThroughStone: currentStone.isThroughStone || false };
-            cutLineX = Math.floor(cutStone.width / 2);
+            // Default to horizontal; if too narrow, auto-switch to vertical
+            if (currentStone.width <= 2 && currentStone.height > 2) {
+                cutOrientation = 'vertical';
+                cutLineX = Math.floor(cutStone.height / 2);
+            } else {
+                cutOrientation = 'horizontal';
+                cutLineX = Math.floor(cutStone.width / 2);
+            }
             cutPhase = 'position';
 
             // Pause the game loop
@@ -1839,8 +2554,8 @@
             const stoneW = cutStone.width * BLOCK_SIZE * scale;
             const stoneH = cutStone.height * BLOCK_SIZE * scale;
 
-            cvs.width = stoneW + padding * 2;
-            cvs.height = stoneH + padding * 2 + 16;
+            cvs.width = stoneW + padding * 2 + (cutOrientation === 'vertical' ? 30 : 0);
+            cvs.height = stoneH + padding * 2 + 16 + 14;
             const cCtx = cvs.getContext('2d');
 
             // Clear
@@ -1857,65 +2572,139 @@
             cCtx.lineWidth = 1;
             cCtx.strokeRect(sx, sy, stoneW, stoneH);
 
-            // Draw cut line
-            const cutX = sx + cutLineX * BLOCK_SIZE * scale;
             cCtx.save();
             cCtx.strokeStyle = '#cc0000';
             cCtx.lineWidth = 2;
             cCtx.setLineDash([6, 4]);
-            cCtx.beginPath();
-            cCtx.moveTo(cutX, sy - 8);
-            cCtx.lineTo(cutX, sy + stoneH + 8);
-            cCtx.stroke();
-            cCtx.setLineDash([]);
 
-            // Labels for piece widths
-            cCtx.font = '12px Georgia';
-            cCtx.fillStyle = '#333';
-            cCtx.textAlign = 'center';
-            const leftW = cutLineX;
-            const rightW = cutStone.width - cutLineX;
-            if (leftW > 0) cCtx.fillText(leftW + '"', sx + (cutX - sx) / 2, sy - 12);
-            if (rightW > 0) cCtx.fillText(rightW + '"', cutX + (sx + stoneW - cutX) / 2, sy - 12);
+            if (cutOrientation === 'horizontal') {
+                // Vertical cut line (splits width)
+                const cutX = sx + cutLineX * BLOCK_SIZE * scale;
+                cCtx.beginPath();
+                cCtx.moveTo(cutX, sy - 8);
+                cCtx.lineTo(cutX, sy + stoneH + 8);
+                cCtx.stroke();
+                cCtx.setLineDash([]);
 
-            // Shade invalid pieces (< 2")
-            if (leftW < 2) {
-                cCtx.fillStyle = 'rgba(200, 0, 0, 0.15)';
-                cCtx.fillRect(sx, sy, cutX - sx, stoneH);
-            }
-            if (rightW < 2) {
-                cCtx.fillStyle = 'rgba(200, 0, 0, 0.15)';
-                cCtx.fillRect(cutX, sy, sx + stoneW - cutX, stoneH);
+                // Labels for piece widths
+                cCtx.font = '12px Georgia';
+                cCtx.fillStyle = '#333';
+                cCtx.textAlign = 'center';
+                const leftW = cutLineX;
+                const rightW = cutStone.width - cutLineX;
+                if (leftW > 0) cCtx.fillText(leftW + '"', sx + (cutX - sx) / 2, sy - 12);
+                if (rightW > 0) cCtx.fillText(rightW + '"', cutX + (sx + stoneW - cutX) / 2, sy - 12);
+
+                // Shade invalid pieces (< 2")
+                if (leftW < 2) {
+                    cCtx.fillStyle = 'rgba(200, 0, 0, 0.15)';
+                    cCtx.fillRect(sx, sy, cutX - sx, stoneH);
+                }
+                if (rightW < 2) {
+                    cCtx.fillStyle = 'rgba(200, 0, 0, 0.15)';
+                    cCtx.fillRect(cutX, sy, sx + stoneW - cutX, stoneH);
+                }
+            } else {
+                // Horizontal cut line (splits height)
+                const cutY = sy + cutLineX * BLOCK_SIZE * scale;
+                cCtx.beginPath();
+                cCtx.moveTo(sx - 8, cutY);
+                cCtx.lineTo(sx + stoneW + 8, cutY);
+                cCtx.stroke();
+                cCtx.setLineDash([]);
+
+                // Labels for piece heights
+                cCtx.font = '12px Georgia';
+                cCtx.fillStyle = '#333';
+                cCtx.textAlign = 'center';
+                const topH = cutLineX;
+                const bottomH = cutStone.height - cutLineX;
+                if (topH > 0) cCtx.fillText(topH + '"', sx + stoneW + 14, sy + (cutY - sy) / 2 + 4);
+                if (bottomH > 0) cCtx.fillText(bottomH + '"', sx + stoneW + 14, cutY + (sy + stoneH - cutY) / 2 + 4);
+
+                // Shade invalid pieces (< 2")
+                if (topH < 2) {
+                    cCtx.fillStyle = 'rgba(200, 0, 0, 0.15)';
+                    cCtx.fillRect(sx, sy, stoneW, cutY - sy);
+                }
+                if (bottomH < 2) {
+                    cCtx.fillStyle = 'rgba(200, 0, 0, 0.15)';
+                    cCtx.fillRect(sx, cutY, stoneW, sy + stoneH - cutY);
+                }
             }
             cCtx.restore();
+
+            // Orientation indicator
+            cCtx.font = '10px Georgia';
+            cCtx.fillStyle = '#888';
+            cCtx.textAlign = 'center';
+            cCtx.fillText(cutOrientation === 'horizontal' ? 'H-cut (\u2191 to toggle)' : 'V-cut (\u2191 to toggle)', cvs.width / 2, cvs.height - 2);
         }
 
         function moveCutLine(direction) {
             if (!cutMode || cutPhase !== 'position') return;
             cutLineX += direction;
-            cutLineX = Math.max(1, Math.min(cutStone.width - 1, cutLineX));
+            const maxDim = cutOrientation === 'horizontal' ? cutStone.width : cutStone.height;
+            cutLineX = Math.max(1, Math.min(maxDim - 1, cutLineX));
+            renderCutPreview();
+        }
+
+        function toggleCutOrientation() {
+            if (!cutMode || cutPhase !== 'position') return;
+            if (cutOrientation === 'horizontal' && cutStone.height > 2) {
+                cutOrientation = 'vertical';
+                cutLineX = Math.floor(cutStone.height / 2);
+            } else if (cutOrientation === 'vertical' && cutStone.width > 2) {
+                cutOrientation = 'horizontal';
+                cutLineX = Math.floor(cutStone.width / 2);
+            }
             renderCutPreview();
         }
 
         function confirmCut() {
             if (!cutMode || cutPhase !== 'position') return;
 
-            const leftW = cutLineX;
-            const rightW = cutStone.width - cutLineX;
+            if (cutOrientation === 'horizontal') {
+                const leftW = cutLineX;
+                const rightW = cutStone.width - cutLineX;
 
-            if (leftW < 2 || rightW < 2) {
-                showFeedback('Both pieces must be at least 2" wide!', 'negative');
-                return;
+                if (leftW < 2 || rightW < 2) {
+                    showFeedback('Both pieces must be at least 2" wide!', 'negative');
+                    return;
+                }
+
+                cutPhase = 'select';
+                cutLeftPiece = { width: leftW, height: cutStone.height, thickness: cutStone.thickness,
+                    isThroughStone: cutStone.isThroughStone && leftW >= 18 };
+                cutRightPiece = { width: rightW, height: cutStone.height, thickness: cutStone.thickness,
+                    isThroughStone: cutStone.isThroughStone && rightW >= 18 };
+            } else {
+                // Vertical cut — splits height
+                const topH = cutLineX;
+                const bottomH = cutStone.height - cutLineX;
+
+                if (topH < 2 || bottomH < 2) {
+                    showFeedback('Both pieces must be at least 2" tall!', 'negative');
+                    return;
+                }
+
+                cutPhase = 'select';
+                cutLeftPiece = { width: cutStone.width, height: topH, thickness: cutStone.thickness,
+                    isThroughStone: cutStone.isThroughStone && cutStone.width >= 18 };
+                cutRightPiece = { width: cutStone.width, height: bottomH, thickness: cutStone.thickness,
+                    isThroughStone: cutStone.isThroughStone && cutStone.width >= 18 };
             }
-
-            cutPhase = 'select';
-            cutLeftPiece = { width: leftW, height: cutStone.height, thickness: cutStone.thickness,
-                isThroughStone: cutStone.isThroughStone && leftW >= 18 };
-            cutRightPiece = { width: rightW, height: cutStone.height, thickness: cutStone.thickness,
-                isThroughStone: cutStone.isThroughStone && rightW >= 18 };
 
             document.getElementById('cutPhasePosition').style.display = 'none';
             document.getElementById('cutPhaseSelect').style.display = 'block';
+
+            // Update labels for vertical cuts
+            const leftLabel = cutOrientation === 'vertical' ? 'Top' : 'Left';
+            const rightLabel = cutOrientation === 'vertical' ? 'Bottom' : 'Right';
+            const leftOptionEl = document.getElementById('cutLeftOption');
+            const rightOptionEl = document.getElementById('cutRightOption');
+            if (leftOptionEl) leftOptionEl.setAttribute('data-label', leftLabel);
+            if (rightOptionEl) rightOptionEl.setAttribute('data-label', rightLabel);
 
             renderCutPiecePreview('cutLeftCanvas', cutLeftPiece, 'cutLeftLabel');
             renderCutPiecePreview('cutRightCanvas', cutRightPiece, 'cutRightLabel');
@@ -2050,6 +2839,13 @@
                 }
             }
 
+            // Winnow a card at each color-change threshold (if hand has >1 card)
+            if (fraction <= 2/3 && cardsWinnowed === 0 && hand.length > 1) {
+                winnowCard();
+            } else if (fraction <= 1/3 && cardsWinnowed === 1 && hand.length > 1) {
+                winnowCard();
+            }
+
             if (remaining <= 0) {
                 // Time's up — auto-select a random card
                 autoSelectCard();
@@ -2057,6 +2853,34 @@
             }
 
             cardSelectAnimFrame = requestAnimationFrame(updateCardTimerBar);
+        }
+
+        // Remove a random card from the hand with a collapse animation
+        function winnowCard() {
+            if (hand.length <= 1) return;
+            cardsWinnowed++;
+
+            // Pick a random card to remove
+            const removeIndex = Math.floor(Math.random() * hand.length);
+            const removedStone = hand.splice(removeIndex, 1)[0];
+
+            // Return the removed stone to the deck
+            if (removedStone) deck.push(removedStone);
+
+            // Animate the card out in the DOM, then re-render
+            const handRow = document.getElementById('handRow');
+            const cards = handRow.querySelectorAll('.hand-card');
+            if (cards[removeIndex]) {
+                cards[removeIndex].classList.add('winnowing');
+                // After animation completes, re-render the hand
+                winnowTimeout = setTimeout(() => {
+                    renderHandRow();
+                    drawBoard();
+                }, 420);
+            } else {
+                renderHandRow();
+                drawBoard();
+            }
         }
 
         function autoSelectCard() {
@@ -2234,6 +3058,9 @@
             document.getElementById('designBtn').classList.toggle('active', designMode);
             document.getElementById('startBtn').textContent = 'Start';
             clearCardSelectTimer();
+            document.getElementById('handRow').style.display = 'none';
+            document.getElementById('copingBankStrip').style.display = 'none';
+            document.getElementById('throughBankStrip').style.display = 'none';
 
             // Toggle panel visibility
             const designPanel = document.getElementById('designPanel');
@@ -2306,8 +3133,8 @@
             if (facePinMode) {
                 const { col, row } = canvasMouseToGrid(event);
                 const clicked = facePinVoids.find(v =>
-                    col >= v.col && col < v.col + FACE_PIN_SIZE &&
-                    row >= v.row && row < v.row + FACE_PIN_SIZE
+                    col >= v.col && col < v.col + v.width &&
+                    row >= v.row && row < v.row + v.height
                 );
                 if (clicked) {
                     placeFacePin(clicked.row, clicked.col);
@@ -2823,6 +3650,8 @@
             board = [];
             stoneInfo = [];
             stoneRegistry = {};
+            // Clear overlay cache so stale composited stones don't linger
+            for (const k in _overlayCache) delete _overlayCache[k];
 
             for (let r = 0; r < ROWS; r++) {
                 board[r] = [];
@@ -3029,15 +3858,44 @@
                 return;
             }
 
+            // Reference walls were designed with ROWS=72 (ground at row 70).
+            // Shift all Y coordinates to match current grid.
+            const refGroundRow = 70; // ground row when reference walls were designed
+            const curGroundRow = ROWS - 2;
+            const yShift = curGroundRow - refGroundRow;
+            // Old coping was 6" tall — detect and grow to current COPING_HEIGHT
+            const oldCopingHeight = 6;
+
             originalWallStones = [];
             let wallStoneId = 1000;
             let cheekStoneId = -1;
 
             for (const s of refWall) {
-                const [x, y, width, height, thickness, label] = s;
+                const [x, origY, width, origHeight, thickness, label] = s;
                 const isThroughStone = label === 't';
                 const isCheek = label === 'c';
-                const isCoping = (y <= (ROWS - 2) - WALL_HEIGHT + COPING_HEIGHT);
+
+                let y = origY + yShift;
+                let height = origHeight;
+
+                // Detect old 6" coping stones and grow them to COPING_HEIGHT.
+                // Coping stones have their top edge at or above the old wall top row.
+                const oldWallTop = refGroundRow - 53 + 1; // row 18
+                const isCoping = (origY <= oldWallTop && origHeight === oldCopingHeight && !isCheek && !isThroughStone);
+                if (isCoping) {
+                    // Grow coping from 6" to COPING_HEIGHT — extend upward
+                    const growth = COPING_HEIGHT - oldCopingHeight;
+                    y = y - growth;
+                    height = COPING_HEIGHT;
+                }
+                // Also detect cheek coping blocks (top edge at or above old wall top)
+                const isCheekCoping = isCheek && origY <= oldWallTop && origHeight === oldCopingHeight;
+                if (isCheekCoping) {
+                    const growth = COPING_HEIGHT - oldCopingHeight;
+                    y = y - growth;
+                    height = COPING_HEIGHT;
+                }
+
                 const id = isCheek ? cheekStoneId-- : wallStoneId++;
 
                 for (let dr = 0; dr < height; dr++) {
@@ -3051,11 +3909,11 @@
                     }
                 }
 
-                registerStone(id, y, y + height - 1, x, x + width - 1, thickness, isCoping, isThroughStone);
+                registerStone(id, y, y + height - 1, x, x + width - 1, thickness, isCoping || isCheekCoping, isThroughStone);
                 if (!isCheek) {
                     originalWallStones.push({
                         id, x, y, width, height, thickness,
-                        isCoping, isThroughStone
+                        isCoping: isCoping, isThroughStone
                     });
                 }
             }
@@ -3398,56 +4256,56 @@
             // PREFER WIDER STONES to avoid running joints and small stone stacking
             function getStoneOptions(courseLevel, inCopingZone) {
                 if (inCopingZone) {
-                    // Coping: stood on end (~6-8" tall, 3-4" wide)
+                    // Coping: stood on end (~10" tall, 3-4" wide)
                     return [
-                        { width: 4, height: 6, thickness: 1 },
-                        { width: 4, height: 6, thickness: 1 }, // Double weight
-                        { width: 3, height: 6, thickness: 1 },
-                        { width: 3, height: 8, thickness: 1 }
+                        { width: 4, height: 10, thickness: 1 },
+                        { width: 4, height: 10, thickness: 1 }, // Double weight
+                        { width: 3, height: 10, thickness: 1 },
+                        { width: 2, height: 10, thickness: 1 }
                     ];
                 }
 
                 if (courseLevel < 18) {
-                    // Foundation (0-18"): thick and wide stones (9-12" tall, 14-20" wide)
+                    // Foundation (0-18"): thick and wide stones (8-12" tall, 14-20" wide)
                     return [
                         { width: 20, height: 12, thickness: 3 },
                         { width: 18, height: 12, thickness: 3 },
                         { width: 18, height: 10, thickness: 3 },
                         { width: 16, height: 10, thickness: 3 },
-                        { width: 16, height: 9, thickness: 3 },
-                        { width: 14, height: 9, thickness: 3 },
+                        { width: 16, height: 10, thickness: 3 }, // Double weight
+                        { width: 14, height: 8, thickness: 2 },
                         { width: 16, height: 8, thickness: 2 }, // Occasional medium
-                        { width: 14, height: 7, thickness: 2 }
+                        { width: 14, height: 8, thickness: 2 }
                     ];
                 }
 
                 if (courseLevel < 27) {
                     // Lower body (18-27"): mix of thick and medium
                     return [
-                        { width: 16, height: 9, thickness: 3 }, // Jumper
-                        { width: 14, height: 9, thickness: 3 }, // Jumper
-                        { width: 14, height: 7, thickness: 2 },
+                        { width: 16, height: 10, thickness: 3 }, // Jumper
+                        { width: 14, height: 10, thickness: 3 }, // Jumper
+                        { width: 14, height: 8, thickness: 2 },
                         { width: 12, height: 6, thickness: 2 },
                         { width: 12, height: 6, thickness: 2 }, // Double weight
-                        { width: 10, height: 5, thickness: 2 },
+                        { width: 10, height: 6, thickness: 2 },
                         { width: 10, height: 4, thickness: 1 },
-                        { width: 8, height: 3, thickness: 1 }
+                        { width: 8, height: 4, thickness: 1 }
                     ];
                 }
 
                 if (courseLevel < 36) {
                     // Mid body (27-36"): medium with occasional jumpers
                     return [
-                        { width: 14, height: 7, thickness: 2 }, // Jumper
+                        { width: 14, height: 8, thickness: 2 }, // Jumper
                         { width: 12, height: 8, thickness: 2 },
                         { width: 12, height: 6, thickness: 2 },
-                        { width: 10, height: 5, thickness: 2 },
-                        { width: 10, height: 5, thickness: 2 }, // Double weight
-                        { width: 9, height: 6, thickness: 2 },
+                        { width: 10, height: 6, thickness: 2 },
+                        { width: 10, height: 6, thickness: 2 }, // Double weight
+                        { width: 10, height: 6, thickness: 2 },
                         { width: 8, height: 4, thickness: 1 },
                         { width: 8, height: 4, thickness: 1 }, // Double weight
                         { width: 10, height: 4, thickness: 1 },
-                        { width: 7, height: 3, thickness: 1 }
+                        { width: 8, height: 4, thickness: 1 }
                     ];
                 }
 
@@ -3455,13 +4313,13 @@
                 return [
                     { width: 10, height: 4, thickness: 1 },
                     { width: 8, height: 4, thickness: 1 },
-                    { width: 8, height: 3, thickness: 1 },
-                    { width: 8, height: 3, thickness: 1 }, // Double weight
+                    { width: 8, height: 4, thickness: 1 },
+                    { width: 8, height: 4, thickness: 1 }, // Double weight
                     { width: 6, height: 2, thickness: 1 },
                     { width: 6, height: 2, thickness: 1 }, // Double weight
-                    { width: 7, height: 3, thickness: 1 },
-                    { width: 9, height: 3, thickness: 1 },
-                    { width: 10, height: 5, thickness: 2 }, // Occasional jumper
+                    { width: 8, height: 4, thickness: 1 },
+                    { width: 10, height: 4, thickness: 1 },
+                    { width: 10, height: 6, thickness: 2 }, // Occasional jumper
                     { width: 12, height: 6, thickness: 2 }  // Occasional jumper
                 ];
             }
@@ -3531,10 +4389,10 @@
                     const fallbackOptions = inCopingZone
                         ? [{ width: 4, height: 6, thickness: 1 }, { width: 3, height: 6, thickness: 1 }]
                         : [
-                            { width: 8, height: 3, thickness: 1 },   // Try 8" wide first
+                            { width: 8, height: 4, thickness: 1 },   // Try 8" wide first
                             { width: 6, height: 2, thickness: 1 },   // Then 6×2
                             { width: 6, height: 4, thickness: 1 },   // Then 6×4
-                            { width: 5, height: 3, thickness: 1 },   // Then 5×3
+                            { width: 4, height: 4, thickness: 1 },   // Then 4×4
                             { width: 4, height: 2, thickness: 1 }    // 4×2 as last resort
                           ];
 
@@ -3572,7 +4430,7 @@
             // Place 2-3 through stones across the face
             let throughX = throughLeft;
             const throughStoneOpts = [
-                { width: 20, height: 5, thickness: 2 },
+                { width: 20, height: 4, thickness: 2 },
                 { width: 18, height: 4, thickness: 2 },
                 { width: 20, height: 6, thickness: 3 },
             ];
@@ -3616,7 +4474,7 @@
 
                     if (inCopingZone) {
                         stoneWidth = Math.min(gapWidth, 4);
-                        stoneHeight = 6;
+                        stoneHeight = 10;
                     } else {
                         // Prefer wider stones
                         stoneWidth = Math.min(gapWidth, Math.max(8, gapWidth));
@@ -3701,10 +4559,11 @@
                 const _faceWidth = _playable.right - _playable.left;
                 copingBankTarget = Math.ceil(_faceWidth / 3.5);
 
-                // Show persistent hand row, bank strip, and await card selection
+                // Show persistent hand row, bank strips, and await card selection
                 awaitingCardSelection = true;
                 document.getElementById('handRow').style.display = 'flex';
                 renderHandRow();
+                renderThroughBank();
                 renderCopingBank();
                 return;
             }
@@ -4118,7 +4977,70 @@
             return stone.width >= stone.height;
         }
 
-        function drawStoneBlock(ctx, x, y, w, h, thickness, isGhost = false, isCheek = false, isCoping = false, stoneW = 0, stoneH = 0, isThroughStone = false) {
+        // 9-slice rendering: splits source image into 9 regions (4 corners, 4 edges, 1 center)
+        // Corners are drawn at natural size, edges stretch along their length, center stretches both ways
+        function drawStone9Slice(ctx, dx, dy, dw, dh, img, cornerFrac) {
+            const sw = img.naturalWidth || img.width;
+            const sh = img.naturalHeight || img.height;
+
+            // Corner sizes in source pixels
+            const cLeft = Math.floor(sw * cornerFrac);
+            const cRight = Math.floor(sw * cornerFrac);
+            const cTop = Math.floor(sh * cornerFrac);
+            const cBot = Math.floor(sh * cornerFrac);
+
+            // Middle region in source
+            const smw = sw - cLeft - cRight;
+            const smh = sh - cTop - cBot;
+
+            // Corner sizes in destination — scale proportionally but cap so corners don't enlarge beyond 1:1
+            const cornerScale = Math.min(dw / sw, dh / sh, 1.0);
+
+            let dcLeft = Math.floor(cLeft * cornerScale);
+            let dcRight = Math.floor(cRight * cornerScale);
+            let dcTop = Math.floor(cTop * cornerScale);
+            let dcBot = Math.floor(cBot * cornerScale);
+
+            // Ensure corners don't exceed half the target
+            if (dcLeft + dcRight > dw) {
+                const ratio = dw / (dcLeft + dcRight);
+                dcLeft = Math.floor(dcLeft * ratio);
+                dcRight = Math.floor(dcRight * ratio);
+            }
+            if (dcTop + dcBot > dh) {
+                const ratio = dh / (dcTop + dcBot);
+                dcTop = Math.floor(dcTop * ratio);
+                dcBot = Math.floor(dcBot * ratio);
+            }
+
+            // Middle region in destination
+            const dmw = dw - dcLeft - dcRight;
+            const dmh = dh - dcTop - dcBot;
+
+            const canDrawMidW = dmw > 0 && smw > 0;
+            const canDrawMidH = dmh > 0 && smh > 0;
+
+            // 1. Top-left corner
+            ctx.drawImage(img, 0, 0, cLeft, cTop, dx, dy, dcLeft, dcTop);
+            // 2. Top edge
+            if (canDrawMidW) ctx.drawImage(img, cLeft, 0, smw, cTop, dx + dcLeft, dy, dmw, dcTop);
+            // 3. Top-right corner
+            ctx.drawImage(img, sw - cRight, 0, cRight, cTop, dx + dw - dcRight, dy, dcRight, dcTop);
+            // 4. Left edge
+            if (canDrawMidH) ctx.drawImage(img, 0, cTop, cLeft, smh, dx, dy + dcTop, dcLeft, dmh);
+            // 5. Center
+            if (canDrawMidW && canDrawMidH) ctx.drawImage(img, cLeft, cTop, smw, smh, dx + dcLeft, dy + dcTop, dmw, dmh);
+            // 6. Right edge
+            if (canDrawMidH) ctx.drawImage(img, sw - cRight, cTop, cRight, smh, dx + dw - dcRight, dy + dcTop, dcRight, dmh);
+            // 7. Bottom-left corner
+            ctx.drawImage(img, 0, sh - cBot, cLeft, cBot, dx, dy + dh - dcBot, dcLeft, dcBot);
+            // 8. Bottom edge
+            if (canDrawMidW) ctx.drawImage(img, cLeft, sh - cBot, smw, cBot, dx + dcLeft, dy + dh - dcBot, dmw, dcBot);
+            // 9. Bottom-right corner
+            ctx.drawImage(img, sw - cRight, sh - cBot, cRight, cBot, dx + dw - dcRight, dy + dh - dcBot, dcRight, dcBot);
+        }
+
+        function drawStoneBlock(ctx, x, y, w, h, thickness, isGhost = false, isCheek = false, isCoping = false, stoneW = 0, stoneH = 0, isThroughStone = false, stoneId = 0) {
             const pad = 1;
 
             if (isGhost) {
@@ -4130,31 +5052,132 @@
                 return;
             }
 
-            // Check for SVG asset (try both orientations)
-            let img = null;
-            let imgRotated = false;
-            if (stoneW && stoneH && !isCheek && !isCoping) {
-                img = stoneImages[`${stoneW}x${stoneH}`];
-                if (!img) {
-                    img = stoneImages[`${stoneH}x${stoneW}`];
-                    if (img) imgRotated = true;
+            // Check for SVG asset via 9-slice system
+            if (stoneW && stoneH) {
+                const images = findStoneImage(stoneW, stoneH);
+                if (images && images.length > 0) {
+                    const img = pickVariant(images, stoneId);
+                    if (img) {
+                        // Scale bleed based on stone pixel size — larger stones need more
+                        // bleed to eliminate gaps. Thin stones (20px tall) keep ~1px;
+                        // thick stones (120px tall) get up to ~2.5px.
+                        const minDim = Math.min(w, h);
+                        const bleed = Math.max(1, Math.min(2.5, minDim * 0.025));
+                        const ow = Math.ceil(w + bleed * 2);
+                        const oh = Math.ceil(h + bleed * 2);
+
+                        // Cache every stone's rendered canvas — turns 9 drawImage calls
+                        // per stone per frame into 1. Key includes ID, size, and type.
+                        const typeFlag = isCheek ? 'c' : (isThroughStone ? 't' : 'n');
+                        const cacheKey = stoneId + '_' + typeFlag + '_' + ow + 'x' + oh;
+                        let cached = _overlayCache[cacheKey];
+                        if (!cached) {
+                            cached = document.createElement('canvas');
+                            cached.width = ow;
+                            cached.height = oh;
+                            const octx = cached.getContext('2d');
+                            drawStone9Slice(octx, 0, 0, ow, oh, img, NINE_SLICE_CORNER);
+
+                            // Apply darkening overlay for cheek/through (source-atop: only on stone pixels)
+                            if (isCheek || isThroughStone) {
+                                octx.globalCompositeOperation = 'source-atop';
+                                octx.fillStyle = isCheek
+                                    ? 'rgba(80, 65, 40, 0.55)'
+                                    : 'rgba(20, 20, 20, 0.55)';
+                                octx.fillRect(0, 0, ow, oh);
+                                octx.globalCompositeOperation = 'source-over';
+                            }
+
+                            // Masked hatching — draw on a second offscreen canvas using
+                            // source-atop so lines only appear inside the stone shape.
+                            const hatchOff = document.createElement('canvas');
+                            hatchOff.width = ow;
+                            hatchOff.height = oh;
+                            const hctx = hatchOff.getContext('2d');
+                            // Copy the stone as alpha mask
+                            hctx.drawImage(cached, 0, 0);
+                            hctx.globalCompositeOperation = 'source-atop';
+                            // Seeded random for consistent hatching per stone
+                            let seed = Math.abs(stoneId || 1) * 9301 + 49297;
+                            const sRand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+                            // Hatching parameters — bolder for cheek stones
+                            const hatchAlpha = isCheek ? 0.40 : 0.14;
+                            const hatchWidth = isCheek ? 1.2 : 0.7;
+                            const hatchSpacing = isCheek ? 3 : 4;
+                            const hatchColor = isCheek
+                                ? 'rgba(30, 25, 15, ' + hatchAlpha + ')'
+                                : 'rgba(60, 55, 40, ' + hatchAlpha + ')';
+                            hctx.strokeStyle = hatchColor;
+                            hctx.lineWidth = hatchWidth;
+                            const angleBase = -Math.PI / 6;
+                            for (let i = -oh; i < ow + oh; i += hatchSpacing) {
+                                const aj = (sRand() - 0.5) * 0.1;
+                                const ox = (sRand() - 0.5) * 1.5;
+                                const oy = (sRand() - 0.5) * 1.5;
+                                hctx.beginPath();
+                                hctx.moveTo(i + ox, oy);
+                                hctx.lineTo(i + Math.cos(angleBase + aj) * (oh + 20) + ox, oh + oy);
+                                hctx.stroke();
+                            }
+                            // Second hatching pass for cheek stones (cross-hatch for extra boldness)
+                            if (isCheek) {
+                                hctx.strokeStyle = 'rgba(30, 25, 15, 0.25)';
+                                hctx.lineWidth = 0.9;
+                                for (let i = -oh; i < ow + oh; i += 5) {
+                                    const jx = (sRand() - 0.5) * 1;
+                                    const jy = (sRand() - 0.5) * 1;
+                                    hctx.beginPath();
+                                    hctx.moveTo(i + jx, oh + jy);
+                                    hctx.lineTo(i + oh * 0.5 + jx, jy);
+                                    hctx.stroke();
+                                }
+                            }
+                            // Stamp masked hatching onto the stone canvas
+                            octx.drawImage(hatchOff, 0, 0);
+
+                            // Rough edges — wobbly outline drawn on top (not masked)
+                            seed = Math.abs(stoneId || 1) * 7919 + 10301;
+                            const eJitter = 1.3;
+                            const perimeter = 2 * ow + 2 * oh;
+                            const steps = Math.max(30, Math.floor(perimeter / 2.5));
+                            octx.strokeStyle = 'rgba(23, 22, 18, 0.45)';
+                            octx.lineWidth = 0.9;
+                            octx.lineCap = 'round';
+                            octx.lineJoin = 'round';
+                            const m = 1.5;
+                            octx.beginPath();
+                            for (let i = 0; i <= steps; i++) {
+                                const t = i / steps;
+                                const pos = t * perimeter;
+                                const pw = ow - 2 * m;
+                                const ph = oh - 2 * m;
+                                let ex, ey;
+                                if (pos < pw) { ex = m + pos; ey = m; }
+                                else if (pos < pw + ph) { ex = ow - m; ey = m + (pos - pw); }
+                                else if (pos < 2 * pw + ph) { ex = ow - m - (pos - pw - ph); ey = oh - m; }
+                                else { ex = m; ey = oh - m - (pos - 2 * pw - ph); }
+                                ex += (sRand() - 0.5) * eJitter * 2;
+                                ey += (sRand() - 0.5) * eJitter * 2;
+                                if (i === 0) octx.moveTo(ex, ey); else octx.lineTo(ex, ey);
+                            }
+                            octx.closePath();
+                            octx.stroke();
+
+                            _overlayCache[cacheKey] = cached;
+                        }
+                        // Stamp the cached result, clipped to cell bounds
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.rect(x, y, w, h);
+                        ctx.clip();
+                        ctx.drawImage(cached, x - bleed, y - bleed);
+                        ctx.restore();
+                        return;
+                    }
                 }
             }
 
-            if (img) {
-                ctx.save();
-                if (imgRotated) {
-                    // Rotate 90° to fit the other orientation
-                    ctx.translate(x + pad + (w - pad * 2) / 2, y + pad + (h - pad * 2) / 2);
-                    ctx.rotate(-Math.PI / 2);
-                    ctx.drawImage(img, -(h - pad * 2) / 2, -(w - pad * 2) / 2, h - pad * 2, w - pad * 2);
-                } else {
-                    ctx.drawImage(img, x + pad, y + pad, w - pad * 2, h - pad * 2);
-                }
-                ctx.restore();
-                return;
-            }
-
+            // Fallback: procedural rendering
             // Through stones are dark charcoal; others use existing scheme
             if (isThroughStone) {
                 ctx.fillStyle = '#3a3a3a';
@@ -4191,7 +5214,7 @@
             const x = stone.x * BLOCK_SIZE * scale + offsetX;
             const y = stone.y * BLOCK_SIZE * scale + offsetY;
             const isThroughStone = stone.isThroughStone || false;
-            drawStoneBlock(ctx, x, y, w, h, stone.thickness, isGhost, false, false, stone.width, stone.height, isThroughStone && !isGhost);
+            drawStoneBlock(ctx, x, y, w, h, stone.thickness, isGhost, false, false, stone.width, stone.height, isThroughStone && !isGhost, stone.id || 0);
         }
 
         function drawBoardStones() {
@@ -4206,7 +5229,7 @@
                 const h = stoneH * BLOCK_SIZE;
                 const isCheek = parseInt(id) < 0;
 
-                drawStoneBlock(ctx, x, y, w, h, s.thickness, false, isCheek, s.isCoping, stoneW, stoneH, s.isThroughStone);
+                drawStoneBlock(ctx, x, y, w, h, s.thickness, false, isCheek, s.isCoping, stoneW, stoneH, s.isThroughStone, parseInt(id));
 
                 // Face pin marker — small '+' cross
                 if (s.isFacePin) {
@@ -4223,6 +5246,267 @@
                 }
             }
         }
+
+        // ─── Void Width Preview System ───
+        // Combines Option 1 (tape-measure arrows) with Option 3 (color coding).
+        // Scans the wall surface for bounded gaps between stones, draws a
+        // horizontal measurement arrow in each gap, and color-codes it based
+        // on how well the player's current hand of cards fits:
+        //   Green  = at least one card in hand fits snugly (within 2")
+        //   Yellow = gap wider than all cards but playable
+        //   Red    = gap too narrow for any card in hand
+        // Gaps wider than 24" are skipped to reduce visual noise.
+        function drawVoidPreview() {
+            if (!awaitingCardSelection) return;
+            if (gamePhase !== 'playing' || facePinMode || cutMode) return;
+            if (!hand || hand.length === 0) return;
+
+            const groundRow = ROWS - 2;
+            const wallTop = groundRow - WALL_HEIGHT + 1;
+
+            // Collect laid-flat widths of all cards in hand
+            const handWidths = hand.map(s => Math.max(s.width, s.height));
+
+            // Find all bounded gaps in the wall. Scan every row that has
+            // at least one filled-to-empty transition (i.e., a stone edge).
+            // This catches gaps at all levels — foundation, mid-wall, and top.
+            //
+            // To avoid the "thin bands" problem (same gap detected at every
+            // row with slightly different widths), we group gaps that share
+            // the same left column and width across adjacent rows, keeping
+            // only the bottommost instance (where a stone would land).
+            const rawGaps = [];
+
+            for (let row = groundRow - 1; row >= wallTop; row--) {
+                // Quick check: does this row have any filled cells at all?
+                // (Skip completely empty rows — no gaps to bound)
+                let hasAnyFilled = false;
+                for (let c = 0; c < COLS; c++) {
+                    if (board[row][c]) { hasAnyFilled = true; break; }
+                }
+                if (!hasAnyFilled) continue;
+
+                // Find horizontal empty runs bounded by filled cells
+                let gc = 0;
+                while (gc < COLS) {
+                    if (board[row][gc]) { gc++; continue; }
+
+                    const gapStart = gc;
+                    while (gc < COLS && !board[row][gc]) gc++;
+                    const gapEnd = gc; // exclusive
+                    const gapW = gapEnd - gapStart;
+
+                    if (gapW < 2 || gapW > 24) continue;
+
+                    // Must be bounded on both sides by filled cells
+                    const leftBound = (gapStart > 0 && board[row][gapStart - 1]);
+                    const rightBound = (gapEnd < COLS && board[row][gapEnd]);
+                    if (!leftBound || !rightBound) continue;
+
+                    // Must have support below (stone or ground under at least one cell)
+                    let hasSupport = false;
+                    for (let sc = gapStart; sc < gapEnd; sc++) {
+                        if (row + 1 >= groundRow || board[row + 1][sc]) {
+                            hasSupport = true;
+                            break;
+                        }
+                    }
+                    if (!hasSupport) continue;
+
+                    rawGaps.push({ col: gapStart, row: row, width: gapW });
+                }
+            }
+
+            // Deduplicate: for each gap position, keep only the bottommost
+            // occurrence (where a stone would actually land). Two gaps at
+            // adjacent rows with overlapping horizontal spans are the same
+            // physical void — we only need the bottom measurement.
+            // Sort bottom-first so the first occurrence wins.
+            rawGaps.sort((a, b) => b.row - a.row || a.col - b.col);
+
+            const gaps = [];
+            for (const g of rawGaps) {
+                // Check if the midpoint of this gap is already covered by
+                // a previously recorded gap at a nearby row (within 4 rows)
+                const midCol = g.col + Math.floor(g.width / 2);
+                let alreadyCovered = false;
+                for (const prev of gaps) {
+                    if (Math.abs(prev.bottomRow - g.row) <= 4 &&
+                        midCol >= prev.col && midCol < prev.col + prev.width) {
+                        alreadyCovered = true;
+                        break;
+                    }
+                }
+                if (alreadyCovered) continue;
+
+                // Find gap height: scan upward from bottomRow
+                let topRow = g.row;
+                while (topRow > wallTop) {
+                    let rowClear = true;
+                    for (let sc = g.col; sc < g.col + g.width; sc++) {
+                        if (board[topRow - 1][sc]) { rowClear = false; break; }
+                    }
+                    if (!rowClear) break;
+                    topRow--;
+                }
+
+                gaps.push({
+                    col: g.col,
+                    row: topRow,
+                    bottomRow: g.row,
+                    width: g.width,
+                    height: g.row - topRow + 1
+                });
+            }
+
+            if (gaps.length === 0) return;
+
+            // --- Draw tape-measure arrows with color coding ---
+            ctx.save();
+            for (const g of gaps) {
+                // Color based on hand card widths:
+                // Green: at least one card's laid-flat width is within [gapWidth-2, gapWidth]
+                // Yellow: gap is wider than all snug candidates but a card still fits
+                // Red: gap narrower than ALL cards' laid-flat widths
+                let anySnug = false;
+                let anyFits = false;
+                for (const w of handWidths) {
+                    if (w <= g.width) {
+                        anyFits = true;
+                        if (w >= g.width - 2) anySnug = true;
+                    }
+                }
+
+                let arrowColor, labelBg;
+                if (anySnug) {
+                    // Green — at least one card fits snugly
+                    arrowColor = 'rgba(42, 138, 42, 0.75)';
+                    labelBg = 'rgba(42, 138, 42, 0.12)';
+                } else if (anyFits) {
+                    // Yellow — cards fit but none are a snug match
+                    arrowColor = 'rgba(180, 150, 30, 0.7)';
+                    labelBg = 'rgba(196, 163, 42, 0.1)';
+                } else {
+                    // Red — gap too narrow for all cards
+                    arrowColor = 'rgba(190, 60, 60, 0.65)';
+                    labelBg = 'rgba(204, 68, 68, 0.08)';
+                }
+
+                // Gap pixel coordinates — arrow measures at the BOTTOM of the gap
+                // where a stone would actually rest
+                const px = g.col * BLOCK_SIZE;
+                const py = g.row * BLOCK_SIZE;
+                const pw = g.width * BLOCK_SIZE;
+                const ph = g.height * BLOCK_SIZE;
+                const bottomPy = g.bottomRow * BLOCK_SIZE;
+
+                // Light background fill over the full gap height
+                ctx.fillStyle = labelBg;
+                ctx.fillRect(px, py, pw, ph);
+
+                // Adaptive sizing: scale down for small gaps
+                const isSmall = pw < 50;
+                const fontSize = isSmall ? 10 : 13;
+                const capH = isSmall ? 4 : 6;
+                const inset = isSmall ? 1 : 2;
+
+                // Draw measurement arrow near the bottom of the gap
+                const arrowY = bottomPy + Math.floor(BLOCK_SIZE / 2);
+                const arrowLeft = px + inset;
+                const arrowRight = px + pw - inset;
+
+                ctx.strokeStyle = arrowColor;
+                ctx.fillStyle = arrowColor;
+                ctx.lineWidth = isSmall ? 1 : 1.5;
+                ctx.setLineDash([]);
+
+                // Horizontal line
+                ctx.beginPath();
+                ctx.moveTo(arrowLeft, arrowY);
+                ctx.lineTo(arrowRight, arrowY);
+                ctx.stroke();
+
+                // Left end-cap (vertical bar)
+                ctx.beginPath();
+                ctx.moveTo(arrowLeft, arrowY - capH);
+                ctx.lineTo(arrowLeft, arrowY + capH);
+                ctx.stroke();
+
+                // Right end-cap (vertical bar)
+                ctx.beginPath();
+                ctx.moveTo(arrowRight, arrowY - capH);
+                ctx.lineTo(arrowRight, arrowY + capH);
+                ctx.stroke();
+
+                // Width label — centered on arrow, or above it if gap is too narrow
+                const label = g.width + '"';
+                ctx.font = 'bold ' + fontSize + 'px Georgia';
+                ctx.textAlign = 'center';
+                const tw = ctx.measureText(label).width;
+                const lx = px + pw / 2;
+                const pillW = tw + (isSmall ? 6 : 10);
+                const pillH = isSmall ? 14 : 18;
+
+                // Position label: inside arrow if it fits, above arrow if not
+                let labelY = arrowY;
+                if (pillW > pw - 4) {
+                    // Label wider than gap — draw above the arrow
+                    labelY = arrowY - capH - pillH / 2 - 2;
+                    if (labelY - pillH / 2 < py) labelY = arrowY + capH + pillH / 2 + 2; // below if no room above
+                }
+
+                // Label background pill
+                ctx.fillStyle = 'rgba(255, 253, 247, 0.92)';
+                ctx.fillRect(lx - pillW / 2, labelY - pillH / 2, pillW, pillH);
+
+                // Label text
+                ctx.fillStyle = arrowColor;
+                ctx.fillText(label, lx, labelY + fontSize * 0.35);
+            }
+
+            ctx.restore();
+        }
+
+        function drawGameHUD() {
+            ctx.save();
+            const hudX = canvas.width - 10;  // Right-aligned
+            const hudY = 10;                  // Top of canvas (sky area)
+            const dotSize = 6;
+            const dotGap = 4;
+            const rowHeight = 18;
+
+            ctx.font = 'bold 10px Georgia';
+            ctx.textAlign = 'right';
+
+            // --- Cuts remaining (numeric display since 10 is too many dots) ---
+            ctx.fillStyle = cutsRemaining > 0 ? '#cc4444' : 'rgba(100,100,100,0.4)';
+            ctx.fillText('CUTS ' + cutsRemaining + '/10', hudX, hudY + 9);
+
+            // --- Face pins remaining (5 dots) ---
+            ctx.fillStyle = facePinsRemaining > 0 ? '#2a8a2a' : 'rgba(100,100,100,0.4)';
+            ctx.fillText('PINS', hudX, hudY + 9 + rowHeight);
+
+            const pinsLabelW = ctx.measureText('PINS').width;
+            const pinsDotsStartX = hudX - pinsLabelW - 8;
+            for (let i = 4; i >= 0; i--) {
+                const dx = pinsDotsStartX - i * (dotSize + dotGap);
+                const cy = hudY + 5 + rowHeight;
+                ctx.beginPath();
+                ctx.arc(dx, cy, dotSize / 2, 0, Math.PI * 2);
+                if (i < facePinsRemaining) {
+                    ctx.fillStyle = '#2a8a2a';
+                    ctx.fill();
+                } else {
+                    ctx.strokeStyle = 'rgba(100,100,100,0.35)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // drawCopingBankOnCanvas — no-op, bank is rendered in the HTML strip below the canvas
 
         function drawBoard() {
             drawEmptyBoard();
@@ -4254,16 +5538,25 @@
                 for (const v of facePinVoids) {
                     const vx = v.col * BLOCK_SIZE;
                     const vy = v.row * BLOCK_SIZE;
-                    const size = FACE_PIN_SIZE * BLOCK_SIZE;
+                    const vw = v.width * BLOCK_SIZE;
+                    const vh = v.height * BLOCK_SIZE;
                     ctx.fillStyle = 'rgba(42, 138, 42, 0.3)';
-                    ctx.fillRect(vx, vy, size, size);
+                    ctx.fillRect(vx, vy, vw, vh);
                     ctx.strokeStyle = '#2a8a2a';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([3, 3]);
-                    ctx.strokeRect(vx + 1, vy + 1, size - 2, size - 2);
+                    ctx.strokeRect(vx + 1, vy + 1, vw - 2, vh - 2);
                 }
                 ctx.setLineDash([]);
                 ctx.restore();
+            }
+
+            // Void width preview — highlight gaps when hovering a hand card
+            drawVoidPreview();
+
+            // In-game HUD — show cuts & face pins remaining during active play
+            if (gamePhase === 'playing' && !designMode) {
+                drawGameHUD();
             }
 
             // Subtle grid
@@ -4439,50 +5732,39 @@
             const course = ROWS - 1 - highestRow;
             document.getElementById('currentCourse').textContent = course + '"';
 
-            // Check wall body complete → trigger coping animation
-            if (checkWallComplete()) {
-                hand.splice(selectedCardIndex, 1);
-                drawFreshHand();
+            // Failsafe: if 6+ player stones above cope line, auto-trigger coping
+            // so the game can't continue indefinitely above the wall top.
+            if (checkCopingFailsafe()) {
+                if (selectedCardIndex >= 0) {
+                    hand.splice(selectedCardIndex, 1);
+                    drawFreshHand();
+                }
                 startCopingAnimation();
                 return;
             }
 
-            // Only game over if stone locked in sky zone AND wall is mostly built
-            const wallProgress = getWallProgress();
-            const wallTop = (ROWS - 2) - WALL_HEIGHT + 1;
-            if (currentStone.y < wallTop - 2 && wallProgress > 0.7) {
-                gameOver(false);
-                return;
+            // Remove the used card and draw fresh hand
+            // (skip if stone came from the through bank — selectedCardIndex === -1)
+            if (selectedCardIndex >= 0) {
+                hand.splice(selectedCardIndex, 1);
+                drawFreshHand();
             }
-
-            // Remove the used card, return rest to deck, draw fresh hand
-            hand.splice(selectedCardIndex, 1);
-            drawFreshHand();
 
             // Stop the game loop and wait for next card selection
             gameRunning = false;
             currentStone = null;
             awaitingCardSelection = true;
             renderHandRow();
+            renderThroughBank();
         }
 
-        function checkWallComplete() {
-            // Wall body is complete when the cope line is reached or overflowed
+        function checkCopingFailsafe() {
+            // Failsafe only: auto-trigger coping if player builds too far above
+            // the cope line (6+ player-placed stones above it).
+            // The normal trigger is the manual "Set Copes" button.
             const groundRow = ROWS - 2;
-            const copeLine = groundRow - WALL_HEIGHT + 1 + COPING_HEIGHT; // Row where cope zone starts
+            const copeLine = groundRow - WALL_HEIGHT + 1 + COPING_HEIGHT;
 
-            // Check 1: Is the row at the cope line well-filled? (≥85%)
-            const playable = getPlayableArea(copeLine);
-            const faceWidth = playable.right - playable.left;
-            if (faceWidth > 4) {
-                let filled = 0;
-                for (let c = playable.left; c < playable.right; c++) {
-                    if (board[copeLine][c]) filled++;
-                }
-                if (filled / faceWidth >= 0.85) return true;
-            }
-
-            // Check 2: Count player-placed stones with top edge above cope line
             let aboveCount = 0;
             const seen = new Set();
             for (let r = copeLine - 1; r >= copeLine - 8 && r >= 0; r--) {
@@ -4494,9 +5776,7 @@
                     }
                 }
             }
-            if (aboveCount >= 6) return true;
-
-            return false;
+            return aboveCount >= 6;
         }
 
         // ============ COPING WAVE ANIMATION ============
@@ -4524,6 +5804,25 @@
             }
         }
 
+        function triggerSetCopes() {
+            // Manual trigger — player clicks "Set Copes" in the bank strip.
+            // Only works during card selection phase (not mid-drop).
+            if (gamePhase !== 'playing' || copingAnimationActive) return;
+            if (copingBank.length === 0) return;
+
+            // If a stone is currently falling, cancel it — return card to hand
+            if (gameRunning && currentStone) {
+                gameRunning = false;
+                currentStone = null;
+            }
+
+            // Clean up card selection state
+            clearCardSelectTimer();
+            awaitingCardSelection = false;
+
+            startCopingAnimation();
+        }
+
         function startCopingAnimation() {
             gameRunning = false;
             currentStone = null;
@@ -4531,9 +5830,10 @@
             clearCardSelectTimer();
             copingAnimationActive = true;
 
-            // Hide the hand row and bank strip during coping animation
+            // Hide the hand row and bank strips during coping animation
             document.getElementById('handRow').style.display = 'none';
             document.getElementById('copingBankStrip').style.display = 'none';
+            document.getElementById('throughBankStrip').style.display = 'none';
 
             // Check through stone alignment bonus before coping wave
             checkThroughStoneAlignment();
@@ -4552,11 +5852,13 @@
         }
 
         function generateCopingPlacements(topRow) {
-            // Place banked stones as coping from left to right
-            // Any banked stone can be placed if it fits within the coping zone
-            // Stones are placed with their original dimensions (width = horizontal, height = vertical)
-            // Only stones with height <= COPING_HEIGHT will fit
+            // Place banked stones as coping from left to right.
+            // Stones are stored FLAT (wider than tall) in copingBank.
+            // Stand them on end for placement: swap width ↔ height.
+            // Each stone drops down to the lowest row where it can sit
+            // (gravity — like the player-placed stones).
             const placements = [];
+            const groundRow = ROWS - 2;
             const playable = getPlayableArea(topRow);
             let col = playable.left;
             const available = [...copingBank]; // Work with a copy
@@ -4565,29 +5867,62 @@
             while (col < playable.right && available.length > 0) {
                 let placed = false;
 
-                // Try to find a banked stone that fits at this position
-                // Prefer smaller widths first for tighter packing
-                available.sort((a, b) => a.width - b.width);
+                // Sort by stood-on-end width (= original height), prefer narrower for tight packing
+                available.sort((a, b) => a.height - b.height);
 
                 for (let i = 0; i < available.length; i++) {
                     const stone = available[i];
-                    const w = stone.width;
-                    const h = stone.height;
+                    // Stand on end: original height becomes coping width, original width becomes coping height
+                    const copeW = stone.height; // narrow dimension = horizontal
+                    const copeH = stone.width;  // wide dimension = vertical (stood on end)
 
-                    // Stone must fit vertically in coping zone and horizontally in remaining space
-                    if (h > COPING_HEIGHT) continue;
-                    if (col + w > playable.right) continue;
-                    if (!isSpaceClearForCoping(col, topRow, w, h)) continue;
+                    if (col + copeW > playable.right) continue;
 
-                    // Place this stone
+                    // Drop the stone: find the lowest row where it fits.
+                    // Start from the ground and move up until we find a clear spot.
+                    let landRow = -1;
+                    for (let tryRow = groundRow - copeH; tryRow >= 0; tryRow--) {
+                        if (isSpaceClearForCoping(col, tryRow, copeW, copeH)) {
+                            landRow = tryRow;
+                        } else {
+                            break; // Hit something — the row below (landRow) is the landing spot
+                        }
+                    }
+
+                    if (landRow < 0) continue; // No room at all in this column
+
+                    // Place this stone stood on end at its landed position
                     available.splice(i, 1);
-                    placements.push({ col, row: topRow, stone: { ...stone, width: w, height: h } });
-                    col += w;
+                    placements.push({ col, row: landRow, stone: { ...stone, width: copeW, height: copeH, thickness: stone.thickness } });
+                    // Temporarily mark the board so subsequent stones stack on top
+                    for (let r = landRow; r < landRow + copeH; r++) {
+                        for (let c = col; c < col + copeW; c++) {
+                            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                                board[r][c] = stone.thickness || 1;
+                            }
+                        }
+                    }
+                    col += copeW;
                     placed = true;
                     break;
                 }
 
-                if (!placed) break; // No fitting stones — stop here (incomplete coping)
+                if (!placed) {
+                    // Skip this column and try the next — there may be a gap
+                    col++;
+                }
+            }
+
+            // Undo the temporary board marks — animateCopingWave will place them
+            // properly one at a time with IDs and registry entries.
+            for (const p of placements) {
+                for (let r = p.row; r < p.row + p.stone.height; r++) {
+                    for (let c = p.col; c < p.col + p.stone.width; c++) {
+                        if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                            board[r][c] = 0;
+                        }
+                    }
+                }
             }
 
             return placements;
@@ -4621,7 +5956,11 @@
                 }
                 updateUI();
                 drawBoard();
-                setTimeout(() => gameOver(true), 500);
+                // Let the player admire the finished wall before showing the score screen
+                setTimeout(() => {
+                    showFeedback('Wall complete!', 'positive');
+                    setTimeout(() => gameOver(true), 4000);
+                }, 2000);
                 return;
             }
 
@@ -4680,7 +6019,16 @@
                 highlightPrinciple('principle-layflat', 'good');
                 stability = Math.min(100, stability + 2);
             } else {
-                stability = Math.max(0, stability - 18);
+                // Penalty scales exponentially with how badly the stone is on end:
+                //   Near-square (8×6 → ratio 1.33): ~-3
+                //   Moderate   (8×4 → ratio 2.0):  ~-8
+                //   Bad        (12×4 → ratio 3.0): ~-13
+                //   Extreme    (12×2 → ratio 6.0):  -18
+                // Power curve (exponent 2.2) so penalty ramps fast once clearly on end
+                const aspectRatio = stone.height / stone.width; // >1 when on end
+                const t = Math.min((aspectRatio - 1) / 5, 1); // 0 at ratio 1.0, 1 at ratio 6.0
+                const penalty = Math.round(3 + 15 * Math.pow(t, 2.2));
+                stability = Math.max(0, stability - penalty);
                 stats.violations++;
                 violations.push('Stone on end!');
                 highlightPrinciple('principle-layflat', 'bad');
@@ -4701,17 +6049,30 @@
                 principles.push('1over2');
                 highlightPrinciple('principle-1over2', 'good');
                 stability = Math.min(100, stability + 3);
-            } else if (below.size >= 3) {
-                stability = Math.max(0, stability - 10);
-                violations.push('1 over 3+');
-                highlightPrinciple('principle-1over2', 'bad');
             } else if (below.size === 1) {
+                // Sitting on 1 stone — acceptable but not ideal (no joint bridged)
+                bonus += 20;
+                stats.oneOverTwo++;
+                principles.push('1over2');
+                highlightPrinciple('principle-1over2', 'good');
+                stability = Math.min(100, stability + 1);
+            } else if (below.size === 3) {
+                // 3 below — stone is too small relative to course, not bridging well
                 stability = Math.max(0, stability - 5);
-                violations.push('Stacked!');
+                violations.push('Sitting on 3 stones');
+                highlightPrinciple('principle-1over2', 'bad');
+            } else if (below.size >= 4) {
+                // 4+ below — stone is far too small for this course
+                stability = Math.max(0, stability - 8);
+                violations.push('Sitting on too many stones');
                 highlightPrinciple('principle-1over2', 'bad');
             }
 
-            // MIDDLE THIRD
+            // MIDDLE THIRD — 3-tier placement quality:
+            //   Dead center (within middle sixth): +50 bonus, +4 stability
+            //   Middle third: +40 bonus, +3 stability
+            //   Middle half (but outside third): neutral — no bonus, no penalty
+            //   Outside middle half: -5 stability penalty
             if (below.size >= 1 && maxY < ROWS - 2) {
                 let bMinX = COLS, bMaxX = 0;
                 for (let c = 0; c < COLS; c++) {
@@ -4722,14 +6083,30 @@
                 }
                 const bw = bMaxX - bMinX + 1;
                 if (bw >= 3) {
+                    const sixth = bw / 6;
                     const third = bw / 3;
-                    if (minX >= bMinX + third - 0.5 && maxX <= bMaxX - third + 0.5) {
+                    const quarter = bw / 4;
+                    const inMiddleSixth = minX >= bMinX + sixth * 2.5 - 0.5 && maxX <= bMaxX - sixth * 2.5 + 0.5;
+                    const inMiddleThird = minX >= bMinX + third - 0.5 && maxX <= bMaxX - third + 0.5;
+                    const inMiddleHalf = minX >= bMinX + quarter - 0.5 && maxX <= bMaxX - quarter + 0.5;
+
+                    if (inMiddleSixth) {
+                        // Dead center — bang on
+                        bonus += 50;
+                        principles.push('middlethird');
+                        highlightPrinciple('principle-middlethird', 'good');
+                        stability = Math.min(100, stability + 4);
+                    } else if (inMiddleThird) {
+                        // Good placement — within middle third
                         bonus += 40;
                         principles.push('middlethird');
                         highlightPrinciple('principle-middlethird', 'good');
                         stability = Math.min(100, stability + 3);
+                    } else if (inMiddleHalf) {
+                        // Acceptable — within middle half but outside third. Neutral.
+                        // No bonus, no penalty, no highlight
                     } else {
-                        // Stone edges outside middle third — poor weight distribution
+                        // Outside middle half — poor weight distribution
                         stability = Math.max(0, stability - 5);
                         violations.push('Off-center!');
                         highlightPrinciple('principle-middlethird', 'bad');
@@ -4737,29 +6114,64 @@
                 }
             }
 
-            // 2 INTO 1
-            // Check if stone edges align with adjacent stone edges (zipper pattern)
-            // Also check for running vertical joints across multiple courses
-            let zipper = false;
-            for (const edge of [minX - 1, maxX + 1]) {
-                if (edge >= 0 && edge < COLS) {
-                    const adj = new Set();
-                    for (let r = minY; r <= maxY; r++) {
-                        if (stoneInfo[r][edge]) adj.add(stoneInfo[r][edge]);
-                    }
-                    // 2+ different stones along an edge means joints are aligning
-                    if (adj.size >= 2) zipper = true;
+            // 2 INTO 1 — Cold joint + Zipper joint detection
+            //
+            // COLD JOINT: the placed stone's vertical edge aligns exactly with a
+            // joint between two stones in the course below (no overlap/bond).
+            // Check: at the stone's left edge (minX) or right edge (maxX+1),
+            // does the stone below change ID at that exact column?
+            let coldJoint = false;
+            if (maxY < ROWS - 2) {
+                // Left edge: check if stone below at (minX-1) differs from stone below at (minX)
+                if (minX > 0) {
+                    const belowLeft = stoneInfo[maxY + 1][minX - 1];
+                    const belowRight = stoneInfo[maxY + 1][minX];
+                    if (belowLeft && belowRight && belowLeft !== belowRight) coldJoint = true;
+                }
+                // Right edge: check if stone below at (maxX) differs from stone below at (maxX+1)
+                if (maxX < COLS - 1) {
+                    const belowLeft = stoneInfo[maxY + 1][maxX];
+                    const belowRight = stoneInfo[maxY + 1][maxX + 1];
+                    if (belowLeft && belowRight && belowLeft !== belowRight) coldJoint = true;
                 }
             }
 
-            if (!zipper && below.size >= 1) {
+            // ZIPPER JOINT: 3+ courses with joints stacking at roughly the same
+            // column — stones barely overlapping, creating a running crack.
+            // This stone's edge is the newest joint; count consecutive joints
+            // in the courses below at the same column. If this stone makes it
+            // 3 in a row (this stone + 2 below), flag a zipper.
+            let zipperJoint = false;
+            if (maxY < ROWS - 2) {
+                for (const edgeCol of [minX, maxX + 1]) {
+                    if (edgeCol <= 0 || edgeCol >= COLS) continue;
+                    let consecutiveJoints = 1; // This stone's edge counts as 1
+                    // Walk downward through courses below
+                    for (let checkRow = maxY + 1; checkRow < ROWS - 1; checkRow++) {
+                        const leftId = stoneInfo[checkRow][edgeCol - 1];
+                        const rightId = stoneInfo[checkRow][edgeCol];
+                        if (!leftId || !rightId || leftId === rightId) break; // No joint here
+                        consecutiveJoints++;
+                        if (consecutiveJoints >= 3) { zipperJoint = true; break; }
+                    }
+                    if (zipperJoint) break;
+                }
+            }
+
+            if (!coldJoint && !zipperJoint && below.size >= 1) {
                 bonus += 20;
                 principles.push('2into1');
                 highlightPrinciple('principle-2into1', 'good');
                 stability = Math.min(100, stability + 2);
-            } else if (zipper) {
-                stability = Math.max(0, stability - 8);
-                violations.push('Zipper joint');
+            } else if (zipperJoint) {
+                // 3+ courses with joints stacking — structural weakness
+                stability = Math.max(0, stability - 10);
+                violations.push('Zipper joint!');
+                highlightPrinciple('principle-2into1', 'bad');
+            } else if (coldJoint) {
+                // Edge aligns with joint below — no bonding across the joint
+                stability = Math.max(0, stability - 5);
+                violations.push('Cold joint');
                 highlightPrinciple('principle-2into1', 'bad');
             }
 
@@ -4804,8 +6216,8 @@
                     highlightPrinciple('principle-through', 'good');
                     stability = Math.min(100, stability + 4);
                 } else {
-                    // Not touching the line at all
-                    stability = Math.max(0, stability - 10);
+                    // Not touching the line at all — harsh penalty for wasting a through stone
+                    stability = Math.max(0, stability - 20);
                     violations.push('Through stone must touch the through line!');
                     highlightPrinciple('principle-through', 'bad');
                 }
@@ -4904,8 +6316,9 @@
             // Cut mode intercepts all keys
             if (cutMode) {
                 if (cutPhase === 'position') {
-                    if (e.key === 'ArrowLeft') { moveCutLine(-1); e.preventDefault(); return; }
-                    if (e.key === 'ArrowRight') { moveCutLine(1); e.preventDefault(); return; }
+                    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { moveCutLine(-1); e.preventDefault(); return; }
+                    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { moveCutLine(1); e.preventDefault(); return; }
+                    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { toggleCutOrientation(); e.preventDefault(); return; }
                     if (e.key === 'Enter') { confirmCut(); e.preventDefault(); return; }
                 }
                 if (e.key === 'Escape') { cancelCut(); e.preventDefault(); return; }
@@ -4932,7 +6345,14 @@
                     case '5': onCardClicked(4); break;
                     case 'f':
                     case 'F': startFacePinMode(); break;
-                    // R key (redraw) removed — hand is fresh each turn
+                    case 't':
+                    case 'T':
+                        if (throughBank.length > 0) {
+                            retrieveThroughStone(0);
+                        } else {
+                            showFeedback('No through stones banked', 'negative');
+                        }
+                        break;
                 }
                 return;
             }
@@ -4941,10 +6361,18 @@
             if (gamePhase !== 'playing') return;
 
             switch (e.key) {
-                case 'ArrowLeft': moveLeft(); break;
-                case 'ArrowRight': moveRight(); break;
-                case 'ArrowUp': rotate(); break;
-                case 'ArrowDown': moveDown(); break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A': moveLeft(); break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D': moveRight(); break;
+                case 'ArrowUp':
+                case 'w':
+                case 'W': rotate(); break;
+                case 'ArrowDown':
+                case 's':
+                case 'S': moveDown(); break;
                 case ' ': e.preventDefault(); hardDrop(); break;
                 case 'b':
                 case 'B': bankStone(); return;
@@ -4965,7 +6393,12 @@
                 if (gameRunning || awaitingCardSelection) gamePaused = true;
                 document.getElementById('resetConfirmOverlay').classList.add('show');
             } else {
-                startGame();
+                // First time? Show tutorial
+                if (!localStorage.getItem('sbs_tutorial_done')) {
+                    showTutorial();
+                } else {
+                    startGame();
+                }
             }
         }
 
@@ -4995,14 +6428,17 @@
             document.getElementById('gameOverOverlay').classList.remove('show');
             document.getElementById('handRow').style.display = 'none';
             document.getElementById('copingBankStrip').style.display = 'none';
+            document.getElementById('throughBankStrip').style.display = 'none';
             copingBank = [];
             copingBankTarget = 0;
             totalBankedCount = 0;
+            throughBank = [];
+            throughBankUsedCount = 0;
             // Reset face pin and cut state
-            facePinsRemaining = 3;
+            facePinsRemaining = 5;
             facePinMode = false;
             facePinVoids = [];
-            cutsRemaining = 3;
+            cutsRemaining = 10;
             cutMode = false;
             cutStone = null;
             cutLineX = 0;
@@ -5058,16 +6494,18 @@
             copingBank = [];
             copingBankTarget = 0;
             totalBankedCount = 0;
+            throughBank = [];
+            throughBankUsedCount = 0;
             totalDeckSize = 0;
             if (copingTimer) { clearTimeout(copingTimer); copingTimer = null; }
             clearCardSelectTimer();
             stats = { stonesPlaced: 0, laidFlat: 0, oneOverTwo: 0, copingStones: 0, violations: 0 };
 
             // Reset face pin and cut state
-            facePinsRemaining = 3;
+            facePinsRemaining = 5;
             facePinMode = false;
             facePinVoids = [];
-            cutsRemaining = 3;
+            cutsRemaining = 10;
             cutMode = false;
             cutStone = null;
             cutLineX = 0;
@@ -5082,6 +6520,7 @@
             document.getElementById('currentCourse').textContent = '1';
             document.getElementById('handRow').style.display = 'none';
             document.getElementById('copingBankStrip').style.display = 'none';
+            document.getElementById('throughBankStrip').style.display = 'none';
 
             // Disable wall size toggle during gameplay
             document.getElementById('wallSize12').disabled = true;
@@ -5135,6 +6574,7 @@
             clearCardSelectTimer();
             document.getElementById('handRow').style.display = 'none';
             document.getElementById('copingBankStrip').style.display = 'none';
+            document.getElementById('throughBankStrip').style.display = 'none';
 
             document.getElementById('finalScore').textContent = score;
             document.getElementById('statStones').textContent = stats.stonesPlaced;
@@ -5142,8 +6582,9 @@
             document.getElementById('stat1over2').textContent = stats.oneOverTwo;
             document.getElementById('statCoping').textContent = stats.copingStones;
             document.getElementById('statBanked').textContent = totalBankedCount;
-            document.getElementById('statFacePins').textContent = (3 - facePinsRemaining);
-            document.getElementById('statCuts').textContent = (3 - cutsRemaining);
+            document.getElementById('statFacePins').textContent = (5 - facePinsRemaining);
+            document.getElementById('statCuts').textContent = (10 - cutsRemaining);
+            document.getElementById('statThroughBanked').textContent = throughBankUsedCount;
             document.getElementById('statStability').textContent = Math.round(stability) + '%';
 
             const msg = document.getElementById('wallCompleteMsg');
@@ -5176,6 +6617,13 @@
         }
 
         window.onload = init;
+        window.addEventListener('resize', function() {
+            // Re-align bank stones with canvas on resize
+            if (gamePhase === 'playing') {
+                renderCopingBank();
+                renderThroughBank();
+            }
+        });
     </script>
 </body>
 </html>
