@@ -5806,12 +5806,15 @@
 
         function triggerSetCopes() {
             // Manual trigger — player clicks "Set Copes" in the bank strip.
-            // Only works during card selection phase (not mid-drop).
+            // Works at any point during gameplay (card selection or mid-drop).
             if (gamePhase !== 'playing' || copingAnimationActive) return;
             if (copingBank.length === 0) return;
 
-            // If a stone is currently falling, cancel it — return card to hand
+            // If a stone is currently falling, cancel it — return card to deck
             if (gameRunning && currentStone) {
+                if (selectedCardIndex >= 0 && selectedCardIndex < hand.length) {
+                    deck.push(hand[selectedCardIndex]);
+                }
                 gameRunning = false;
                 currentStone = null;
             }
@@ -5838,33 +5841,38 @@
             // Check through stone alignment bonus before coping wave
             checkThroughStoneAlignment();
 
-            showFeedback('Wall body complete! Adding coping stones...', 'positive');
-
-            // Determine coping zone boundaries
-            const groundRow = ROWS - 2;
-            const wallTopRow = groundRow - WALL_HEIGHT + 1;
+            showFeedback('Setting coping stones...', 'positive');
 
             // Generate coping stone placements from left to right
-            const copingPlacements = generateCopingPlacements(wallTopRow);
+            const copingPlacements = generateCopingPlacements();
 
             // Start the wave animation
             setTimeout(() => animateCopingWave(copingPlacements, 0), 500);
         }
 
-        function generateCopingPlacements(topRow) {
+        function generateCopingPlacements() {
             // Place banked stones as coping from left to right.
             // Stones may be stored in any orientation — stand them on end
             // so the narrow dimension is horizontal and the tall dimension is vertical.
-            // Each stone drops down to the lowest row where it can sit
-            // (gravity — like the player-placed stones).
+            // Each stone drops from the sky to the lowest position where it can rest
+            // (gravity — lands on top of whatever is below it).
             const placements = [];
             const groundRow = ROWS - 2;
-            const playable = getPlayableArea(topRow);
-            let col = playable.left;
+            const cheekOffset = getCheekOffset();
+
+            // Start at the right edge of the left cheek at the wall top
+            const wallTopRow = groundRow - WALL_HEIGHT + 1;
+            const cheekWidthAtTop = getCheekWidthAtRow(wallTopRow);
+            const startCol = cheekOffset + cheekWidthAtTop;
+
+            // End at the left edge of the right cheek at the wall top
+            const endCol = COLS - cheekOffset - cheekWidthAtTop;
+
+            let col = startCol;
             const available = [...copingBank]; // Work with a copy
             copingBank.length = 0; // Clear the bank
 
-            while (col < playable.right && available.length > 0) {
+            while (col < endCol && available.length > 0) {
                 let placed = false;
 
                 // Sort by stood-on-end width (= narrow dimension), prefer narrower for tight packing
@@ -5876,16 +5884,16 @@
                     const copeW = Math.min(stone.width, stone.height); // narrow = horizontal
                     const copeH = Math.max(stone.width, stone.height); // tall = vertical (stood on end)
 
-                    if (col + copeW > playable.right) continue;
+                    if (col + copeW > endCol) continue;
 
-                    // Drop the stone: find the lowest row where it fits.
-                    // Start from the ground and move up until we find a clear spot.
+                    // Drop from the sky: start at the very top and move DOWN
+                    // until we can't go any further (hit a stone or the ground).
                     let landRow = -1;
-                    for (let tryRow = groundRow - copeH; tryRow >= 0; tryRow--) {
+                    for (let tryRow = 0; tryRow <= groundRow - copeH; tryRow++) {
                         if (isSpaceClearForCoping(col, tryRow, copeW, copeH)) {
-                            landRow = tryRow;
+                            landRow = tryRow; // Keep going down — we want the LOWEST clear spot
                         } else {
-                            break; // Hit something — the row below (landRow) is the landing spot
+                            break; // Hit something — the row above (landRow) is the landing spot
                         }
                     }
 
