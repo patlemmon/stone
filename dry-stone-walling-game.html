@@ -377,6 +377,72 @@
         .feedback-toast.positive { background: #e8f5e8; }
         .feedback-toast.negative { background: #ffeeee; }
 
+        /* Star rating */
+        .star-rating {
+            text-align: center;
+            font-size: 28px;
+            margin: 6px 0;
+            letter-spacing: 4px;
+        }
+        .star.filled { color: #e6a817; }
+        .star.empty { color: #ccc; }
+
+        /* New high score */
+        .new-high-score {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #e6a817;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: hsFlash 0.6s ease-in-out 3;
+            margin-bottom: 4px;
+        }
+        @keyframes hsFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* High scores section */
+        .high-scores-section {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid #d5d0c8;
+        }
+        .high-scores-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin: 0 0 6px 0;
+            text-align: center;
+        }
+        .high-score-entry {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-family: Georgia, serif;
+            border-bottom: 1px solid #e8e4dc;
+        }
+        .high-score-entry.current {
+            background: #fdf8e8;
+            font-weight: bold;
+        }
+        .hs-rank { color: #999; width: 20px; }
+        .hs-score { flex: 1; text-align: right; }
+        .hs-stars { font-size: 12px; letter-spacing: 1px; }
+
+        /* Sidebar high scores panel */
+        .high-scores-panel {
+            padding: 4px 6px;
+        }
+        .high-scores-panel .high-score-entry {
+            font-size: 10px;
+        }
+        .high-scores-panel .hs-stars { font-size: 10px; }
+
         .game-over-overlay {
             position: fixed;
             top: 0;
@@ -1207,6 +1273,7 @@
             <div class="controls" id="gameControls">
                 <button class="btn" id="startBtn">Start</button>
                 <button class="btn" id="pauseBtn">Pause</button>
+                <button class="btn help-btn" id="soundToggleBtn" title="Toggle sound" onclick="toggleSound()">&#x1F50A;</button>
                 <button class="btn help-btn" id="helpBtn" title="How to play">?</button>
             </div>
 
@@ -1221,6 +1288,12 @@
                 <p><span class="key">C</span> Cut stone (while dropping)</p>
                 <p><span class="key">F</span> Face pin (fills void)</p>
                 <p><span class="key">T</span> Place through stone (from bank)</p>
+                <p><span class="key">U</span> Pull stone off wall</p>
+            </div>
+
+            <div class="section-label">High Scores</div>
+            <div class="panel high-scores-panel" id="highScoresPanel">
+                <div style="color:#999;font-size:10px;text-align:center;padding:4px;">No scores yet</div>
             </div>
 
             <div class="section-label" id="rulesLabel">How to Wall</div>
@@ -1390,6 +1463,8 @@
         <div class="game-over-content">
             <h2>WALL SECTION COMPLETE</h2>
             <div class="wall-complete-msg" id="wallCompleteMsg"></div>
+            <div class="star-rating" id="starRating"></div>
+            <div class="new-high-score" id="newHighScoreMsg" style="display:none">New High Score!</div>
             <div class="final-score" id="finalScore">0</div>
             <div class="stats-grid">
                 <div class="end-stat">
@@ -1428,6 +1503,18 @@
                     <div class="end-stat-label">Final Integrity</div>
                     <div class="end-stat-value" id="statStability">0%</div>
                 </div>
+                <div class="end-stat">
+                    <div class="end-stat-label">Craftsmanship</div>
+                    <div class="end-stat-value" id="statCraftsmanship">+200</div>
+                </div>
+                <div class="end-stat">
+                    <div class="end-stat-label">Pull Bonus</div>
+                    <div class="end-stat-value" id="statPullBonus">+150</div>
+                </div>
+            </div>
+            <div class="high-scores-section">
+                <h3>High Scores</h3>
+                <div id="gameOverHighScores"></div>
             </div>
             <button class="btn" id="restartBtn">Build Again</button>
         </div>
@@ -1485,58 +1572,13 @@
         // Heights: {2, 3, 4, 6, 8, 12}, Widths: {2, 3, 4, 6, 8, 10, 12, 14, 16, 18, 20}
         // Rule: width >= height (no stone taller than wide)
         // Thin: 2-4" tall (thickness 1), Medium: 6-8" tall (thickness 2), Thick: 12" tall (thickness 3)
-        const STONES = [
-            // Thin stones (2" tall, thickness 1)
-            { width: 2, height: 2, thickness: 1 },
-            { width: 4, height: 2, thickness: 1 },
-            { width: 6, height: 2, thickness: 1 },
-            { width: 8, height: 2, thickness: 1 },
-            { width: 10, height: 2, thickness: 1 },
-            // Thin stones (4" tall, thickness 1)
-            { width: 4, height: 4, thickness: 1 },
-            { width: 6, height: 4, thickness: 1 },
-            { width: 8, height: 4, thickness: 1 },
-            { width: 10, height: 4, thickness: 1 },
-            { width: 12, height: 4, thickness: 1 },
-
-            // Medium stones (6" tall, thickness 2)
-            { width: 6, height: 6, thickness: 2 },
-            { width: 8, height: 6, thickness: 2 },
-            { width: 10, height: 6, thickness: 2 },
-            { width: 12, height: 6, thickness: 2 },
-            { width: 14, height: 6, thickness: 2 },
-            { width: 16, height: 6, thickness: 2 },
-            // Medium stones (8" tall, thickness 2)
-            { width: 8, height: 8, thickness: 2 },
-            { width: 10, height: 8, thickness: 2 },
-            { width: 12, height: 8, thickness: 2 },
-            { width: 14, height: 8, thickness: 2 },
-            { width: 16, height: 8, thickness: 2 },
-            { width: 18, height: 8, thickness: 2 },
-
-            // Thick stones (12" tall, thickness 3)
-            { width: 12, height: 12, thickness: 3 },
-            { width: 14, height: 12, thickness: 3 },
-            { width: 16, height: 12, thickness: 3 },
-            { width: 18, height: 12, thickness: 3 },
-            { width: 20, height: 12, thickness: 3 },
-        ];
-
-        // Through stones - very wide, placed at halfway point (27")
-        const THROUGH_STONES = [
-            { width: 20, height: 4, thickness: 2, isThroughStone: true },
-            { width: 18, height: 6, thickness: 2, isThroughStone: true },
-            { width: 20, height: 6, thickness: 3, isThroughStone: true },
-        ];
-
-        // COPING_STONES removed — any stone can be banked for coping by the player
-        // The coping wave uses whatever stones the player chose to bank
-
         // Game state
         let canvas, ctx;
         const stoneImages = {}; // key: 'WxH' e.g. '3x2', value: array of loaded Images (variants A, B, C...)
         const NINE_SLICE_CORNER = 0.15; // 15% corner region for 9-slice rendering
         const _overlayCache = {}; // Cache composited cheek/through stone canvases by key
+        let _bgCache = null; // Cached background canvas (sky, ground, reference lines)
+        let _hatchPool = null; // Reusable offscreen canvas for hatching (avoid alloc per stone)
         let board = [];
         let stoneInfo = [];
         let currentStone = null;
@@ -1615,13 +1657,13 @@
         // Card selection state (unified mode)
         let awaitingCardSelection = true; // True when waiting for player to click a card
         let copingAnimationActive = false; // True during coping wave animation
-        let copingDeck = []; // Legacy — no longer used (coping is player-banked)
         let copingBank = []; // Stones banked by player for coping (any non-through stone)
         let copingBankTarget = 0; // Approx coping stones needed (computed after deconstruction)
         let totalBankedCount = 0; // Lifetime count (not decremented by coping wave)
         let throughBank = []; // Through stones banked by player for later placement
         let throughBankUsedCount = 0; // Count of through stones retrieved from bank and placed
         let copingTimer = null; // For pause support during coping animation
+        let copingDropFrame = null; // rAF ID for coping drop animation (cancellable on reset)
         let cardSelectTimer = null; // Auto-select countdown timer
         let cardSelectDeadline = 0; // Timestamp when auto-select fires
         let cardSelectAnimFrame = null; // RAF for timer bar animation
@@ -1653,6 +1695,239 @@
         let cutOrientation = 'horizontal'; // 'horizontal' splits width, 'vertical' splits height
         let cutLeftPiece = null;
         let cutRightPiece = null;
+
+        // Sound system state
+        let audioCtx = null;
+        let soundEnabled = true;
+        let soundBuffers = {}; // Decoded AudioBuffers keyed by name
+
+        // Screen shake state
+        let previousStability = 100;
+        const SHAKE_THRESHOLDS = [85, 70, 50, 25, 15];
+        let shakeAnimFrame = null;
+
+        // Dust particle state (hard drop only)
+        let dustParticles = [];
+
+        // Combo scoring state
+        let comboCount = 0;
+        const COMBO_PHRASES = {
+            3: "Now we're cooking with gas!",
+            5: "Mamby jamby!"
+        };
+
+        // "Pull It Off The Wall" state
+        let pullsRemaining = 3;
+        let pullMode = false;
+        let pullableStones = []; // Array of stone IDs that can be pulled
+
+        // Cut bonus system: unlimited cuts, first 3 free, 4th+ reduces craftsmanship bonus
+        let cutsUsed = 0;
+
+        // Dramatic deconstruction state
+        let fallingDeconStones = [];
+
+        // Sound system: master gain node
+        let soundMasterGain = null;
+
+        // ============ SCREEN SHAKE SYSTEM ============
+
+        // Shake intensities per threshold index (matches SHAKE_THRESHOLDS order)
+        const SHAKE_INTENSITIES = [
+            { displacement: 2, duration: 200 },   // 85%
+            { displacement: 4, duration: 250 },   // 70%
+            { displacement: 6, duration: 300 },   // 50%
+            { displacement: 10, duration: 350 },  // 25%
+            { displacement: 14, duration: 400 }   // 15%
+        ];
+
+        function checkStabilityThresholdCrossing(oldStab, newStab) {
+            // Returns the index of the most severe threshold crossed, or -1
+            let worstIndex = -1;
+            for (let i = 0; i < SHAKE_THRESHOLDS.length; i++) {
+                const threshold = SHAKE_THRESHOLDS[i];
+                if (oldStab >= threshold && newStab < threshold) {
+                    worstIndex = i; // Keep going to find the worst (lowest threshold)
+                }
+            }
+            return worstIndex;
+        }
+
+        function shakeCanvas(intensityIndex) {
+            const container = document.querySelector('.game-board-container');
+            if (!container) return;
+            const { displacement, duration } = SHAKE_INTENSITIES[intensityIndex];
+            const startTime = performance.now();
+
+            if (shakeAnimFrame) cancelAnimationFrame(shakeAnimFrame);
+
+            function shakeStep(now) {
+                const elapsed = now - startTime;
+                if (elapsed >= duration) {
+                    container.style.transform = '';
+                    shakeAnimFrame = null;
+                    return;
+                }
+                const decay = 1 - (elapsed / duration);
+                const dx = (Math.random() * 2 - 1) * displacement * decay;
+                const dy = (Math.random() * 2 - 1) * displacement * decay;
+                container.style.transform = `translate(${dx}px, ${dy}px)`;
+                shakeAnimFrame = requestAnimationFrame(shakeStep);
+            }
+            shakeAnimFrame = requestAnimationFrame(shakeStep);
+        }
+
+        // ============ DUST PARTICLE SYSTEM ============
+
+        let dustAnimFrame = null;
+        let lastDustTime = 0;
+
+        function spawnDustParticles(x, y, width) {
+            // Light dust plume: many tiny, pale particles that drift upward and fade quickly
+            const count = 12 + Math.floor(Math.random() * 8); // 12-19 particles
+            const cx = (x + width / 2) * BLOCK_SIZE; // Center of stone bottom
+            const spreadX = width * BLOCK_SIZE * 0.6; // Horizontal spread zone
+
+            for (let i = 0; i < count; i++) {
+                // Gaussian-ish spread: more particles near center
+                const offsetX = (Math.random() + Math.random() - 1) * spreadX * 0.5;
+                dustParticles.push({
+                    x: cx + offsetX,
+                    y: y * BLOCK_SIZE - Math.random() * 2, // Slight upward offset
+                    vx: (Math.random() - 0.5) * 0.8, // Gentle horizontal drift
+                    vy: -(Math.random() * 0.8 + 0.3), // Slow upward float
+                    life: 1.0,
+                    size: 0.5 + Math.random() * 1.2, // Tiny: 0.5-1.7px
+                    growRate: 0.02 + Math.random() * 0.03 // Particles expand slightly as they rise
+                });
+            }
+            // Start dust animation loop if not running
+            if (!dustAnimFrame) {
+                lastDustTime = performance.now();
+                dustAnimFrame = requestAnimationFrame(dustLoop);
+            }
+        }
+
+        function dustLoop(now) {
+            const dt = Math.min((now - lastDustTime) / 16.67, 3); // Normalize to ~60fps, cap at 3x
+            lastDustTime = now;
+
+            // Update particles
+            for (let i = dustParticles.length - 1; i >= 0; i--) {
+                const p = dustParticles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vy += 0.012 * dt; // Very light gravity — particles float upward longer
+                p.vx *= 0.995; // Gentle horizontal damping
+                p.size += p.growRate * dt; // Expand slightly as they rise (plume effect)
+                p.life -= 0.035 * dt; // Fade faster for ephemeral feel
+                if (p.life <= 0) {
+                    dustParticles.splice(i, 1);
+                }
+            }
+
+            // Draw particles on top of current canvas state
+            if (dustParticles.length > 0) {
+                drawDustParticles();
+                dustAnimFrame = requestAnimationFrame(dustLoop);
+            } else {
+                dustAnimFrame = null;
+            }
+        }
+
+        function drawDustParticles() {
+            ctx.save();
+            for (const p of dustParticles) {
+                // Soft, pale dust with low opacity — light plume, not mud
+                const alpha = p.life * p.life * 0.35; // Quadratic fade for softer dissipation
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = 'rgb(215, 205, 185)'; // Pale warm tan, not brown
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        }
+
+        // ============ DANGER VIGNETTE ============
+
+        function drawDangerVignette() {
+            if (gamePhase !== 'playing' || stability >= 25) return;
+
+            const alpha = 0.05 + 0.20 * (1 - stability / 25); // 0.05 at 25% → 0.25 at 0%
+            const w = canvas.width;
+            const h = canvas.height;
+            const edgeSize = 80;
+
+            ctx.save();
+            // Left edge
+            let grad = ctx.createLinearGradient(0, 0, edgeSize, 0);
+            grad.addColorStop(0, `rgba(180, 30, 30, ${alpha})`);
+            grad.addColorStop(1, 'rgba(180, 30, 30, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, edgeSize, h);
+
+            // Right edge
+            grad = ctx.createLinearGradient(w, 0, w - edgeSize, 0);
+            grad.addColorStop(0, `rgba(180, 30, 30, ${alpha})`);
+            grad.addColorStop(1, 'rgba(180, 30, 30, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(w - edgeSize, 0, edgeSize, h);
+
+            // Top edge
+            grad = ctx.createLinearGradient(0, 0, 0, edgeSize);
+            grad.addColorStop(0, `rgba(180, 30, 30, ${alpha})`);
+            grad.addColorStop(1, 'rgba(180, 30, 30, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, edgeSize);
+
+            // Bottom edge
+            grad = ctx.createLinearGradient(0, h, 0, h - edgeSize);
+            grad.addColorStop(0, `rgba(180, 30, 30, ${alpha})`);
+            grad.addColorStop(1, 'rgba(180, 30, 30, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, h - edgeSize, w, edgeSize);
+            ctx.restore();
+        }
+
+        // ============ SOUND SYSTEM ============
+
+        function initAudio() {
+            if (audioCtx) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                soundMasterGain = audioCtx.createGain();
+                soundMasterGain.connect(audioCtx.destination);
+                soundMasterGain.gain.value = soundEnabled ? 1 : 0;
+            } catch (e) {
+                console.warn('Web Audio API not available:', e);
+            }
+        }
+
+        function playSound(name, volume = 1.0) {
+            if (!audioCtx || !soundEnabled || !soundBuffers[name]) return;
+            try {
+                const source = audioCtx.createBufferSource();
+                source.buffer = soundBuffers[name];
+                const gain = audioCtx.createGain();
+                gain.gain.value = volume;
+                source.connect(gain);
+                gain.connect(soundMasterGain);
+                source.start(0);
+            } catch (e) {
+                // Silently ignore audio errors
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            if (soundMasterGain) {
+                soundMasterGain.gain.value = soundEnabled ? 1 : 0;
+            }
+            const btn = document.getElementById('soundToggleBtn');
+            if (btn) btn.textContent = soundEnabled ? '\u{1F50A}' : '\u{1F507}';
+        }
 
         function loadStoneImages() {
             // Asset naming convention: stone_assets/{H}_{W} {variant}.svg
@@ -1961,6 +2236,9 @@
             // Custom label dropdown
             initCustomSelect();
 
+            // Render sidebar high scores on init
+            renderSidebarHighScores();
+
             // Build the pre-built wall data but DON'T draw yet — wait for
             // stone assets to finish loading so we never flash generic blocks.
             canvas.style.visibility = 'hidden';
@@ -2025,8 +2303,8 @@
                 }
 
                 card.onclick = () => onCardClicked(index);
-                card.onmouseenter = () => { hoveredCardIndex = index; drawBoard(); };
-                card.onmouseleave = () => { hoveredCardIndex = -1; drawBoard(); };
+                card.onmouseenter = () => { hoveredCardIndex = index; };
+                card.onmouseleave = () => { hoveredCardIndex = -1; };
 
                 // Create preview canvas for stone (scaled to fit card)
                 const previewCanvas = document.createElement('canvas');
@@ -2047,7 +2325,9 @@
                     previewCtx.fillStyle = '#3a3a3a';
                     previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
                 }
-                drawStoneBlock(previewCtx, 0, 0, previewCanvas.width, previewCanvas.height, stone.thickness, false, false, false, stone.width, stone.height, isThroughStone);
+                // Use a preview ID based on stone properties + hand index so different variants show
+                const previewId = stone.id || (stone.width * 1000 + stone.height * 100 + index * 7 + stone.thickness);
+                drawStoneBlock(previewCtx, 0, 0, previewCanvas.width, previewCanvas.height, stone.thickness, false, false, false, stone.width, stone.height, isThroughStone, previewId);
 
                 // Type label — only through stones get a label, others just show dimensions
                 const typeLabel = isThroughStone ? 'Through' : '';
@@ -2057,10 +2337,12 @@
                 const bankBtn = showBank
                     ? `<button class="hand-card-bank-btn" onclick="event.stopPropagation(); bankStone()">Bank</button>`
                     : '';
-                // Cut button visible on selected card while dropping if stone is wide enough
-                const showCut = !awaitingCardSelection && gameRunning && currentStone && currentStone.width > 2 && cutsRemaining > 0 && index === selectedCardIndex;
+                // Cut button visible on selected card while dropping if stone is wide enough (unlimited cuts)
+                const showCut = !awaitingCardSelection && gameRunning && currentStone && currentStone.width > 2 && index === selectedCardIndex;
+                const cutLabel = cutsUsed < 3 ? `Cut (${3 - cutsUsed} free)` : `Cut (${cutsUsed})`;
+                const cutBtnStyle = cutsUsed < 3 ? 'background:#fde8e8; border-color:#cc4444; color:#cc4444;' : 'background:#f5e8e8; border-color:#996666; color:#996666;';
                 const cutBtn = showCut
-                    ? `<button class="hand-card-bank-btn" style="background:#fde8e8; border-color:#cc4444; color:#cc4444;" onclick="event.stopPropagation(); startCut()">Cut (${cutsRemaining})</button>`
+                    ? `<button class="hand-card-bank-btn" style="${cutBtnStyle}" onclick="event.stopPropagation(); startCut()">${cutLabel}</button>`
                     : '';
                 card.innerHTML = `
                     <div class="hand-card-preview"></div>
@@ -2082,10 +2364,14 @@
             const throughBtnHtml = (awaitingCardSelection && throughBank.length > 0)
                 ? `<button class="hand-action-btn" style="background:#eae5dc;border-color:#8a7a6a;color:#3a3a3a;" onclick="retrieveThroughStone(0)">Through (T) <strong>${throughBank.length}</strong></button>`
                 : (throughBank.length > 0 ? `<button class="hand-action-btn" style="background:#eae5dc;border-color:#8a7a6a;color:#3a3a3a;" disabled>Through (T) <strong>${throughBank.length}</strong></button>` : '');
+            const pullBtnHtml = (awaitingCardSelection && pullsRemaining > 0)
+                ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" onclick="startPullMode()">Pull (U) <strong>${pullsRemaining}</strong></button>`
+                : (pullsRemaining > 0 ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" disabled>Pull (U) <strong>${pullsRemaining}</strong></button>` : '');
             info.innerHTML = `
                 <span><strong>${deck.length}</strong> in deck</span>
                 ${pinBtnHtml}
                 ${throughBtnHtml}
+                ${pullBtnHtml}
             `;
             handRow.appendChild(info);
 
@@ -2348,7 +2634,6 @@
             const spawnX = Math.floor((playable.left + playable.right - stone.width) / 2);
             currentStone = {
                 ...stone,
-                shape: createStoneShape(stone.width, stone.height),
                 id: ++stoneIdCounter,
                 x: spawnX,
                 y: 0
@@ -2509,6 +2794,112 @@
             showFeedback('Face pin cancelled', 'neutral');
         }
 
+        // ============ PULL IT OFF THE WALL MECHANIC ============
+
+        function findPullableStones() {
+            // Find all player-placed stones (positive ID, non-coping) with nothing above them
+            const pullable = [];
+            for (const id in stoneRegistry) {
+                const numId = parseInt(id);
+                if (numId <= 0) continue; // Skip cheek stones (negative IDs)
+                const s = stoneRegistry[id];
+                if (s.isCoping) continue; // Can't pull coping stones
+
+                // Check if all cells above the stone's top row are empty
+                let blocked = false;
+                if (s.minR > 0) {
+                    for (let c = s.minC; c <= s.maxC; c++) {
+                        for (let r = s.minR - 1; r >= 0; r--) {
+                            if (board[r] && board[r][c] && stoneInfo[r][c] > 0 && stoneInfo[r][c] !== numId) {
+                                blocked = true;
+                                break;
+                            }
+                        }
+                        if (blocked) break;
+                    }
+                }
+                if (!blocked) {
+                    pullable.push(numId);
+                }
+            }
+            return pullable;
+        }
+
+        function startPullMode() {
+            if (pullsRemaining <= 0 || !awaitingCardSelection || gamePhase !== 'playing') return;
+
+            pullableStones = findPullableStones();
+            if (pullableStones.length === 0) {
+                showFeedback('No stones can be pulled!', 'negative');
+                return;
+            }
+
+            pullMode = true;
+            clearCardSelectTimer();
+            drawBoard();
+            showFeedback('Click a blue stone to pull it off', 'neutral');
+        }
+
+        function executePull(stoneId) {
+            const s = stoneRegistry[stoneId];
+            if (!s) return;
+
+            // Get stone dimensions from registry
+            const width = s.maxC - s.minC + 1;
+            const height = s.maxR - s.minR + 1;
+            const thickness = s.thickness;
+            const isThroughStone = s.isThroughStone || false;
+
+            // Clear from board and stoneInfo
+            for (let r = s.minR; r <= s.maxR; r++) {
+                for (let c = s.minC; c <= s.maxC; c++) {
+                    if (stoneInfo[r][c] === stoneId) {
+                        board[r][c] = 0;
+                        stoneInfo[r][c] = null;
+                    }
+                }
+            }
+
+            // Remove from registry
+            delete stoneRegistry[stoneId];
+
+            // Invalidate caches for this stone
+            const cachePrefix = String(stoneId);
+            for (const key in _overlayCache) {
+                if (key.startsWith(cachePrefix + '_') || key === cachePrefix) {
+                    delete _overlayCache[key];
+                }
+            }
+
+            // Push stone back to deck
+            deck.push({
+                width: width,
+                height: height,
+                thickness: thickness,
+                isThroughStone: isThroughStone
+            });
+
+            pullsRemaining--;
+            pullMode = false;
+            pullableStones = [];
+
+            // Resume card selection
+            awaitingCardSelection = true;
+            _bgCache = null; // Invalidate background cache since wall changed
+            renderHandRow();
+            drawBoard();
+            showFeedback(`Stone pulled! ${pullsRemaining} pulls remaining`, 'positive');
+        }
+
+        function cancelPullMode() {
+            pullMode = false;
+            pullableStones = [];
+            awaitingCardSelection = true;
+            startCardSelectTimer();
+            drawBoard();
+            showFeedback('Pull cancelled', 'neutral');
+        }
+
         // ============ CUT MECHANIC ============
 
         function getStoneColor(thickness) {
@@ -2518,7 +2909,7 @@
         }
 
         function startCut() {
-            if (cutsRemaining <= 0 || !gameRunning || !currentStone || gamePhase !== 'playing') return;
+            if (!gameRunning || !currentStone || gamePhase !== 'playing') return;
             if (currentStone.width <= 2 && currentStone.height <= 2) {
                 showFeedback('Stone too small to cut!', 'negative');
                 return;
@@ -2740,7 +3131,7 @@
             const kept = (side === 'left') ? { ...cutLeftPiece } : { ...cutRightPiece };
             const offcut = (side === 'left') ? { ...cutRightPiece } : { ...cutLeftPiece };
 
-            cutsRemaining--;
+            cutsUsed++;
             cutMode = false;
 
             document.getElementById('cutOverlay').classList.remove('show');
@@ -2767,7 +3158,6 @@
             currentStone.height = kept.height;
             currentStone.thickness = kept.thickness;
             currentStone.isThroughStone = kept.isThroughStone;
-            currentStone.shape = createStoneShape(kept.width, kept.height);
 
             // Also update the hand entry for accurate display
             if (hand[selectedCardIndex]) {
@@ -2779,7 +3169,8 @@
 
             // Resume game
             gameRunning = true;
-            showFeedback('Stone cut! ' + cutsRemaining + ' cuts remaining', 'positive');
+            const freeCutsLeft = Math.max(0, 3 - cutsUsed);
+            showFeedback(freeCutsLeft > 0 ? `Stone cut! ${freeCutsLeft} free cuts left` : `Stone cut! (affects craftsmanship)`, cutsUsed <= 3 ? 'positive' : 'negative');
             renderHandRow();
             drawBoard();
             requestAnimationFrame(gameLoop);
@@ -3098,6 +3489,9 @@
             document.getElementById('wallSize12').classList.toggle('active', size === '12ft');
             document.getElementById('wallSize6').classList.toggle('active', size === '6ft');
 
+            // Update sidebar high scores for new wall size
+            renderSidebarHighScores();
+
             if (gamePhase === 'title') {
                 // Rebuild title screen wall with new size
                 createBoard(true);
@@ -3138,6 +3532,16 @@
                 );
                 if (clicked) {
                     placeFacePin(clicked.row, clicked.col);
+                }
+                return;
+            }
+
+            // Pull mode — click to pull a highlighted stone
+            if (pullMode) {
+                const { col, row } = canvasMouseToGrid(event);
+                const clickedId = stoneInfo[row] && stoneInfo[row][col];
+                if (clickedId && clickedId > 0 && pullableStones.includes(clickedId)) {
+                    executePull(clickedId);
                 }
                 return;
             }
@@ -3652,6 +4056,7 @@
             stoneRegistry = {};
             // Clear overlay cache so stale composited stones don't linger
             for (const k in _overlayCache) delete _overlayCache[k];
+            _bgCache = null; // Invalidate background cache
 
             for (let r = 0; r < ROWS; r++) {
                 board[r] = [];
@@ -4493,8 +4898,10 @@
                         }
                     }
 
+                    // Determine thickness from stone height: 2-4" → thin(1), 5-8" → medium(2), 9-12" → thick(3)
+                    const gapThickness = stoneHeight <= 4 ? 1 : (stoneHeight <= 8 ? 2 : 3);
                     if (isSpaceClear(x, row - stoneHeight + 1, stoneWidth, stoneHeight)) {
-                        placeStone(x, row - stoneHeight + 1, stoneWidth, stoneHeight, stoneHeight, inCopingZone);
+                        placeStone(x, row - stoneHeight + 1, stoneWidth, stoneHeight, gapThickness, inCopingZone);
                     }
                 }
             }
@@ -4502,17 +4909,42 @@
             console.log('Generated algorithmic wall with', originalWallStones.length, 'stones in', iterations, 'iterations');
         }
 
+        let deconRenderLoop = null;
+
         function startDeconstruction() {
             gamePhase = 'deconstructing';
+            fallingDeconStones = [];
 
             // Sort stones by Y position (top first) for deconstruction order
             // This removes from top to bottom, like taking apart a wall
             deconstructionStones = [...originalWallStones].sort((a, b) => a.y - b.y);
             deck = [];
-            copingDeck = []; // Separate coping stones
+
+            // Start the deconstruction render loop for falling stones
+            deconRenderLoop = requestAnimationFrame(deconstructRenderStep);
 
             console.log('Starting deconstruction of', originalWallStones.length, 'stones');
             deconstructNextStone();
+        }
+
+        function deconstructRenderStep() {
+            // Update falling stones
+            for (let i = fallingDeconStones.length - 1; i >= 0; i--) {
+                const fs = fallingDeconStones[i];
+                fs.fallVy += 0.8;
+                fs.fallY += fs.fallVy;
+                // Remove when off screen
+                if ((fs.y + fs.fallY) * BLOCK_SIZE > canvas.height + 100) {
+                    fallingDeconStones.splice(i, 1);
+                }
+            }
+            drawBoard();
+            // Continue loop if still deconstructing or stones still falling
+            if (gamePhase === 'deconstructing' || fallingDeconStones.length > 0) {
+                deconRenderLoop = requestAnimationFrame(deconstructRenderStep);
+            } else {
+                deconRenderLoop = null;
+            }
         }
 
         function deconstructNextStone() {
@@ -4600,10 +5032,19 @@
                     isThroughStone: stone.isThroughStone || false
                 };
                 deck.push(card);
-            }
 
-            // Update display
-            drawBoard();
+                // Push a falling stone for dramatic effect
+                fallingDeconStones.push({
+                    x: stone.x,
+                    y: stone.y,
+                    width: stone.width,
+                    height: stone.height,
+                    thickness: stone.thickness,
+                    id: stone.id || Date.now(),
+                    fallY: 0,
+                    fallVy: Math.random() * 0.5 // Slight random initial velocity
+                });
+            }
 
             // Continue deconstruction with delay for animation effect
             deconstructTimer = setTimeout(deconstructNextStone, 50);
@@ -4740,7 +5181,6 @@
 
             currentStone = {
                 ...stone,
-                shape: createStoneShape(stone.width, stone.height),
                 id: ++stoneIdCounter,
                 x: spawnX,
                 y: 0
@@ -4812,80 +5252,85 @@
         }
 
         function drawEmptyBoard() {
+            // Use cached background if available — sky, ground, and reference lines
+            // are identical every frame. Cache is invalidated on createBoard().
+            if (_bgCache) {
+                ctx.drawImage(_bgCache, 0, 0);
+                return;
+            }
+
+            // Build the background cache
+            const bgCanvas = document.createElement('canvas');
+            bgCanvas.width = canvas.width;
+            bgCanvas.height = canvas.height;
+            const bgCtx = bgCanvas.getContext('2d');
+
             // Sky
-            const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.25);
+            const skyGrad = bgCtx.createLinearGradient(0, 0, 0, canvas.height * 0.25);
             skyGrad.addColorStop(0, '#d4e5f7');
             skyGrad.addColorStop(1, '#eef4fb');
-            ctx.fillStyle = skyGrad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            bgCtx.fillStyle = skyGrad;
+            bgCtx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Ground
-            ctx.fillStyle = '#d4c4a8';
-            ctx.fillRect(0, (ROWS - 1) * BLOCK_SIZE, canvas.width, BLOCK_SIZE);
+            bgCtx.fillStyle = '#d4c4a8';
+            bgCtx.fillRect(0, (ROWS - 1) * BLOCK_SIZE, canvas.width, BLOCK_SIZE);
 
             // Ground line
-            ctx.strokeStyle = '#2a2a2a';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, (ROWS - 1) * BLOCK_SIZE);
-            ctx.lineTo(canvas.width, (ROWS - 1) * BLOCK_SIZE);
-            ctx.stroke();
+            bgCtx.strokeStyle = '#2a2a2a';
+            bgCtx.lineWidth = 2;
+            bgCtx.beginPath();
+            bgCtx.moveTo(0, (ROWS - 1) * BLOCK_SIZE);
+            bgCtx.lineTo(canvas.width, (ROWS - 1) * BLOCK_SIZE);
+            bgCtx.stroke();
 
-            // Ground hatching
-            ctx.lineWidth = 1;
+            // Ground hatching — batched into single stroke
+            bgCtx.lineWidth = 1;
+            bgCtx.beginPath();
             for (let x = 0; x < canvas.width; x += 8) {
-                ctx.beginPath();
-                ctx.moveTo(x, (ROWS - 1) * BLOCK_SIZE);
-                ctx.lineTo(x + 15, canvas.height);
-                ctx.stroke();
+                bgCtx.moveTo(x, (ROWS - 1) * BLOCK_SIZE);
+                bgCtx.lineTo(x + 15, canvas.height);
             }
+            bgCtx.stroke();
 
             // Through stone reference line (1st Lift / 2nd Lift boundary)
             const groundRow = ROWS - 2;
             const throughLineY = (groundRow - THROUGH_STONE_ROW) * BLOCK_SIZE;
-            ctx.save();
-            ctx.strokeStyle = '#8a6a4a';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.moveTo(0, throughLineY);
-            ctx.lineTo(canvas.width, throughLineY);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            bgCtx.save();
+            bgCtx.strokeStyle = '#8a6a4a';
+            bgCtx.lineWidth = 1;
+            bgCtx.setLineDash([4, 4]);
+            bgCtx.beginPath();
+            bgCtx.moveTo(0, throughLineY);
+            bgCtx.lineTo(canvas.width, throughLineY);
+            bgCtx.stroke();
+            bgCtx.setLineDash([]);
             // Label
-            ctx.font = '9px Georgia';
-            ctx.fillStyle = '#8a6a4a';
-            ctx.textAlign = 'left';
-            ctx.fillText('Through Line (27")', 4, throughLineY - 3);
-            ctx.restore();
+            bgCtx.font = '9px Georgia';
+            bgCtx.fillStyle = '#8a6a4a';
+            bgCtx.textAlign = 'left';
+            bgCtx.fillText('Through Line (27")', 4, throughLineY - 3);
+            bgCtx.restore();
 
             // Cope line — marks top of wall body / bottom of coping course (48" from ground)
             const copeLineY = (groundRow - (WALL_HEIGHT - COPING_HEIGHT)) * BLOCK_SIZE;
-            ctx.save();
-            ctx.strokeStyle = '#5a8a5a';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.moveTo(0, copeLineY);
-            ctx.lineTo(canvas.width, copeLineY);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.font = '9px Georgia';
-            ctx.fillStyle = '#5a8a5a';
-            ctx.textAlign = 'left';
-            ctx.fillText('Cope Line (48")', 4, copeLineY - 3);
-            ctx.restore();
-        }
+            bgCtx.save();
+            bgCtx.strokeStyle = '#5a8a5a';
+            bgCtx.lineWidth = 1;
+            bgCtx.setLineDash([4, 4]);
+            bgCtx.beginPath();
+            bgCtx.moveTo(0, copeLineY);
+            bgCtx.lineTo(canvas.width, copeLineY);
+            bgCtx.stroke();
+            bgCtx.setLineDash([]);
+            bgCtx.font = '9px Georgia';
+            bgCtx.fillStyle = '#5a8a5a';
+            bgCtx.textAlign = 'left';
+            bgCtx.fillText('Cope Line (48")', 4, copeLineY - 3);
+            bgCtx.restore();
 
-        function createStoneShape(width, height) {
-            const shape = [];
-            for (let r = 0; r < height; r++) {
-                shape[r] = [];
-                for (let c = 0; c < width; c++) {
-                    shape[r][c] = 1;
-                }
-            }
-            return shape;
+            _bgCache = bgCanvas;
+            ctx.drawImage(_bgCache, 0, 0);
         }
 
         function getWallProgress() {
@@ -4910,67 +5355,6 @@
             }
 
             return totalCells > 0 ? filledCells / totalCells : 0;
-        }
-
-        function getRandomStone() {
-            const progress = getWallProgress();
-
-            // Through stone chance: peaks at 40-60% progress (midpoint of wall)
-            const throughPeak = 1 - Math.abs(progress - 0.5) * 4; // 0 at 0/100%, 1 at 50%
-            const throughChance = Math.max(0, throughPeak * 0.12); // Up to 12% at midpoint
-            if (Math.random() < throughChance) {
-                const template = THROUGH_STONES[Math.floor(Math.random() * THROUGH_STONES.length)];
-                const playable = getPlayableArea(0);
-                const spawnX = Math.floor((playable.left + playable.right - template.width) / 2);
-                return {
-                    shape: createStoneShape(template.width, template.height),
-                    width: template.width,
-                    height: template.height,
-                    thickness: template.thickness,
-                    isThroughStone: true,
-                    id: ++stoneIdCounter,
-                    x: spawnX,
-                    y: 0
-                };
-            }
-
-            // Weight stone selection based on wall progress
-            // Early: favor thick (3) and medium (2), few thin
-            // Later: favor medium (2) and thin (1), fewer thick
-            let weightedStones = [];
-
-            for (const stone of STONES) {
-                let weight = 1;
-                if (stone.thickness === 3) {
-                    // Thick stones: common early, rare late
-                    weight = Math.max(0.2, 1.5 - progress * 1.5);
-                } else if (stone.thickness === 2) {
-                    // Medium stones: always common, slightly more late
-                    weight = 1.0 + progress * 0.3;
-                } else {
-                    // Thin stones: rare early, common late
-                    weight = 0.3 + progress * 1.0;
-                }
-                // Add stone multiple times based on weight
-                const count = Math.round(weight * 3);
-                for (let i = 0; i < count; i++) {
-                    weightedStones.push(stone);
-                }
-            }
-
-            const template = weightedStones[Math.floor(Math.random() * weightedStones.length)];
-
-            const playable = getPlayableArea(0);
-            const spawnX = Math.floor((playable.left + playable.right - template.width) / 2);
-
-            return {
-                shape: createStoneShape(template.width, template.height),
-                width: template.width, height: template.height,
-                thickness: template.thickness,
-                id: ++stoneIdCounter,
-                x: spawnX,
-                y: 0
-            };
         }
 
         function isLaidFlat(stone) {
@@ -5088,9 +5472,10 @@
                                 octx.globalCompositeOperation = 'source-over';
                             }
 
-                            // Masked hatching — draw on a second offscreen canvas using
+                            // Masked hatching — draw on a pooled offscreen canvas using
                             // source-atop so lines only appear inside the stone shape.
-                            const hatchOff = document.createElement('canvas');
+                            if (!_hatchPool) _hatchPool = document.createElement('canvas');
+                            const hatchOff = _hatchPool;
                             hatchOff.width = ow;
                             hatchOff.height = oh;
                             const hctx = hatchOff.getContext('2d');
@@ -5478,9 +5863,10 @@
             ctx.font = 'bold 10px Georgia';
             ctx.textAlign = 'right';
 
-            // --- Cuts remaining (numeric display since 10 is too many dots) ---
-            ctx.fillStyle = cutsRemaining > 0 ? '#cc4444' : 'rgba(100,100,100,0.4)';
-            ctx.fillText('CUTS ' + cutsRemaining + '/10', hudX, hudY + 9);
+            // --- Cuts used (unlimited, show count) ---
+            const cutColor = cutsUsed <= 3 ? '#cc4444' : '#996666';
+            ctx.fillStyle = cutColor;
+            ctx.fillText('CUTS ' + cutsUsed, hudX, hudY + 9);
 
             // --- Face pins remaining (5 dots) ---
             ctx.fillStyle = facePinsRemaining > 0 ? '#2a8a2a' : 'rgba(100,100,100,0.4)';
@@ -5501,6 +5887,33 @@
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 }
+            }
+
+            // --- Pulls remaining (3 dots, blue) ---
+            ctx.fillStyle = pullsRemaining > 0 ? '#2a64b4' : 'rgba(100,100,100,0.4)';
+            ctx.fillText('PULLS', hudX, hudY + 9 + rowHeight * 2);
+
+            const pullsLabelW = ctx.measureText('PULLS').width;
+            const pullsDotsStartX = hudX - pullsLabelW - 8;
+            for (let i = 2; i >= 0; i--) {
+                const dx = pullsDotsStartX - i * (dotSize + dotGap);
+                const cy = hudY + 5 + rowHeight * 2;
+                ctx.beginPath();
+                ctx.arc(dx, cy, dotSize / 2, 0, Math.PI * 2);
+                if (i < pullsRemaining) {
+                    ctx.fillStyle = '#2a64b4';
+                    ctx.fill();
+                } else {
+                    ctx.strokeStyle = 'rgba(100,100,100,0.35)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+
+            // --- Combo streak ---
+            if (comboCount >= 2) {
+                ctx.fillStyle = '#c4882a';
+                ctx.fillText('×' + comboCount + ' STREAK', hudX, hudY + 9 + rowHeight * 3);
             }
 
             ctx.restore();
@@ -5554,26 +5967,67 @@
             // Void width preview — highlight gaps when hovering a hand card
             drawVoidPreview();
 
+            // Pull mode highlighting (blue overlay on pullable stones)
+            if (pullMode && pullableStones.length > 0) {
+                ctx.save();
+                for (const stoneId of pullableStones) {
+                    const s = stoneRegistry[stoneId];
+                    if (!s) continue;
+                    const px = s.minC * BLOCK_SIZE;
+                    const py = s.minR * BLOCK_SIZE;
+                    const pw = (s.maxC - s.minC + 1) * BLOCK_SIZE;
+                    const ph = (s.maxR - s.minR + 1) * BLOCK_SIZE;
+                    ctx.fillStyle = 'rgba(42, 100, 180, 0.3)';
+                    ctx.fillRect(px, py, pw, ph);
+                    ctx.strokeStyle = '#2a64b4';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([3, 3]);
+                    ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
+                }
+                ctx.setLineDash([]);
+                ctx.restore();
+            }
+
+            // Danger zone vignette (red edges when stability < 25%)
+            drawDangerVignette();
+
+            // Draw falling deconstruction stones
+            if (fallingDeconStones.length > 0) {
+                ctx.save();
+                for (const fs of fallingDeconStones) {
+                    const fx = fs.x * BLOCK_SIZE;
+                    const fy = (fs.y + fs.fallY) * BLOCK_SIZE;
+                    drawStoneBlock(ctx, fx, fy, fs.width * BLOCK_SIZE, fs.height * BLOCK_SIZE,
+                        fs.thickness, false, false, false, fs.width, fs.height, false, fs.id);
+                }
+                ctx.restore();
+            }
+
+            // Draw dust particles
+            if (dustParticles.length > 0) {
+                drawDustParticles();
+            }
+
             // In-game HUD — show cuts & face pins remaining during active play
             if (gamePhase === 'playing' && !designMode) {
                 drawGameHUD();
             }
 
-            // Subtle grid
+            // Subtle grid — batched into 2 stroke calls for performance
             ctx.strokeStyle = 'rgba(42, 42, 42, 0.06)';
             ctx.lineWidth = 0.5;
+            ctx.beginPath();
             for (let c = 0; c <= COLS; c++) {
-                ctx.beginPath();
                 ctx.moveTo(c * BLOCK_SIZE, 0);
                 ctx.lineTo(c * BLOCK_SIZE, (ROWS - 1) * BLOCK_SIZE);
-                ctx.stroke();
             }
+            ctx.stroke();
+            ctx.beginPath();
             for (let r = 0; r <= ROWS - 1; r++) {
-                ctx.beginPath();
                 ctx.moveTo(0, r * BLOCK_SIZE);
                 ctx.lineTo(canvas.width, r * BLOCK_SIZE);
-                ctx.stroke();
             }
+            ctx.stroke();
 
             // Phase-specific messages
             if (gamePhase === 'showing') {
@@ -5724,6 +6178,12 @@
             );
 
             analyzeStone(positions, currentStone);
+            playSound('thunk', 0.7);
+
+            // Drop speed escalation: 1200ms at start → 900ms at end
+            const progress = getWallProgress();
+            dropInterval = Math.round(1200 - progress * 300);
+
             stats.stonesPlaced++;
             document.getElementById('stonesPlaced').textContent = stats.stonesPlaced;
 
@@ -5997,11 +6457,8 @@
                 }
                 updateUI();
                 drawBoard();
-                // Let the player admire the finished wall before showing the score screen
-                setTimeout(() => {
-                    showFeedback('Wall complete!', 'positive');
-                    setTimeout(() => gameOver(true), 4000);
-                }, 2000);
+                // Post-coping celebration
+                showPostCopingCelebration();
                 return;
             }
 
@@ -6039,6 +6496,7 @@
 
                     // Highlight coping principle card
                     highlightPrinciple('principle-coping', 'good');
+                    playSound('tap', 0.5);
 
                     drawBoard();
 
@@ -6055,16 +6513,100 @@
                 drawStoneBlock(ctx, x, y, w, h, stone.thickness, false, false, true, stone.width, stone.height, false, index + 90000);
 
                 currentRow += dropSpeed;
-                requestAnimationFrame(dropFrame);
+                copingDropFrame = requestAnimationFrame(dropFrame);
             }
 
-            requestAnimationFrame(dropFrame);
+            copingDropFrame = requestAnimationFrame(dropFrame);
+        }
+
+        // ============ POST-COPING CELEBRATION ============
+
+        function showPostCopingCelebration() {
+            const stars = calculateStars(true, stability);
+            const duration = 5000; // 5 seconds of celebration
+            const startTime = performance.now();
+
+            function celebrationFrame(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                drawBoard();
+                drawCelebrationOverlay(progress, stars);
+
+                if (progress < 1) {
+                    requestAnimationFrame(celebrationFrame);
+                } else {
+                    // Wait 1 more second then show game over
+                    setTimeout(() => gameOver(true), 1000);
+                }
+            }
+            requestAnimationFrame(celebrationFrame);
+        }
+
+        function drawCelebrationOverlay(progress, stars) {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.save();
+
+            // Golden glow overlay (fades in over first 30%)
+            const glowAlpha = Math.min(progress / 0.3, 1) * 0.15;
+            ctx.fillStyle = `rgba(230, 168, 23, ${glowAlpha})`;
+            ctx.fillRect(0, 0, w, h);
+
+            // Banner background
+            const bannerY = h * 0.35;
+            const bannerH = 60;
+            const bannerAlpha = Math.min(progress / 0.2, 1) * 0.85;
+            ctx.fillStyle = `rgba(42, 36, 24, ${bannerAlpha})`;
+            ctx.fillRect(0, bannerY, w, bannerH);
+
+            // "WALL COMPLETE" text
+            if (progress > 0.15) {
+                const textAlpha = Math.min((progress - 0.15) / 0.2, 1);
+                ctx.globalAlpha = textAlpha;
+                ctx.font = 'bold 28px Georgia';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#e6a817';
+                ctx.fillText('WALL COMPLETE', w / 2, bannerY + 38);
+                ctx.globalAlpha = 1;
+            }
+
+            // Stars appearing progressively (one every 15% progress starting at 40%)
+            if (progress > 0.4 && stars > 0) {
+                const starSize = 32;
+                const starSpacing = 40;
+                const startX = w / 2 - ((stars - 1) * starSpacing) / 2;
+                const starY = bannerY + bannerH + 30;
+
+                ctx.font = `${starSize}px Georgia`;
+                ctx.textAlign = 'center';
+
+                for (let i = 0; i < stars; i++) {
+                    const starProgress = (progress - 0.4 - i * 0.08);
+                    if (starProgress <= 0) break;
+
+                    const starAlpha = Math.min(starProgress / 0.1, 1);
+                    const scale = 0.5 + Math.min(starProgress / 0.1, 1) * 0.5;
+
+                    ctx.save();
+                    ctx.globalAlpha = starAlpha;
+                    ctx.translate(startX + i * starSpacing, starY);
+                    ctx.scale(scale, scale);
+                    ctx.fillStyle = '#e6a817';
+                    ctx.fillText('\u2605', 0, 0);
+                    ctx.restore();
+                }
+            }
+
+            ctx.restore();
         }
 
         function analyzeStone(positions, stone) {
             let bonus = 0;
             let principles = [];
             let violations = [];
+            const oldStability = stability; // Track for threshold crossing
 
             const minX = Math.min(...positions.map(p => p.x));
             const maxX = Math.max(...positions.map(p => p.x));
@@ -6189,16 +6731,17 @@
             let coldJoint = false;
             if (maxY < ROWS - 2) {
                 // Left edge: check if stone below at (minX-1) differs from stone below at (minX)
+                // Ignore cheek stones (negative IDs) — they aren't player-placed joints
                 if (minX > 0) {
                     const belowLeft = stoneInfo[maxY + 1][minX - 1];
                     const belowRight = stoneInfo[maxY + 1][minX];
-                    if (belowLeft && belowRight && belowLeft !== belowRight) coldJoint = true;
+                    if (belowLeft > 0 && belowRight > 0 && belowLeft !== belowRight) coldJoint = true;
                 }
                 // Right edge: check if stone below at (maxX) differs from stone below at (maxX+1)
                 if (maxX < COLS - 1) {
                     const belowLeft = stoneInfo[maxY + 1][maxX];
                     const belowRight = stoneInfo[maxY + 1][maxX + 1];
-                    if (belowLeft && belowRight && belowLeft !== belowRight) coldJoint = true;
+                    if (belowLeft > 0 && belowRight > 0 && belowLeft !== belowRight) coldJoint = true;
                 }
             }
 
@@ -6212,11 +6755,11 @@
                 for (const edgeCol of [minX, maxX + 1]) {
                     if (edgeCol <= 0 || edgeCol >= COLS) continue;
                     let consecutiveJoints = 1; // This stone's edge counts as 1
-                    // Walk downward through courses below
+                    // Walk downward through courses below (ignore cheek stones with negative IDs)
                     for (let checkRow = maxY + 1; checkRow < ROWS - 1; checkRow++) {
                         const leftId = stoneInfo[checkRow][edgeCol - 1];
                         const rightId = stoneInfo[checkRow][edgeCol];
-                        if (!leftId || !rightId || leftId === rightId) break; // No joint here
+                        if (!leftId || leftId < 0 || !rightId || rightId < 0 || leftId === rightId) break; // No joint here
                         consecutiveJoints++;
                         if (consecutiveJoints >= 3) { zipperJoint = true; break; }
                     }
@@ -6241,7 +6784,7 @@
                 highlightPrinciple('principle-2into1', 'bad');
             }
 
-            // COURSING - wall height is defined by WALL_HEIGHT (54" inches)
+            // COURSING - wall height is defined by WALL_HEIGHT (57")
             const courseLevel = ROWS - 1 - maxY; // How many inches from ground
             // Bottom 18": thick (9-12"), Middle 18-36": medium (5-8"), Top 36+": thin (2-4")
             const expected = courseLevel < 18 ? 3 : (courseLevel < 36 ? 2 : 1);
@@ -6289,11 +6832,32 @@
                 }
             }
 
+            // Combo scoring: clean placements build streaks
+            if (violations.length === 0) {
+                comboCount++;
+                // Apply combo multiplier to bonus portion only (not base area score)
+                let multiplier = 1.0;
+                if (comboCount >= 5) multiplier = 2.0;
+                else if (comboCount >= 3) multiplier = 1.5;
+                else if (comboCount >= 2) multiplier = 1.25;
+                bonus = Math.round(bonus * multiplier);
+            } else {
+                comboCount = 0;
+            }
+
             // Inch-based score: area * 0.3 + bonuses (keeps proportional without dwarfing bonuses)
             score += Math.round(stone.width * stone.height * 0.3) + bonus;
 
+            // Screen shake on stability threshold crossings
+            const shakeIndex = checkStabilityThresholdCrossing(oldStability, stability);
+            if (shakeIndex >= 0) {
+                shakeCanvas(shakeIndex);
+                if (shakeIndex >= 3) playSound('rumble', 0.8); // Below 25%: danger rumble
+            }
+
             if (violations.length > 0) {
                 showFeedback(violations.join(', '), 'negative');
+                playSound('violation', 0.6);
             } else if (principles.length > 0) {
                 const msgs = {
                     layflat: 'Flat!',
@@ -6304,7 +6868,18 @@
                     coping: 'Coping!',
                     through: 'Through!'
                 };
-                showFeedback(`+${bonus} ${principles.slice(0, 2).map(p => msgs[p]).join(' ')}`, 'positive');
+                let feedbackText = `+${bonus} ${principles.slice(0, 2).map(p => msgs[p]).join(' ')}`;
+                // Add combo streak info
+                if (comboCount >= 2) {
+                    feedbackText += ` (×${comboCount})`;
+                }
+                // Show streak phrase at milestones
+                const phrase = COMBO_PHRASES[comboCount];
+                if (phrase) {
+                    feedbackText = phrase;
+                }
+                showFeedback(feedbackText, 'positive');
+                playSound('chime', 0.5);
             }
 
             updateUI();
@@ -6340,7 +6915,6 @@
 
             currentStone.width = nw;
             currentStone.height = nh;
-            currentStone.shape = createStoneShape(nw, nh);
             currentStone.x = Math.floor(ox + (ow - nw) / 2);
 
             if (collision(currentStone)) {
@@ -6350,7 +6924,6 @@
                     if (collision(currentStone)) {
                         currentStone.width = ow;
                         currentStone.height = oh;
-                        currentStone.shape = createStoneShape(ow, oh);
                         currentStone.x = ox;
                     }
                 }
@@ -6371,8 +6944,15 @@
         }
 
         function hardDrop() {
+            if (!currentStone) return;
+            // Capture stone position before locking for dust effect
+            const stoneX = currentStone.x;
+            const stoneWidth = currentStone.width;
             while (moveDown()) {}
+            const stoneBottomY = currentStone.y + currentStone.height;
             lockStone();
+            // Spawn dust particles at landing point
+            spawnDustParticles(stoneX, stoneBottomY, stoneWidth);
         }
 
         function handleKeyPress(e) {
@@ -6401,6 +6981,16 @@
                 return; // Swallow other keys during face pin mode
             }
 
+            // Pull mode — Escape or U cancels
+            if (pullMode) {
+                if (e.key === 'Escape' || e.key === 'u' || e.key === 'U') {
+                    cancelPullMode();
+                    e.preventDefault();
+                    return;
+                }
+                return; // Swallow other keys during pull mode
+            }
+
             // Handle card selection when awaiting player choice
             if (awaitingCardSelection && gamePhase === 'playing') {
                 switch (e.key) {
@@ -6411,6 +7001,8 @@
                     case '5': onCardClicked(4); break;
                     case 'f':
                     case 'F': startFacePinMode(); break;
+                    case 'u':
+                    case 'U': startPullMode(); break;
                     case 't':
                     case 'T':
                         if (throughBank.length > 0) {
@@ -6474,6 +7066,8 @@
             // Reset to title state with pre-built wall displayed
             if (deconstructTimer) { clearTimeout(deconstructTimer); deconstructTimer = null; }
             if (copingTimer) { clearTimeout(copingTimer); copingTimer = null; }
+            if (copingDropFrame) { cancelAnimationFrame(copingDropFrame); copingDropFrame = null; }
+            if (deconRenderLoop) { cancelAnimationFrame(deconRenderLoop); deconRenderLoop = null; }
             clearCardSelectTimer();
             gameRunning = false;
             awaitingCardSelection = false;
@@ -6511,6 +7105,19 @@
             cutPhase = 'position';
             cutLeftPiece = null;
             cutRightPiece = null;
+            // Reset new game state
+            previousStability = 100;
+            if (shakeAnimFrame) { cancelAnimationFrame(shakeAnimFrame); shakeAnimFrame = null; }
+            const shakeContainer = document.querySelector('.game-board-container');
+            if (shakeContainer) shakeContainer.style.transform = '';
+            dustParticles = [];
+            if (dustAnimFrame) { cancelAnimationFrame(dustAnimFrame); dustAnimFrame = null; }
+            comboCount = 0;
+            pullsRemaining = 3;
+            pullMode = false;
+            pullableStones = [];
+            cutsUsed = 0;
+            fallingDeconStones = [];
             document.getElementById('cutOverlay').classList.remove('show');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('pauseBtn').textContent = 'Pause';
@@ -6537,10 +7144,14 @@
         }
 
         function startGame() {
-            // Clear any pending deconstruction
+            // Clear any pending deconstruction / animations
             if (deconstructTimer) {
                 clearTimeout(deconstructTimer);
                 deconstructTimer = null;
+            }
+            if (deconRenderLoop) {
+                cancelAnimationFrame(deconRenderLoop);
+                deconRenderLoop = null;
             }
 
             // Reset game state (skipCheeks — cheeks baked into REFERENCE_WALL)
@@ -6556,7 +7167,6 @@
             currentStone = null;
             awaitingCardSelection = false;
             copingAnimationActive = false;
-            copingDeck = [];
             copingBank = [];
             copingBankTarget = 0;
             totalBankedCount = 0;
@@ -6564,6 +7174,7 @@
             throughBankUsedCount = 0;
             totalDeckSize = 0;
             if (copingTimer) { clearTimeout(copingTimer); copingTimer = null; }
+            if (copingDropFrame) { cancelAnimationFrame(copingDropFrame); copingDropFrame = null; }
             clearCardSelectTimer();
             stats = { stonesPlaced: 0, laidFlat: 0, oneOverTwo: 0, copingStones: 0, violations: 0 };
 
@@ -6578,6 +7189,22 @@
             cutPhase = 'position';
             cutLeftPiece = null;
             cutRightPiece = null;
+            // Reset new game state
+            previousStability = 100;
+            if (shakeAnimFrame) { cancelAnimationFrame(shakeAnimFrame); shakeAnimFrame = null; }
+            const shakeContainer = document.querySelector('.game-board-container');
+            if (shakeContainer) shakeContainer.style.transform = '';
+            dustParticles = [];
+            if (dustAnimFrame) { cancelAnimationFrame(dustAnimFrame); dustAnimFrame = null; }
+            comboCount = 0;
+            pullsRemaining = 3;
+            pullMode = false;
+            pullableStones = [];
+            cutsUsed = 0;
+            fallingDeconStones = [];
+
+            // Init audio on first game start (requires user interaction)
+            initAudio();
 
             document.getElementById('gameOverOverlay').classList.remove('show');
             document.getElementById('cutOverlay').classList.remove('show');
@@ -6635,12 +7262,81 @@
             }
         }
 
+        // ============ HIGH SCORES + STAR RATING ============
+
+        function calculateStars(complete, stab) {
+            if (!complete) return 0;
+            if (stab > 95) return 5;
+            if (stab > 85) return 4;
+            if (stab > 75) return 3;
+            if (stab > 50) return 2;
+            return 1; // Finished
+        }
+
+        function renderStarsHTML(count) {
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                html += `<span class="star ${i < count ? 'filled' : 'empty'}">${i < count ? '\u2605' : '\u2606'}</span>`;
+            }
+            return html;
+        }
+
+        function getHighScores(wallSize) {
+            try {
+                const key = 'sbs_highscores_' + wallSize;
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            } catch (e) { return []; }
+        }
+
+        function saveHighScore(wallSize, entry) {
+            const scores = getHighScores(wallSize);
+            scores.push(entry);
+            scores.sort((a, b) => b.score - a.score);
+            const top3 = scores.slice(0, 3);
+            localStorage.setItem('sbs_highscores_' + wallSize, JSON.stringify(top3));
+            return top3;
+        }
+
+        function isNewHighScore(wallSize, s) {
+            const scores = getHighScores(wallSize);
+            return scores.length < 3 || s > scores[scores.length - 1].score;
+        }
+
+        function renderSidebarHighScores() {
+            const panel = document.getElementById('highScoresPanel');
+            if (!panel) return;
+            const scores = getHighScores(activeWallSize);
+            if (scores.length === 0) {
+                panel.innerHTML = '<div style="color:#999;font-size:10px;text-align:center;padding:4px;">No scores yet</div>';
+                return;
+            }
+            let html = '';
+            scores.forEach((entry, i) => {
+                const stars = renderStarsHTML(entry.stars || 0);
+                html += `<div class="high-score-entry">
+                    <span class="hs-rank">#${i + 1}</span>
+                    <span class="hs-score">${entry.score}</span>
+                    <span class="hs-stars">${stars}</span>
+                </div>`;
+            });
+            panel.innerHTML = html;
+        }
+
         function gameOver(complete) {
             gameRunning = false;
             clearCardSelectTimer();
             document.getElementById('handRow').style.display = 'none';
             document.getElementById('copingBankStrip').style.display = 'none';
             document.getElementById('throughBankStrip').style.display = 'none';
+
+            // Calculate end-of-game bonuses
+            const pullBonus = pullsRemaining * 50;
+            const craftsmanshipBonus = Math.max(0, 200 - Math.max(0, cutsUsed - 3) * 30);
+            score += pullBonus + craftsmanshipBonus;
+
+            // Star rating
+            const stars = calculateStars(complete, stability);
 
             document.getElementById('finalScore').textContent = score;
             document.getElementById('statStones').textContent = stats.stonesPlaced;
@@ -6649,9 +7345,15 @@
             document.getElementById('statCoping').textContent = stats.copingStones;
             document.getElementById('statBanked').textContent = totalBankedCount;
             document.getElementById('statFacePins').textContent = (5 - facePinsRemaining);
-            document.getElementById('statCuts').textContent = (10 - cutsRemaining);
+            document.getElementById('statCuts').textContent = cutsUsed;
             document.getElementById('statThroughBanked').textContent = throughBankUsedCount;
             document.getElementById('statStability').textContent = Math.round(stability) + '%';
+            document.getElementById('statCraftsmanship').textContent = '+' + craftsmanshipBonus;
+            document.getElementById('statPullBonus').textContent = '+' + pullBonus;
+
+            // Star rating display
+            const starDiv = document.getElementById('starRating');
+            if (starDiv) starDiv.innerHTML = renderStarsHTML(stars);
 
             const msg = document.getElementById('wallCompleteMsg');
             if (complete) {
@@ -6665,7 +7367,39 @@
                 msg.style.color = '#666';
             }
 
+            // High scores
+            const isNew = isNewHighScore(activeWallSize, score);
+            const top3 = saveHighScore(activeWallSize, {
+                score: score,
+                stability: Math.round(stability),
+                stars: stars,
+                date: new Date().toLocaleDateString()
+            });
+
+            const newHsMsg = document.getElementById('newHighScoreMsg');
+            if (newHsMsg) {
+                newHsMsg.style.display = isNew ? 'block' : 'none';
+            }
+
+            // Render high scores in game over overlay
+            const hsSection = document.getElementById('gameOverHighScores');
+            if (hsSection) {
+                let hsHtml = '';
+                top3.forEach((entry, i) => {
+                    const isCurrent = entry.score === score && entry.stability === Math.round(stability);
+                    hsHtml += `<div class="high-score-entry${isCurrent ? ' current' : ''}">
+                        <span class="hs-rank">#${i + 1}</span>
+                        <span class="hs-score">${entry.score}</span>
+                        <span class="hs-stars">${renderStarsHTML(entry.stars || 0)}</span>
+                    </div>`;
+                });
+                hsSection.innerHTML = hsHtml;
+            }
+
             document.getElementById('gameOverOverlay').classList.add('show');
+
+            // Update sidebar high scores
+            renderSidebarHighScores();
 
             // Re-enable wall size toggle after game ends
             document.getElementById('wallSize12').disabled = false;

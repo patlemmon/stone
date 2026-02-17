@@ -6,7 +6,7 @@
 
 ## Architecture
 
-Single-file monolithic application — everything lives in `dry-stone-walling-game.html` (~6,630 lines of embedded HTML/CSS/JS). No build system, no external dependencies, no frameworks. Pure vanilla JavaScript with Canvas 2D API.
+Single-file monolithic application — everything lives in `dry-stone-walling-game.html` (~7,400 lines of embedded HTML/CSS/JS). No build system, no external dependencies, no frameworks. Pure vanilla JavaScript with Canvas 2D API.
 
 ```
 Stone By Stone/
@@ -38,8 +38,9 @@ Open `dry-stone-walling-game.html` in any modern web browser. No build step, no 
 - Offscreen canvas caching for all rendered stones (performance optimization)
 - `source-atop` compositing for masked hatching/overlay effects
 - Browser FileReader API for save/load in Design Mode
-- localStorage for tutorial completion + cheek design persistence
-- requestAnimationFrame game loop
+- localStorage for tutorial completion + cheek design persistence + high scores
+- Web Audio API for sound effects (base64-embedded audio clips decoded into AudioBuffers)
+- requestAnimationFrame game loop + separate animation loops for dust, deconstruction, celebration
 
 ## Code Conventions
 
@@ -163,6 +164,44 @@ All stones get hand-drawn visual effects, masked to the stone shape using `sourc
 - **Cheek darkening:** `rgba(80, 65, 40, 0.55)` overlay via `source-atop`
 - **Through stone darkening:** `rgba(20, 20, 20, 0.55)` overlay via `source-atop`
 
+### Sound System (Web Audio API)
+Lazy-initialized on first game start via `initAudio()`. Sounds are embedded as base64 data URIs, decoded into `AudioBuffer`s at init. `playSound(name, volume)` plays a named sound through a `GainNode` → `soundMasterGain` → `audioCtx.destination`. Sound toggle button (🔊/🔇) in header. Five sounds: `thunk` (stone placement), `tap` (coping), `violation` (bad placement), `chime` (clean placement), `rumble` (danger threshold). **Note: Sound clips not yet embedded — framework is in place, awaiting audio files.**
+
+Key state: `audioCtx`, `soundEnabled`, `soundBuffers{}`, `soundMasterGain`
+
+### Screen Shake System
+CSS transform-based shake on `.game-board-container`. Triggers only when stability *crosses down* through a threshold (not every bad placement). Five thresholds at 85%, 70%, 50%, 25%, 15% with escalating displacement (2px→14px) and duration (200ms→400ms). Implemented via `checkStabilityThresholdCrossing(old, new)` → `shakeCanvas(intensityIndex)`. Danger rumble sound at severity ≥3 (below 25%).
+
+Key state: `previousStability`, `SHAKE_THRESHOLDS[]`, `SHAKE_INTENSITIES[]`, `shakeAnimFrame`
+
+### Dust Particle System
+Spawned only on hard drop (Space key), not normal gravity drops. 3-5 small particles at stone's bottom edge with upward velocity, gravity, and fading alpha. Independent `dustLoop()` RAF continues even when game loop isn't running (during card selection). Particles drawn after board stones in `drawBoard()`.
+
+Key state: `dustParticles[]`, `dustAnimFrame`
+Key functions: `spawnDustParticles(x, y, width)`, `dustLoop()`, `drawDustParticles()`
+
+### Combo Scoring + Streak Phrases
+Consecutive clean placements (no violations) build a combo streak. Multiplier applied to bonus portion only (not base area score): 2 clean = 1.25x, 3 clean = 1.5x, 5+ clean = 2.0x. Any violation resets to 0. Streak count shown in HUD. Celebratory phrases shown at milestones via `COMBO_PHRASES` object (easy to edit/extend).
+
+Key state: `comboCount`, `COMBO_PHRASES{}`
+
+### Drop Speed Escalation
+Stone drop interval decreases from 1200ms at game start to 900ms at game end. Formula: `dropInterval = Math.round(1200 - progress * 300)`. Updated in `lockStone()` after `analyzeStone()` based on `getWallProgress()`.
+
+### Stability Danger Zone (Red Vignette)
+Red gradient vignette drawn on all four canvas edges when stability drops below 25%. Alpha scales from 0.05 at 25% to 0.25 at 0%. Implemented as `drawDangerVignette()` called from `drawBoard()` during `gamePhase === 'playing'`.
+
+### "Pull It Off The Wall" Mechanic
+3 uses per game. Press `U` during card selection to enter pull mode. Pullable stones (positive ID, non-coping, nothing above) are highlighted in blue. Click one to remove it from the wall and return it to the deck. Follows the face pin pattern: mode flag → find valid targets → highlight → handle click → execute. Bonus: +50 per unused pull at game over.
+
+Key state: `pullsRemaining = 3`, `pullMode`, `pullableStones[]`
+Key functions: `findPullableStones()`, `startPullMode()`, `executePull(stoneId)`, `cancelPullMode()`
+
+### Cut Bonus System (Replaces Cut Limit)
+Unlimited cuts (was limited to 10). First 3 cuts are free. 4th+ cuts reduce a craftsmanship bonus at game over. Formula: `craftsmanshipBonus = max(0, 200 - max(0, cutsUsed - 3) * 30)`. The `cutsUsed` variable tracks total cuts alongside the legacy `cutsRemaining` (which is still used by the cut overlay UI internals).
+
+Key state: `cutsUsed = 0`
+
 ### Cut Mechanic
 During card selection, players can press C to enter cut mode on the current stone. A visual overlay shows the stone with a movable cut line (arrow keys to reposition, R to rotate between horizontal/vertical). Confirms with Space to split the stone into two pieces — player keeps one, other goes to deck. Useful for fitting stones into tight gaps.
 
@@ -177,8 +216,24 @@ Coping stones are separated during deconstruction into `copingBank[]`. A "Set Co
 
 Key functions: `triggerSetCopes()`, `checkCopingFailsafe()`, `renderCopingBank()`
 
+### Dramatic Deconstruction (Falling Stones)
+During wall deconstruction, removed stones don't just disappear — they fall away with gravity animation. Each deconstructed stone is pushed to `fallingDeconStones[]` with initial random velocity. A separate `deconstructRenderStep()` RAF loop applies gravity (vy += 0.8) and culls off-screen stones. Falling stones are drawn in `drawBoard()` after board stones.
+
+Key state: `fallingDeconStones[]`, `deconRenderLoop`
+Key functions: `deconstructRenderStep()` (RAF loop during deconstruction)
+
+### Post-Coping Celebration
+After coping wave completes, a 5-second animated celebration plays on the canvas instead of the old plain wait. Features: golden glow overlay (fades in), "WALL COMPLETE" banner, and star rating appearing progressively. After celebration, 1-second pause then `gameOver(true)`.
+
+Key functions: `showPostCopingCelebration()`, `drawCelebrationOverlay(progress, stars)`
+
+### High Scores + Star Rating
+Star rating for completed walls: ★=finished, ★★=>50% stability, ★★★=>75%, ★★★★=>85%, ★★★★★=>95%. Top 3 scores per wall size stored in localStorage (`sbs_highscores_6ft`, `sbs_highscores_12ft`). Each entry: `{score, stability, stars, date}`. Displayed in game over overlay with "New High Score!" animation and in sidebar panel.
+
+Key functions: `calculateStars()`, `renderStarsHTML()`, `getHighScores()`, `saveHighScore()`, `isNewHighScore()`, `renderSidebarHighScores()`
+
 ### Coping Wave Animation (Gravity-Based)
-When coping is triggered, stones animate left-to-right at 250ms intervals. Each coping stone drops to the **lowest possible position** (gravity-based placement via `generateCopingPlacements()`), not a fixed row. After all stones are placed, a 6-second delay lets the player admire the wall before the score screen.
+When coping is triggered, stones animate left-to-right at 250ms intervals. Each coping stone drops to the **lowest possible position** (gravity-based placement via `generateCopingPlacements()`), not a fixed row. After coping completes, the post-coping celebration plays.
 
 Key functions: `startCopingAnimation()`, `generateCopingPlacements()`, `animateCopingWave()`
 
@@ -211,7 +266,7 @@ A multi-step tutorial overlay (`#tutorialOverlay`) guides new players through co
 ## UI Layout
 
 ### Header (`game-wrapper` > `game-header`)
-Left-aligned title "STONE BY STONE", centered stats row (Score, Integrity bar, Stones placed, Course number), help button (`?`). Wrapped in `.game-wrapper` so the header width matches the game area below it.
+Left-aligned title "STONE BY STONE", centered stats row (Score, Integrity bar, Stones placed, Course number), sound toggle (🔊), help button (`?`). Wrapped in `.game-wrapper` so the header width matches the game area below it.
 
 ### Main Area (`main-game-area`)
 - **Left column** (`.game-board-column`):
@@ -223,19 +278,25 @@ Left-aligned title "STONE BY STONE", centered stats row (Score, Integrity bar, S
   1. **Wall size selector** — `[ 12' | 6' ]` segmented control
   2. **Mode switcher** — segmented control `[ Challenge | Design ]`
   3. **Controls** — Start/Pause buttons (Start becomes "Reset" during gameplay)
-  4. **Controls panel** — keyboard shortcut reference
-  5. **"How to Wall" section label** — above 7 principle cards
-  6. **Principle cards** — highlight on stone placement
-  7. **Design panel** (hidden unless Design mode active)
+  4. **Controls panel** — keyboard shortcut reference (includes `U` for Pull)
+  5. **High Scores panel** — top 3 scores for current wall size
+  6. **"How to Wall" section label** — above 7 principle cards
+  7. **Principle cards** — highlight on stone placement
+  8. **Design panel** (hidden unless Design mode active)
 
 ### Hand Row (`#handRow`)
-Below the stone banks. Shows up to 5 card divs with stone previews at 1:1 play-area size, dimensions, type labels. Includes deck count, redraw/pin/through action buttons, and a full-width timer bar.
+Below the stone banks. Shows up to 5 card divs with stone previews at 1:1 play-area size, dimensions, type labels. Includes deck count, pin/through/pull action buttons, and a full-width timer bar.
+
+### In-Game HUD (Canvas)
+Top-right corner of the canvas during gameplay. Shows: cuts used count, face pins remaining (5 dots), pulls remaining (3 blue dots), and combo streak count when active.
 
 ### Overlays
 - **Tutorial overlay** (`.tutorial-overlay`) — multi-step guided introduction
 - **Reset confirmation** (`.confirm-overlay`) — "Reset the current game?" with Reset/Cancel buttons
-- **Game over** (`.game-over-overlay`) — final score, stats grid, restart button
+- **Game over** (`.game-over-overlay`) — star rating, final score, stats grid (includes craftsmanship bonus + pull bonus), high scores section, restart button
 - **Cut mode overlay** — stone splitting interface with movable cut line
+- **Post-coping celebration** — canvas-drawn golden glow + "WALL COMPLETE" banner + progressive star reveal
+- **Danger vignette** — canvas-drawn red edge gradients when stability < 25%
 
 ## Key Functions Reference
 
@@ -268,6 +329,14 @@ Below the stone banks. Shows up to 5 card divs with stone previews at 1:1 play-a
 | `startCopingAnimation()` / `animateCopingWave()` | Left-to-right coping cascade |
 | `startFacePinMode()` | Enter face pin placement mode |
 | `retrieveThroughStone()` | Pull a through stone from the bank |
+| `startPullMode()` / `executePull()` / `cancelPullMode()` | "Pull It Off The Wall" mechanic |
+| `initAudio()` / `playSound()` / `toggleSound()` | Sound system (Web Audio API) |
+| `checkStabilityThresholdCrossing()` / `shakeCanvas()` | Screen shake on stability drops |
+| `spawnDustParticles()` / `dustLoop()` / `drawDustParticles()` | Dust particles on hard drop |
+| `drawDangerVignette()` | Red vignette when stability < 25% |
+| `showPostCopingCelebration()` / `drawCelebrationOverlay()` | Post-coping celebration animation |
+| `calculateStars()` / `saveHighScore()` / `renderSidebarHighScores()` | High scores + star rating |
+| `deconstructRenderStep()` | Falling stones during deconstruction |
 | `togglePause()` | Pause/resume game loop and card timer |
 | `saveDesign()` / `loadDesign()` | JSON export/import for wall designs |
 
@@ -285,7 +354,35 @@ No automated test suite. Test by opening the HTML file in a browser. Design Mode
 
 ## Development History
 
-### Scoring Fine-Tuning (latest)
+### Game Experience Upgrade (12 Features) (latest)
+Major "juice" and progression update adding 12 new systems:
+- **Sound system** — Web Audio API with base64-embedded audio clips (framework in place, awaiting audio files)
+- **Screen shake** — CSS transform shake at 5 stability thresholds (85/70/50/25/15%)
+- **Dust particles** — Particle system on hard drops, independent RAF loop
+- **Combo scoring** — Streak multiplier (1.25x→2x) with phrases at milestones
+- **Drop speed** — 1200ms→900ms over game progress
+- **Pull mechanic** — 3 uses/game, remove top stones, +50 bonus per unused
+- **Cut bonus** — Unlimited cuts, craftsmanship bonus (200 base, -30 per cut after 3 free)
+- **Dramatic deconstruction** — Stones fall away with gravity instead of disappearing
+- **Danger vignette** — Red canvas edge gradients when stability < 25%
+- **High scores** — Top 3 per wall size in localStorage, 1-5 star rating
+- **Post-coping celebration** — Golden glow + "WALL COMPLETE" + progressive stars
+- **CLAUDE.md** — Full documentation of all new systems
+
+New state variables: `audioCtx`, `soundEnabled`, `soundBuffers`, `soundMasterGain`, `previousStability`, `shakeAnimFrame`, `dustParticles`, `dustAnimFrame`, `comboCount`, `pullsRemaining`, `pullMode`, `pullableStones`, `cutsUsed`, `fallingDeconStones`, `deconRenderLoop`
+
+New localStorage keys: `sbs_highscores_6ft`, `sbs_highscores_12ft`
+
+### Bug Fixes, Dead Code Removal, Performance Improvements
+- **Bug 1:** Gap-fill thickness now correctly calculated from stone height ranges
+- **Bug 2:** Card previews now show correct variants (preview ID from dimensions + index)
+- **Bug 3:** Coping drop animation now cancellable on reset
+- **Bug 4:** Updated outdated comment (54" → 57")
+- **Bug 5:** Cold/zipper joint detection now excludes cheek stones (negative IDs)
+- **Dead code:** Removed `copingDeck`, `getRandomStone()`, `STONES/THROUGH_STONES`, `createStoneShape()`
+- **Perf:** Batched grid lines (273→2 stroke calls), cached background (`_bgCache`), removed hover redraws, pooled hatching canvas (`_hatchPool`)
+
+### Scoring Fine-Tuning
 - **Middle Third** → 4-tier system: dead center (middle sixth) +50/+4, middle third +40/+3, middle half neutral (gracious zone), outside middle half -5
 - **Lay Flat** violation now scales exponentially by aspect ratio: near-square (8×6 as 8×6) ~-3, moderate (8×4 as 8×4) ~-8, extreme (12×2 as 12×2) -18. Uses power curve (exponent 2.2)
 - **Through Stone** miss penalty doubled: -10 → -20 (wasting a through stone is costly)
@@ -354,7 +451,7 @@ No automated test suite. Test by opening the HTML file in a browser. Design Mode
 - All game logic, rendering, and UI are in one file — edits must be careful about scope and side effects
 - The `wall-building-rules.md` file is the authoritative reference for scoring algorithms and stone distributions
 - Stone types: Regular (thin 2–4", medium 5–8", thick 9–12"), Through (18–20" wide, dark), and Coping (3–4" wide × 10" tall, stood on end)
-- Browser APIs used: Canvas 2D, requestAnimationFrame, FileReader, URL.createObjectURL, JSON serialization, Image (for SVG loading), localStorage
+- Browser APIs used: Canvas 2D, requestAnimationFrame, FileReader, URL.createObjectURL, JSON serialization, Image (for SVG loading), localStorage, Web Audio API (AudioContext, AudioBuffer, GainNode)
 - `stoneRegistry` is the performance-critical data structure — all stone add/remove paths must update it
 - `_overlayCache` is the rendering cache — cleared on `createBoard()`, stores composited offscreen canvases
 - Save format is version 2 with `gridSpec` field; old saves auto-migrate with coordinate/size scaling
