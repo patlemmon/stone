@@ -5856,17 +5856,50 @@
             // so the narrow dimension is horizontal and the tall dimension is vertical.
             // Each stone drops from the sky to the lowest position where it can rest
             // (gravity — lands on top of whatever is below it).
+            //
+            // The face boundary (where the cheek ends and the open face begins)
+            // varies per row due to the cheek taper. We scan the board at each
+            // column to find the actual left/right face edges based on cheek stones.
             const placements = [];
             const groundRow = ROWS - 2;
             const cheekOffset = getCheekOffset();
 
-            // Start at the right edge of the left cheek at the wall top
+            // Find the face boundaries by scanning the board for cheek stones.
+            // Use the coping zone bottom row (where cheeks are widest in the coping
+            // zone) to find the tightest face — this is where coping starts.
             const wallTopRow = groundRow - WALL_HEIGHT + 1;
-            const cheekWidthAtTop = getCheekWidthAtRow(wallTopRow);
-            const startCol = cheekOffset + cheekWidthAtTop;
+            const copingZoneBottom = wallTopRow + COPING_HEIGHT - 1;
 
-            // End at the left edge of the right cheek at the wall top
-            const endCol = COLS - cheekOffset - cheekWidthAtTop;
+            // Scan left side: find rightmost cheek stone column at coping zone bottom
+            let startCol = cheekOffset;
+            for (let c = 0; c < COLS; c++) {
+                if (board[copingZoneBottom] && stoneInfo[copingZoneBottom] &&
+                    board[copingZoneBottom][c] && stoneInfo[copingZoneBottom][c] < 0) {
+                    startCol = c + 1; // Face starts right after last cheek column
+                } else if (board[copingZoneBottom] && board[copingZoneBottom][c] &&
+                    stoneInfo[copingZoneBottom] && stoneInfo[copingZoneBottom][c] > 0) {
+                    break; // Hit a player stone — stop
+                }
+            }
+
+            // Scan right side: find leftmost cheek stone column at coping zone bottom
+            let endCol = COLS - cheekOffset;
+            for (let c = COLS - 1; c >= 0; c--) {
+                if (board[copingZoneBottom] && stoneInfo[copingZoneBottom] &&
+                    board[copingZoneBottom][c] && stoneInfo[copingZoneBottom][c] < 0) {
+                    endCol = c; // Face ends right before first right cheek column
+                } else if (board[copingZoneBottom] && board[copingZoneBottom][c] &&
+                    stoneInfo[copingZoneBottom] && stoneInfo[copingZoneBottom][c] > 0) {
+                    break;
+                }
+            }
+
+            // Fallback if no cheek stones found: use the formula
+            if (startCol <= cheekOffset) {
+                const cheekW = getCheekWidthAtRow(copingZoneBottom);
+                startCol = cheekOffset + cheekW;
+                endCol = COLS - cheekOffset - cheekW;
+            }
 
             let col = startCol;
             const available = [...copingBank]; // Work with a copy
