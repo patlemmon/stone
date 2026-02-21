@@ -12,10 +12,11 @@
 | LAY FLAT | +15 | +2 | -18 (stone on end) |
 | 1 OVER 2 | +35 | +3 (sits on 2) | -10 (sits on 3+), -5 (stacking) |
 | MIDDLE THIRD | +40 | +3 (centered) | -5 (off-center) |
-| 2 INTO 1 | +20 | +2 (no zipper) | -8 (zipper: 2+ aligned joints) |
+| 2 INTO 1 | +20 | +2 (no zipper) | -3 to -15 (zipper: graduated by length — 3 courses=-3, 4=-6, 5=-10, 6+=-15), -5 (cold joint) |
 | COURSING | +15 | +1 (right thickness) | -6 (thickness mismatch ≥2) |
 | COPING | +50 | +3 | — |
 | THROUGH STONE | +60 (spans line) / +30 (within 3") | +4 / +2 | -10 (misplaced) |
+| PLACEMENT BOUNDS | — | — | -8 (on cheek wall), -8 (outside face), -5 (above wall) |
 
 **Base score formula:** `Math.round(stone.width * stone.height * 0.3) + bonuses`
 
@@ -128,19 +129,23 @@ if stonesBelow.count >= 3: PENALTY -10 stability
 ```
 
 ### 3. MIDDLE THIRD
-**Rule:** A stone's edges should fall within the middle third of the stones below.
-- The joint below should be covered by the middle portion of the stone above
-- Prevents "running joints" (vertical lines of weakness)
+**Rule:** A stone's center of mass should fall within the middle third of the stones below.
+- Weight should transfer near the center of the support, not at the edges
+- Prevents tipping forces and "running joints" (vertical lines of weakness)
 
-**Detection Algorithm:**
+**Detection Algorithm (center-of-mass based):**
 ```
 belowSpan = (leftmost edge of stones below, rightmost edge)
-belowWidth = belowSpan.right - belowSpan.left
-thirdWidth = belowWidth / 3
-middleZone = (belowSpan.left + thirdWidth, belowSpan.right - thirdWidth)
+belowWidth = belowSpan.right - belowSpan.left + 1
+stoneCenter = (stone.left + stone.right + 1) / 2
+belowCenter = (belowSpan.left + belowSpan.right + 1) / 2
+offset = abs(stoneCenter - belowCenter)
+offRatio = offset / (belowWidth / 2)   // 0 = dead center, 1 = edge
 
-if stone.leftEdge >= middleZone.left AND stone.rightEdge <= middleZone.right:
-    BONUS +40
+if offRatio <= 1/6:  BONUS +50, stability +4  (dead center)
+if offRatio <= 1/3:  BONUS +40, stability +3  (middle third)
+if offRatio <= 1/2:  neutral                   (middle half)
+if offRatio > 1/2:   stability -5             (off-center penalty)
 ```
 
 ### 4. TWO INTO ONE (2/1) - Horizontal Termination Rule

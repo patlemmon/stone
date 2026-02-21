@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-**Stone by Stone** is an educational HTML5 Canvas game that teaches traditional dry stone wall building principles. Players reconstruct a deconstructed wall by placing falling stones (Tetris-style) using card-based selection from a persistent hand of 5 cards. The game supports 6' and 12' wall sizes (toggled via a size selector), with modes toggled via a segmented control between Challenge (gameplay) and Design (custom wall creation).
+**Stone by Stone** is an educational HTML5 Canvas game that teaches traditional dry stone wall building principles. Players reconstruct a deconstructed wall by placing falling stones (Tetris-style) using card-based selection from a persistent hand of 5-7 cards. The game supports 6' and 12' wall sizes (toggled via a size selector), with three modes: Challenge (timed gameplay), Freestyle (relaxed, no timer, wall can't collapse), and Design (custom wall creation).
 
 ## Architecture
 
-Single-file monolithic application — everything lives in `dry-stone-walling-game.html` (~7,400 lines of embedded HTML/CSS/JS). No build system, no external dependencies, no frameworks. Pure vanilla JavaScript with Canvas 2D API.
+Single-file monolithic application — everything lives in `dry-stone-walling-game.html` (~8,200 lines of embedded HTML/CSS/JS). No build system, no external dependencies, no frameworks. Pure vanilla JavaScript with Canvas 2D API.
 
 ```
 Stone By Stone/
@@ -354,7 +354,85 @@ No automated test suite. Test by opening the HTML file in a browser. Design Mode
 
 ## Development History
 
-### Game Experience Upgrade (12 Features) (latest)
+### Major Polish Pass (35 Features) (latest)
+Comprehensive polish upgrade taking the game from functional to professional. 35 features across 15 phases:
+
+**Foundations & Quick Wins:**
+- Easing utility functions (`easeOutCubic`, `easeInQuad`, `easeInOutQuad`)
+- Placement history array — records every stone for review mode, auto-save, stone naming
+- Peak stability tracking
+- Feedback toast: larger (14px), longer (2.5s)
+- Principle card highlight: 1s→2s
+- Cursor changes: crosshair for pin/pull, hidden during drop, restored on lock/cancel
+- Quick restart from game over (Space/Enter)
+- Selected card emphasis: placing cards scale up, disabled cards scale down
+
+**Canvas Drawing Enhancements:**
+- Stone shadows — subtle `rgba(0,0,0,0.12)` behind each stone
+- Ground texture — deterministic pseudo-random patches for organic feel
+- Sky warmth overlay — sky warms golden as wall rises (10%→80% progress)
+- Combo warmth overlay — golden sky tint at combo ≥ 2
+
+**Feedback Loop Polish:**
+- Clean placement glow — white overlay fading over 200ms via easeOutCubic
+- Stone wobble on violations — decaying sinusoidal oscillation over 300ms
+- Snug fit bonus (+25) — stones fitting tightly between neighbors (≤2" gaps each side)
+- Quick pick bonus (+10) — clean placement within 3s of card selection
+
+**Weight Feel:**
+- Heavy stones drop faster (thickness 3+ or area ≥120: 0.8x interval), thin stones slower (1.2x)
+
+**Phase Transitions:**
+- Canvas fade-in on load (CSS opacity transition)
+- Deconstruction dramatic start — 1s hold before stones fall
+- Card deal-in animation — staggered opacity/transform on first hand
+- Building→Coping transition beat — flash all principle cards before coping wave
+- Game over section-by-section reveal — cascading opacity transitions
+
+**Visual Refinement:**
+- Wall settling micro-animation — subtle CSS scale pulse on placement
+- Streak visual warmth on hand row — warm/hot background based on combo
+- Celtic knot border — SVG border-image replacing double-border
+- Deck visual bar — depleting bar + count replacing text-only deck display
+
+**Context-Sensitive Hints:**
+- Card hints — "T: Bank" for through stones, "B: Bank for coping" when progress > 75%
+
+**Sound Extensions:**
+- Size-based sound names — through→'bass', thick→'deepThud', thin/small→'tap', default→'thunk'
+
+**Micro-Interactions:**
+- Double-click principle card to expand — hidden detail text with smooth max-height transition
+- Hold-Shift shortcut overlay — semi-transparent overlay with context-sensitive shortcut list
+
+**End Game:**
+- Final stone moment — 500ms pause, chime, zoom-out, delayed celebration
+- "What you missed" summary — stones used, unused through stones, peak stability
+- Save wall as image — canvas toDataURL with score overlay bar
+
+**Wall Review Mode:**
+- Hover-to-inspect — mouse over placed stones shows tooltip with dims, principles, score, name
+- Timeline scrubber — range input reconstructs board at any point in build history
+- Stone naming — "The Bridge" (spans 3+), "The Keystone" (saved stability), "The Misfit" (3+ violations)
+
+**Auto-Save:**
+- Auto-save to localStorage after each placement
+- Resume prompt on page load, clear on game over / new game
+
+**Freestyle Mode:**
+- 7-card hand instead of 5
+- No card timer, no winnowing
+- No drop speed escalation
+- Stability = 0 → wall settles (stability = 20, score × 0.8), keep playing
+- Keys 6-7 added for larger hand
+
+New state variables: `placementHistory`, `peakStability`, `glowStone`, `wobbleStone`, `snugFitGlow`, `cardSelectTimestamp`, `showingShortcuts`, `reviewMode`, `freestyleMode`
+
+New functions: `easeOutCubic()`, `easeInQuad()`, `easeInOutQuad()`, `getHandSize()`, `updateModeButtons()`, `computeStoneName()`, `autoSaveState()`, `clearAutoSave()`, `checkAutoSave()`, `restoreAutoSave()`, `enterReviewMode()`, `exitReviewMode()`, `handleReviewScrub()`, `reconstructBoardFromHistory()`, `handleReviewHover()`, `hideReviewTooltip()`, `saveWallImage()`
+
+New localStorage keys: `sbs_autosave`
+
+### Game Experience Upgrade (12 Features)
 Major "juice" and progression update adding 12 new systems:
 - **Sound system** — Web Audio API with base64-embedded audio clips (framework in place, awaiting audio files)
 - **Screen shake** — CSS transform shake at 5 stability thresholds (85/70/50/25/15%)

@@ -19,11 +19,14 @@
             flex-direction: column;
             align-items: center;
             padding: 10px;
+            overflow: hidden;
         }
 
         .game-wrapper {
             display: flex;
             flex-direction: column;
+            transform-origin: top center;
+            will-change: transform;
         }
 
         .game-header {
@@ -75,6 +78,15 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            transition: transform 0.2s ease-out;
+        }
+
+        .stability-container.pulse-up {
+            transform: scale(1.08);
+        }
+
+        .stability-container.pulse-down {
+            transform: scale(1.08);
         }
 
         .stability-bar {
@@ -83,6 +95,15 @@
             background: #fffdf7;
             border: 2px solid #2a2a2a;
             overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .stability-container.pulse-up .stability-bar {
+            border-color: #2a8a2a;
+        }
+
+        .stability-container.pulse-down .stability-bar {
+            border-color: #aa2a2a;
         }
 
         .stability-fill {
@@ -111,8 +132,6 @@
         }
         .game-board-container {
             background: #fffdf7;
-            padding: 8px 8px 2px 8px;
-            border: 3px solid #2a2a2a;
             position: relative;
         }
 
@@ -121,20 +140,15 @@
             height: auto;
         }
 
-        .game-board-container::before {
-            content: '';
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            right: -4px;
-            bottom: -2px;
-            border: 2px solid #2a2a2a;
-            z-index: -1;
-        }
-
         #gameCanvas {
             display: block;
             background: #fffdf7;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #gameCanvas.loaded {
+            opacity: 1;
         }
 
         .side-panel {
@@ -294,6 +308,21 @@
             line-height: 1.2;
         }
 
+        .principle-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease;
+            font-size: 8px;
+            line-height: 1.3;
+            color: #555;
+            margin-top: 0;
+        }
+
+        .principle-card.expanded .principle-detail {
+            max-height: 80px;
+            margin-top: 4px;
+        }
+
         .controls {
             margin-top: 8px;
             display: flex;
@@ -367,7 +396,7 @@
             border: 2px solid #2a2a2a;
             background: #fffdf7;
             font-family: 'Georgia', serif;
-            font-size: 12px;
+            font-size: 14px;
             opacity: 0;
             transition: opacity 0.3s ease;
             z-index: 1000;
@@ -472,6 +501,17 @@
             max-width: 320px;
         }
 
+        .game-over-content.revealing > * {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .game-over-content.revealing > .revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .game-over-content h2 {
             color: #2a2a2a;
             margin-bottom: 6px;
@@ -521,6 +561,104 @@
             font-weight: bold;
         }
 
+        /* Personal Best Comparison */
+        .best-comparison {
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin: 4px 0 8px;
+            letter-spacing: 0.5px;
+        }
+        .best-comparison.above {
+            color: #2a8a2a;
+        }
+        .best-comparison.below {
+            color: #aa6622;
+        }
+        .best-comparison.first {
+            color: #666;
+            font-size: 11px;
+            font-weight: normal;
+        }
+
+        /* Score Breakdown */
+        .score-breakdown {
+            margin: 10px 0;
+            border-top: 1px solid #d5d0c8;
+            padding-top: 8px;
+        }
+        .score-breakdown-toggle {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: Georgia, serif;
+            padding: 2px 0;
+            width: 100%;
+            text-align: center;
+        }
+        .score-breakdown-toggle:hover {
+            color: #2a2a2a;
+        }
+        .score-breakdown-toggle::after {
+            content: ' ▸';
+        }
+        .score-breakdown.open .score-breakdown-toggle::after {
+            content: ' ▾';
+        }
+        .score-breakdown-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .score-breakdown.open .score-breakdown-details {
+            max-height: 400px;
+        }
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 2px 4px;
+            font-size: 10px;
+            font-family: Georgia, serif;
+            border-bottom: 1px solid #ece8e0;
+        }
+        .breakdown-row:last-child {
+            border-bottom: none;
+        }
+        .breakdown-label {
+            color: #555;
+        }
+        .breakdown-label .breakdown-count {
+            color: #999;
+            font-size: 9px;
+        }
+        .breakdown-value {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #2a2a2a;
+        }
+        .breakdown-row.total {
+            border-top: 1px solid #2a2a2a;
+            margin-top: 2px;
+            padding-top: 4px;
+            font-weight: bold;
+        }
+        .breakdown-row.total .breakdown-label {
+            color: #2a2a2a;
+        }
+        .breakdown-row.avg {
+            color: #888;
+            font-style: italic;
+        }
+        .breakdown-row.avg .breakdown-value {
+            color: #888;
+            font-weight: normal;
+        }
+
         /* Reset Confirmation */
         .confirm-overlay {
             position: fixed;
@@ -561,6 +699,135 @@
             display: flex;
             justify-content: center;
             gap: 10px;
+        }
+
+        /* Settings Overlay */
+        .settings-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(42, 42, 42, 0.88);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .settings-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .settings-content {
+            background: #fffdf7;
+            border: 3px solid #2a2a2a;
+            padding: 20px 28px;
+            max-width: 380px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .settings-content h2 {
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            text-align: center;
+            color: #2a2a2a;
+        }
+        .settings-section {
+            margin-bottom: 14px;
+        }
+        .settings-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #2a2a2a;
+        }
+        .settings-row label {
+            flex: 1;
+        }
+        .settings-row input[type="range"] {
+            width: 120px;
+            accent-color: #2a2a2a;
+        }
+        .settings-row .range-value {
+            width: 30px;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #666;
+        }
+        .settings-row select {
+            font-family: Georgia, serif;
+            font-size: 11px;
+            padding: 2px 6px;
+            border: 2px solid #2a2a2a;
+            background: #fffdf7;
+        }
+        .settings-toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: #ccc;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            flex-shrink: 0;
+        }
+        .settings-toggle.on {
+            background: #2a8a2a;
+        }
+        .settings-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #fffdf7;
+            border-radius: 50%;
+            transition: left 0.2s ease;
+        }
+        .settings-toggle.on::after {
+            left: 18px;
+        }
+        .settings-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .settings-actions .btn {
+            font-size: 10px;
+            padding: 4px 10px;
+        }
+        .settings-close-btn {
+            display: block;
+            margin: 16px auto 0;
+            font-family: Georgia, serif;
+            font-size: 12px;
+            padding: 6px 24px;
+            background: #2a2a2a;
+            color: #fffdf7;
+            border: 2px solid #2a2a2a;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .settings-close-btn:hover {
+            background: #444;
         }
 
         /* Tutorial Overlay */
@@ -868,6 +1135,35 @@
             margin-top: 2px;
             min-height: 80px;
             padding: 2px 0;
+            transition: background 0.3s ease;
+        }
+
+        .hand-row.warm { background: rgba(255,220,150,0.15); }
+        .hand-row.hot { background: rgba(255,200,100,0.25); }
+
+        .deck-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .deck-bar {
+            width: 60px;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .deck-bar-fill {
+            height: 100%;
+            background: #8a6a4a;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .deck-count {
+            font-size: 10px;
+            font-weight: bold;
+            color: #2a2a2a;
+            min-width: 20px;
         }
 
         .hand-card {
@@ -915,14 +1211,14 @@
         .hand-card.disabled {
             opacity: 0.5;
             pointer-events: none;
-            transform: none;
+            transform: scale(0.98);
         }
 
         .hand-card.placing {
             border-color: #e6a817;
             background: #fef9e7;
             opacity: 0.7;
-            transform: translateY(-2px);
+            transform: scale(1.05) translateY(-4px);
         }
 
         .hand-card-preview {
@@ -946,6 +1242,12 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #888;
+        }
+
+        .hand-card-hint {
+            font-size: 8px;
+            color: #8a6a4a;
+            font-style: italic;
         }
 
         .hand-row-info {
@@ -1207,6 +1509,97 @@
             align-items: center;
             margin-left: 8px;
         }
+
+        /* Interactive Tutorial Highlight System */
+        .tutorial-dim {
+            position: relative;
+        }
+        .tutorial-dim .game-board-column,
+        .tutorial-dim .side-panel,
+        .tutorial-dim .game-header {
+            opacity: 0.3;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .tutorial-dim .tutorial-spotlight {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        .tutorial-highlight {
+            animation: tutorialPulse 1.2s ease-in-out infinite;
+        }
+        @keyframes tutorialPulse {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(230, 168, 23, 0.3); }
+            50% { box-shadow: 0 0 0 6px rgba(230, 168, 23, 0.6); }
+        }
+        .interactive-tutorial-msg {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(42, 42, 42, 0.92);
+            color: #fffdf7;
+            padding: 12px 24px;
+            font-family: Georgia, serif;
+            font-size: 15px;
+            z-index: 1300;
+            text-align: center;
+            max-width: 400px;
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .interactive-tutorial-msg.show {
+            opacity: 1;
+        }
+        .interactive-tutorial-msg .tutorial-key {
+            display: inline-block;
+            background: #e6a817;
+            color: #2a2a2a;
+            padding: 1px 6px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 2px;
+        }
+
+        /* Accessibility: Colorblind Mode */
+        .colorblind-mode .principle-card.violation {
+            background: repeating-linear-gradient(45deg, #fffdf7, #fffdf7 4px, #fff0d0 4px, #fff0d0 8px) !important;
+            border-color: #cc8800 !important;
+        }
+        .colorblind-mode .principle-card.active {
+            background: #1a4a8a !important;
+            color: #fffdf7 !important;
+        }
+
+        /* Accessibility: High Contrast Mode */
+        .high-contrast-mode .game-board-container {
+            border: 3px solid #000 !important;
+        }
+        .high-contrast-mode .stat-box {
+            border-width: 3px !important;
+        }
+        .high-contrast-mode .principle-card {
+            border-width: 3px !important;
+        }
+        .high-contrast-mode .hand-card {
+            border-width: 4px !important;
+        }
+        .high-contrast-mode .stat-label,
+        .high-contrast-mode .stat-value {
+            color: #000 !important;
+        }
+
+        /* Accessibility: Large Text Mode */
+        .large-text-mode .stat-label { font-size: 12px !important; }
+        .large-text-mode .stat-value { font-size: 20px !important; }
+        .large-text-mode .principle-card { font-size: 11px !important; }
+        .large-text-mode .principle-card h4 { font-size: 13px !important; }
+        .large-text-mode .hand-card-dims { font-size: 12px !important; }
+        .large-text-mode .hand-card-type { font-size: 10px !important; }
+        .large-text-mode .feedback-toast { font-size: 16px !important; }
     </style>
 </head>
 <body>
@@ -1263,9 +1656,11 @@
         <div class="side-panel">
             <div class="mode-switcher">
                 <button id="challengeBtn" class="active">Challenge</button>
+                <button id="freestyleBtn">Freestyle</button>
                 <button id="designBtn">Design</button>
             </div>
-            <div id="wallSizeSelector" class="wall-size-selector">
+            <!-- Wall size selector — 12' option hidden for now, re-enable by removing style="display:none" -->
+            <div id="wallSizeSelector" class="wall-size-selector" style="display:none">
                 <button id="wallSize12">12'</button>
                 <button id="wallSize6" class="active">6'</button>
             </div>
@@ -1273,6 +1668,7 @@
             <div class="controls" id="gameControls">
                 <button class="btn" id="startBtn">Start</button>
                 <button class="btn" id="pauseBtn">Pause</button>
+                <button class="btn help-btn" id="settingsBtn" title="Settings" onclick="showSettings()">&#x2699;</button>
                 <button class="btn help-btn" id="soundToggleBtn" title="Toggle sound" onclick="toggleSound()">&#x1F50A;</button>
                 <button class="btn help-btn" id="helpBtn" title="How to play">?</button>
             </div>
@@ -1301,36 +1697,43 @@
             <div class="principle-card" id="principle-layflat">
                 <h4>LAY FLAT</h4>
                 <p>Wider than tall. Rotate to lay flat!</p>
+                <div class="principle-detail">Stones are strongest when laid on their widest face. Use W or ↑ to rotate before placing. Coping stones are the exception — they stand on end.</div>
             </div>
 
             <div class="principle-card" id="principle-1over2">
                 <h4>1 OVER 2</h4>
                 <p>One stone on two below. Not 3+.</p>
+                <div class="principle-detail">Each stone should bridge across the joint between two stones below it. Sitting on 3+ stones means you're not spanning gaps well enough.</div>
             </div>
 
             <div class="principle-card" id="principle-2into1">
                 <h4>2 INTO 1</h4>
                 <p>Two match one. No zipper joints!</p>
+                <div class="principle-detail">Avoid aligning vertical joints. When joints stack up in a column, it creates a "zipper" — a crack that weakens the wall structurally.</div>
             </div>
 
             <div class="principle-card" id="principle-middlethird">
                 <h4>MIDDLE THIRD</h4>
                 <p>Edges in middle third below.</p>
+                <div class="principle-detail">A stone's edges should land in the middle third of the stone below. Dead center is ideal. This creates the strongest bond between courses.</div>
             </div>
 
             <div class="principle-card" id="principle-coursing">
                 <h4>COURSING</h4>
                 <p>Large at base, smaller up top.</p>
+                <div class="principle-detail">Build thick stones at the bottom (9-12"), medium in the middle (5-8"), and thin near the top (2-4"). This creates a stable, tapered wall.</div>
             </div>
 
             <div class="principle-card" id="principle-coping">
                 <h4>COPING</h4>
                 <p>Stones stood on end cap the wall.</p>
+                <div class="principle-detail">Coping stones are set upright along the wall top to lock everything together. Bank stones early using B, then click "Set Copes" when ready.</div>
             </div>
 
             <div class="principle-card" id="principle-through">
                 <h4>THROUGH STONE</h4>
                 <p>Dark stones at the halfway point (27").</p>
+                <div class="principle-detail">Through stones span the full wall thickness at the 27" through line. Bank them with T when drawn, then retrieve with T when you reach the line.</div>
             </div>
 
             <!-- Design Mode Panel (hidden by default) -->
@@ -1466,6 +1869,11 @@
             <div class="star-rating" id="starRating"></div>
             <div class="new-high-score" id="newHighScoreMsg" style="display:none">New High Score!</div>
             <div class="final-score" id="finalScore">0</div>
+            <div class="best-comparison" id="bestComparison" style="display:none"></div>
+            <div class="score-breakdown" id="scoreBreakdown">
+                <button class="score-breakdown-toggle" onclick="this.parentElement.classList.toggle('open')">Score Breakdown</button>
+                <div class="score-breakdown-details" id="scoreBreakdownDetails"></div>
+            </div>
             <div class="stats-grid">
                 <div class="end-stat">
                     <div class="end-stat-label">Stones Placed</div>
@@ -1516,9 +1924,95 @@
                 <h3>High Scores</h3>
                 <div id="gameOverHighScores"></div>
             </div>
+            <div id="missedSummary" style="font-size:10px; color:#666; margin-top:8px; font-style:italic;"></div>
             <button class="btn" id="restartBtn">Build Again</button>
+            <button class="btn" id="reviewWallBtn" style="margin-top:6px; background:#eee; color:#2a2a2a; border-color:#888;">Review Wall</button>
+            <button class="btn" id="saveWallImageBtn" style="margin-top:6px; background:#e8f0e8; color:#2a6a2a; border-color:#2a8a2a;">Save Wall Image</button>
         </div>
     </div>
+
+    <!-- Interactive Tutorial Message -->
+    <div class="interactive-tutorial-msg" id="interactiveTutorialMsg"></div>
+
+    <!-- Settings Overlay -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-content">
+            <h2>Settings</h2>
+
+            <div class="settings-section">
+                <h3>Audio</h3>
+                <div class="settings-row">
+                    <label>Master Volume</label>
+                    <input type="range" id="settingMasterVol" min="0" max="100" value="100">
+                    <span class="range-value" id="settingMasterVolVal">100</span>
+                </div>
+                <div class="settings-row">
+                    <label>SFX Volume</label>
+                    <input type="range" id="settingSfxVol" min="0" max="100" value="70">
+                    <span class="range-value" id="settingSfxVolVal">70</span>
+                </div>
+                <div class="settings-row">
+                    <label>Music Volume</label>
+                    <input type="range" id="settingMusicVol" min="0" max="100" value="60">
+                    <span class="range-value" id="settingMusicVolVal">60</span>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Gameplay</h3>
+                <div class="settings-row">
+                    <label>Drop Speed</label>
+                    <select id="settingDropSpeed">
+                        <option value="relaxed">Relaxed</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="intense">Intense</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <label>Show Grid Lines</label>
+                    <div class="settings-toggle" id="settingGridLines" onclick="toggleSettingSwitch(this)"></div>
+                </div>
+                <div class="settings-row">
+                    <label>Show Stone Guides</label>
+                    <div class="settings-toggle on" id="settingGuides" onclick="toggleSettingSwitch(this)"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Accessibility</h3>
+                <div class="settings-row">
+                    <label>Colorblind Mode</label>
+                    <div class="settings-toggle" id="settingColorblind" onclick="toggleSettingSwitch(this)"></div>
+                </div>
+                <div class="settings-row">
+                    <label>High Contrast</label>
+                    <div class="settings-toggle" id="settingHighContrast" onclick="toggleSettingSwitch(this)"></div>
+                </div>
+                <div class="settings-row">
+                    <label>Large Text</label>
+                    <div class="settings-toggle" id="settingLargeText" onclick="toggleSettingSwitch(this)"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Data</h3>
+                <div class="settings-actions">
+                    <button class="btn" onclick="resetHighScoresFromSettings()">Reset High Scores</button>
+                    <button class="btn" onclick="clearAutoSaveFromSettings()">Clear Auto-Save</button>
+                </div>
+            </div>
+
+            <button class="settings-close-btn" onclick="hideSettings()">Close</button>
+        </div>
+    </div>
+
+    <!-- Wall Review Controls (Feature 31) -->
+    <div id="reviewControls" style="display:none; text-align:center; padding:8px; background:#fffdf7; border:2px solid #2a2a2a; margin-top:4px;">
+        <label style="font-size:11px; font-family:Georgia; color:#2a2a2a;">Timeline: <input type="range" id="reviewScrubber" min="0" max="1" value="1" step="1" style="width:300px; vertical-align:middle;"></label>
+        <span id="reviewScrubberLabel" style="font-size:10px; color:#666; margin-left:8px;">All stones</span>
+        <button class="btn" id="reviewBackBtn" style="margin-left:16px; font-size:10px; padding:4px 12px;">Back to Scores</button>
+    </div>
+    <div id="reviewTooltip" style="display:none; position:fixed; background:#fffdf7; border:2px solid #2a2a2a; padding:8px 12px; font-family:Georgia; font-size:10px; max-width:200px; z-index:1001; pointer-events:none; box-shadow:2px 2px 6px rgba(0,0,0,0.15);"></div>
 
     <!-- Old card popup removed — replaced by persistent hand row -->
 
@@ -1589,6 +2083,7 @@
         let dropInterval = 1200;
         let lastDrop = 0;
         let stoneIdCounter = 0;
+        let previewIdCounter = 0; // Stable preview IDs for hand cards (not dependent on array index)
 
         // Deck and hand system
         let deck = []; // All stones from deconstructed wall
@@ -1709,6 +2204,11 @@
         // Dust particle state (hard drop only)
         let dustParticles = [];
 
+        // Ambient dust motes state (Phase 6B)
+        let ambientMotes = [];
+        let motesInitialized = false;
+        let winnowExplainedThisSession = false; // Show winnow explanation once per session
+
         // Combo scoring state
         let comboCount = 0;
         const COMBO_PHRASES = {
@@ -1729,6 +2229,52 @@
 
         // Sound system: master gain node
         let soundMasterGain = null;
+
+        // Background music state
+        let bgMusic = false;         // Whether background music is currently playing
+        let bgMusicBuffer = null;    // Audio element for the background MP3
+
+        // ============ EASING UTILITY FUNCTIONS ============
+        function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+        function easeInQuad(t) { return t * t; }
+        function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+        // ============ POLISH PASS STATE ============
+
+        // Placement history — records every stone placed for review mode, auto-save, stone naming
+        let placementHistory = [];
+
+        // Peak stability tracking — highest stability reached during the game
+        let peakStability = 100;
+
+        // Glow effect on clean placements
+        let glowStone = null; // {id, startTime, x, y, w, h}
+
+        // Wobble effect on violations
+        let wobbleStone = null; // {id, startTime, cx, cy}
+
+        // Snug fit glow effect
+        let snugFitGlow = null; // {startTime, x, y, w, h}
+
+        // Quick pick timestamp
+        let cardSelectTimestamp = 0;
+
+        // Shortcut overlay state
+        let showingShortcuts = false;
+
+        // Review mode state
+        let reviewMode = false;
+
+        // Freestyle mode state
+        let freestyleMode = false;
+
+        function getHandSize() { return freestyleMode ? 7 : HAND_SIZE; }
+
+        function updateModeButtons() {
+            document.getElementById('challengeBtn').classList.toggle('active', !designMode && !freestyleMode);
+            document.getElementById('freestyleBtn').classList.toggle('active', freestyleMode && !designMode);
+            document.getElementById('designBtn').classList.toggle('active', designMode);
+        }
 
         // ============ SCREEN SHAKE SYSTEM ============
 
@@ -1850,6 +2396,49 @@
             ctx.restore();
         }
 
+        // ============ AMBIENT DUST MOTES ============
+
+        function drawAmbientMotes() {
+            // Initialize motes once
+            if (!motesInitialized) {
+                motesInitialized = true;
+                for (let i = 0; i < 8; i++) {
+                    ambientMotes.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * (ROWS - 2 - WALL_HEIGHT) * BLOCK_SIZE, // Sky area only
+                        size: 1 + Math.random() * 1.5,
+                        speed: 0.1 + Math.random() * 0.15,
+                        phase: Math.random() * Math.PI * 2,
+                        drift: 0.3 + Math.random() * 0.4
+                    });
+                }
+            }
+
+            const t = performance.now() / 1000;
+            const skyH = (ROWS - 2 - WALL_HEIGHT) * BLOCK_SIZE;
+
+            ctx.save();
+            for (const m of ambientMotes) {
+                // Gentle upward drift + sine wave horizontal motion
+                m.y -= m.speed;
+                m.x += Math.sin(t * m.drift + m.phase) * 0.3;
+
+                // Wrap around
+                if (m.y < -5) {
+                    m.y = skyH + 5;
+                    m.x = Math.random() * canvas.width;
+                }
+
+                ctx.globalAlpha = 0.12;
+                ctx.fillStyle = '#c8b898';
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        }
+
         // ============ DANGER VIGNETTE ============
 
         function drawDangerVignette() {
@@ -1893,6 +2482,9 @@
 
         // ============ SOUND SYSTEM ============
 
+        let sfxVolume = 0.7;
+        let musicVolume = 0.6;
+
         function initAudio() {
             if (audioCtx) return;
             try {
@@ -1900,6 +2492,16 @@
                 soundMasterGain = audioCtx.createGain();
                 soundMasterGain.connect(audioCtx.destination);
                 soundMasterGain.gain.value = soundEnabled ? 1 : 0;
+                generateSoundBuffers();
+                // Load background atmosphere MP3 via <audio> element (works with file:// protocol)
+                try {
+                    const audioEl = new Audio('Audio/bbc_atmosphere_07062114.mp3');
+                    audioEl.loop = true;
+                    audioEl.preload = 'auto';
+                    bgMusicBuffer = audioEl; // Store the <audio> element
+                } catch (e) {
+                    console.warn('Background audio element failed:', e);
+                }
             } catch (e) {
                 console.warn('Web Audio API not available:', e);
             }
@@ -1911,7 +2513,7 @@
                 const source = audioCtx.createBufferSource();
                 source.buffer = soundBuffers[name];
                 const gain = audioCtx.createGain();
-                gain.gain.value = volume;
+                gain.gain.value = volume * sfxVolume;
                 source.connect(gain);
                 gain.connect(soundMasterGain);
                 source.start(0);
@@ -1920,13 +2522,370 @@
             }
         }
 
+        // ============ BACKGROUND MUSIC ============
+        // Uses an <audio> element for file:// protocol compatibility.
+        // bgMusicBuffer holds the Audio element, bgMusic flags whether it's playing.
+
+        function startBgMusic() {
+            if (!bgMusicBuffer || bgMusic) return;
+            try {
+                bgMusicBuffer.volume = soundEnabled ? musicVolume * (gameSettings.masterVolume / 100) : 0;
+                bgMusicBuffer.currentTime = 0;
+                bgMusicBuffer.play().catch(() => {});
+                bgMusic = true;
+            } catch (e) {
+                console.warn('Background music start failed:', e);
+            }
+        }
+
+        function stopBgMusic() {
+            if (bgMusic && bgMusicBuffer) {
+                try {
+                    bgMusicBuffer.pause();
+                    bgMusicBuffer.currentTime = 0;
+                } catch(e) {}
+                bgMusic = false;
+            }
+        }
+
+        function updateBgMusicVolume() {
+            if (bgMusicBuffer) {
+                bgMusicBuffer.volume = soundEnabled ? musicVolume * (gameSettings.masterVolume / 100) : 0;
+            }
+        }
+
+        // ============ SYNTHESIZED SOUND GENERATION ============
+
+        function generateSoundBuffers() {
+            if (!audioCtx) return;
+            const sr = audioCtx.sampleRate;
+
+            // Helper: create a buffer from a generator function
+            function makeBuffer(duration, generator) {
+                const len = Math.floor(sr * duration);
+                const buffer = audioCtx.createBuffer(1, len, sr);
+                const data = buffer.getChannelData(0);
+                generator(data, len, sr);
+                return buffer;
+            }
+
+            // thunk — default stone placement: low sine + noise burst
+            soundBuffers['thunk'] = makeBuffer(0.2, (d, len, sr) => {
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    const env = Math.exp(-t * 25); // fast decay
+                    const sine = Math.sin(2 * Math.PI * 80 * t) * 0.6;
+                    const noise = (Math.random() * 2 - 1) * (t < 0.03 ? 0.5 : 0) * Math.exp(-t * 60);
+                    d[i] = (sine + noise) * env;
+                }
+            });
+
+            // deepThud — heavy/thick stone: lower, longer
+            soundBuffers['deepThud'] = makeBuffer(0.4, (d, len, sr) => {
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    const env = Math.exp(-t * 12);
+                    const sine1 = Math.sin(2 * Math.PI * 50 * t) * 0.5;
+                    const sine2 = Math.sin(2 * Math.PI * 25 * t) * 0.3;
+                    const noise = (Math.random() * 2 - 1) * (t < 0.05 ? 0.4 : 0) * Math.exp(-t * 40);
+                    d[i] = (sine1 + sine2 + noise) * env;
+                }
+            });
+
+            // bass — through stone placement: deep sweep
+            soundBuffers['bass'] = makeBuffer(0.5, (d, len, sr) => {
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    const env = Math.exp(-t * 6);
+                    const freq = 60 - t * 40; // sweep 60→40Hz
+                    const sine = Math.sin(2 * Math.PI * freq * t) * 0.5;
+                    const sub = Math.sin(2 * Math.PI * 30 * t) * 0.2;
+                    d[i] = (sine + sub) * env;
+                }
+            });
+
+            // tap — thin/small stone or coping: bright click
+            soundBuffers['tap'] = makeBuffer(0.08, (d, len, sr) => {
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    const env = Math.exp(-t * 80);
+                    const sine = Math.sin(2 * Math.PI * 800 * t) * 0.3;
+                    const noise = (Math.random() * 2 - 1) * 0.5 * Math.exp(-t * 100);
+                    d[i] = (sine + noise) * env;
+                }
+            });
+
+            // chime — clean placement reward: musical two-tone
+            soundBuffers['chime'] = makeBuffer(0.7, (d, len, sr) => {
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    // Gentle attack (20ms ramp)
+                    const attack = Math.min(1, t / 0.02);
+                    const decay = Math.exp(-t * 3.5);
+                    const env = attack * decay;
+                    const tone1 = Math.sin(2 * Math.PI * 523 * t) * 0.3; // C5
+                    const tone2 = Math.sin(2 * Math.PI * 659 * t) * 0.25; // E5
+                    const tone3 = Math.sin(2 * Math.PI * 784 * t) * 0.1; // G5 (subtle)
+                    d[i] = (tone1 + tone2 + tone3) * env;
+                }
+            });
+
+            // violation — bad placement: dissonant buzz
+            soundBuffers['violation'] = makeBuffer(0.25, (d, len, sr) => {
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    const env = Math.exp(-t * 10);
+                    // Detuned square waves for dissonance
+                    const sq1 = (Math.sin(2 * Math.PI * 200 * t) > 0 ? 1 : -1) * 0.2;
+                    const sq2 = (Math.sin(2 * Math.PI * 213 * t) > 0 ? 1 : -1) * 0.15;
+                    // Some noise grit
+                    const noise = (Math.random() * 2 - 1) * 0.08 * Math.exp(-t * 20);
+                    d[i] = (sq1 + sq2 + noise) * env;
+                }
+            });
+
+            // rumble — danger threshold: low ominous swell
+            soundBuffers['rumble'] = makeBuffer(1.0, (d, len, sr) => {
+                // Brown noise (accumulated random walk) filtered low
+                let brown = 0;
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    // Swell envelope: ramps up then decays
+                    const swell = Math.min(1, t / 0.2) * Math.exp(-(t - 0.2) * 2);
+                    brown += (Math.random() * 2 - 1) * 0.1;
+                    brown *= 0.998; // low-pass leak
+                    const sine = Math.sin(2 * Math.PI * 35 * t) * 0.2; // deep rumble tone
+                    d[i] = (brown * 0.6 + sine) * swell;
+                }
+            });
+
+            // tight — snug fit bonus: quick ascending sweep
+            soundBuffers['tight'] = makeBuffer(0.15, (d, len, sr) => {
+                for (let i = 0; i < len; i++) {
+                    const t = i / sr;
+                    const env = Math.exp(-t * 15);
+                    const freq = 300 + t * 2000; // sweep 300→600Hz
+                    const sine = Math.sin(2 * Math.PI * freq * t) * 0.35;
+                    const noise = (Math.random() * 2 - 1) * 0.1 * Math.exp(-t * 50);
+                    d[i] = (sine + noise) * env;
+                }
+            });
+        }
+
         function toggleSound() {
             soundEnabled = !soundEnabled;
             if (soundMasterGain) {
-                soundMasterGain.gain.value = soundEnabled ? 1 : 0;
+                soundMasterGain.gain.value = soundEnabled ? (gameSettings.masterVolume / 100) : 0;
             }
+            updateBgMusicVolume();
             const btn = document.getElementById('soundToggleBtn');
             if (btn) btn.textContent = soundEnabled ? '\u{1F50A}' : '\u{1F507}';
+        }
+
+        // ============ RESPONSIVE SCALING + FULLSCREEN ============
+
+        let currentScale = 1;
+
+        function updateGameScale() {
+            const wrapper = document.querySelector('.game-wrapper');
+            if (!wrapper) return;
+
+            // Temporarily remove scale to measure natural size
+            wrapper.style.transform = 'none';
+            const naturalW = wrapper.scrollWidth;
+            const naturalH = wrapper.scrollHeight;
+
+            // Available viewport (account for body padding)
+            const viewW = window.innerWidth - 20;  // body padding: 10px each side
+            const viewH = window.innerHeight - 20;
+
+            // Scale to fit, never exceed 1.0 (don't scale UP)
+            const scale = Math.min(viewW / naturalW, viewH / naturalH, 1.0);
+            currentScale = scale;
+
+            if (scale < 0.999) {
+                wrapper.style.transform = 'scale(' + scale + ')';
+                // Shrink the body's layout height so no scrollbar appears
+                document.body.style.height = (naturalH * scale + 20) + 'px';
+                document.body.style.overflow = 'hidden';
+            } else {
+                wrapper.style.transform = 'none';
+                document.body.style.height = '';
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Fullscreen removed — can be re-enabled with:
+        // function toggleFullscreen() {
+        //     if (!document.fullscreenElement) {
+        //         document.documentElement.requestFullscreen().then(() => {
+        //             setTimeout(updateGameScale, 100);
+        //         }).catch(() => {});
+        //     } else {
+        //         document.exitFullscreen().then(() => {
+        //             setTimeout(updateGameScale, 100);
+        //         }).catch(() => {});
+        //     }
+        // }
+
+        // ============ SETTINGS SYSTEM ============
+
+        let gameSettings = {
+            masterVolume: 100,
+            sfxVolume: 70,
+            musicVolume: 60,
+            dropSpeed: 'normal',     // 'relaxed', 'normal', 'intense'
+            showGridLines: false,
+            showGuides: true,
+            colorblind: false,
+            highContrast: false,
+            largeText: false
+        };
+
+        const DROP_SPEED_MULTIPLIERS = { relaxed: 1.5, normal: 1.0, intense: 0.75 };
+
+        function showSettings() {
+            const overlay = document.getElementById('settingsOverlay');
+            overlay.classList.add('show');
+            // Sync UI to current settings
+            document.getElementById('settingMasterVol').value = gameSettings.masterVolume;
+            document.getElementById('settingMasterVolVal').textContent = gameSettings.masterVolume;
+            document.getElementById('settingSfxVol').value = gameSettings.sfxVolume;
+            document.getElementById('settingSfxVolVal').textContent = gameSettings.sfxVolume;
+            document.getElementById('settingMusicVol').value = gameSettings.musicVolume;
+            document.getElementById('settingMusicVolVal').textContent = gameSettings.musicVolume;
+            document.getElementById('settingDropSpeed').value = gameSettings.dropSpeed;
+            setToggleState('settingGridLines', gameSettings.showGridLines);
+            setToggleState('settingGuides', gameSettings.showGuides);
+            setToggleState('settingColorblind', gameSettings.colorblind);
+            setToggleState('settingHighContrast', gameSettings.highContrast);
+            setToggleState('settingLargeText', gameSettings.largeText);
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsOverlay').classList.remove('show');
+            // Read all values from UI and apply
+            gameSettings.masterVolume = parseInt(document.getElementById('settingMasterVol').value);
+            gameSettings.sfxVolume = parseInt(document.getElementById('settingSfxVol').value);
+            gameSettings.musicVolume = parseInt(document.getElementById('settingMusicVol').value);
+            gameSettings.dropSpeed = document.getElementById('settingDropSpeed').value;
+            gameSettings.showGridLines = getToggleState('settingGridLines');
+            gameSettings.showGuides = getToggleState('settingGuides');
+            gameSettings.colorblind = getToggleState('settingColorblind');
+            gameSettings.highContrast = getToggleState('settingHighContrast');
+            gameSettings.largeText = getToggleState('settingLargeText');
+            applySettings();
+            saveSettings();
+        }
+
+        function applySettings() {
+            // Audio
+            sfxVolume = gameSettings.sfxVolume / 100;
+            musicVolume = gameSettings.musicVolume / 100;
+            if (soundMasterGain) {
+                soundMasterGain.gain.value = soundEnabled ? (gameSettings.masterVolume / 100) : 0;
+            }
+            updateBgMusicVolume();
+
+            // Accessibility — colorblind mode
+            if (gameSettings.colorblind) {
+                document.body.classList.add('colorblind-mode');
+            } else {
+                document.body.classList.remove('colorblind-mode');
+            }
+
+            // Accessibility — high contrast
+            if (gameSettings.highContrast) {
+                document.body.classList.add('high-contrast-mode');
+            } else {
+                document.body.classList.remove('high-contrast-mode');
+            }
+
+            // Accessibility — large text
+            if (gameSettings.largeText) {
+                document.body.classList.add('large-text-mode');
+            } else {
+                document.body.classList.remove('large-text-mode');
+            }
+
+            // Redraw board to reflect grid lines / guides changes
+            if (typeof _bgCache !== 'undefined') {
+                _bgCache = null; // Force background redraw
+            }
+            if (typeof drawBoard === 'function' && typeof canvas !== 'undefined' && canvas) {
+                try { drawBoard(); } catch(e) {}
+            }
+        }
+
+        function saveSettings() {
+            try {
+                localStorage.setItem('sbs_settings', JSON.stringify(gameSettings));
+            } catch (e) {}
+        }
+
+        function loadSettings() {
+            try {
+                const data = localStorage.getItem('sbs_settings');
+                if (data) {
+                    const saved = JSON.parse(data);
+                    Object.assign(gameSettings, saved);
+                }
+            } catch (e) {}
+        }
+
+        function toggleSettingSwitch(el) {
+            el.classList.toggle('on');
+            // Live-update volume sliders
+            updateSettingLivePreview();
+        }
+
+        function setToggleState(id, on) {
+            const el = document.getElementById(id);
+            if (on) el.classList.add('on');
+            else el.classList.remove('on');
+        }
+
+        function getToggleState(id) {
+            return document.getElementById(id).classList.contains('on');
+        }
+
+        function updateSettingLivePreview() {
+            // Update volume display values as sliders move
+            const mv = document.getElementById('settingMasterVol');
+            const sv = document.getElementById('settingSfxVol');
+            const muv = document.getElementById('settingMusicVol');
+            if (mv) document.getElementById('settingMasterVolVal').textContent = mv.value;
+            if (sv) document.getElementById('settingSfxVolVal').textContent = sv.value;
+            if (muv) document.getElementById('settingMusicVolVal').textContent = muv.value;
+
+            // Live volume preview
+            if (soundMasterGain) {
+                soundMasterGain.gain.value = soundEnabled ? (parseInt(mv.value) / 100) : 0;
+            }
+            sfxVolume = parseInt(sv.value) / 100;
+            musicVolume = parseInt(muv.value) / 100;
+            updateBgMusicVolume();
+        }
+
+        function resetHighScoresFromSettings() {
+            if (confirm('Reset all high scores? This cannot be undone.')) {
+                localStorage.removeItem('sbs_highscores_6ft');
+                localStorage.removeItem('sbs_highscores_12ft');
+                renderSidebarHighScores();
+                showFeedback('High scores reset', 'positive');
+            }
+        }
+
+        function clearAutoSaveFromSettings() {
+            if (confirm('Clear auto-saved game data?')) {
+                clearAutoSave();
+                showFeedback('Auto-save cleared', 'positive');
+            }
+        }
+
+        function getBaseDropInterval() {
+            const mult = DROP_SPEED_MULTIPLIERS[gameSettings.dropSpeed] || 1.0;
+            return Math.round(1200 * mult);
         }
 
         function loadStoneImages() {
@@ -1982,7 +2941,7 @@
                     loadedCount++;
                     // Once all assets are loaded, show the canvas and draw with art
                     if (loadedCount >= totalAssets) {
-                        canvas.style.visibility = 'visible';
+                        canvas.classList.add('loaded');
                         drawBoard();
                     }
                 };
@@ -2103,6 +3062,89 @@
             }
         ];
 
+        // ============ INTERACTIVE TUTORIAL ============
+
+        let interactiveTutorialStep = 0;
+        let interactiveTutorialActive = false;
+
+        function startInteractiveTutorial() {
+            interactiveTutorialActive = true;
+            interactiveTutorialStep = 0;
+            // Start the game normally — tutorial runs during gameplay
+            startGame();
+        }
+
+        function showInteractiveTutorialStep() {
+            const msg = document.getElementById('interactiveTutorialMsg');
+            const wrapper = document.querySelector('.game-wrapper');
+
+            // Clear all highlights/dims
+            wrapper.classList.remove('tutorial-dim');
+            document.querySelectorAll('.tutorial-spotlight, .tutorial-highlight').forEach(el => {
+                el.classList.remove('tutorial-spotlight', 'tutorial-highlight');
+            });
+
+            if (interactiveTutorialStep === 0) {
+                // Step 1: "Pick a stone"
+                wrapper.classList.add('tutorial-dim');
+                const handRow = document.getElementById('handRow');
+                handRow.classList.add('tutorial-spotlight', 'tutorial-highlight');
+                msg.innerHTML = 'Choose a stone from your hand';
+                msg.classList.add('show');
+
+            } else if (interactiveTutorialStep === 1) {
+                // Step 2: "Place it on the wall"
+                wrapper.classList.add('tutorial-dim');
+                const boardCol = document.querySelector('.game-board-column');
+                boardCol.classList.add('tutorial-spotlight');
+                msg.innerHTML = '<span class="tutorial-key">\u2190 \u2192</span> move &nbsp; <span class="tutorial-key">\u2191</span> rotate &nbsp; <span class="tutorial-key">Space</span> drop';
+                msg.classList.add('show');
+
+            } else if (interactiveTutorialStep === 2) {
+                // Step 3: "Watch the rules" — highlight principle cards
+                wrapper.classList.add('tutorial-dim');
+                const panel = document.querySelector('.side-panel');
+                panel.classList.add('tutorial-spotlight');
+                document.querySelectorAll('.principle-card').forEach(c => c.classList.add('tutorial-highlight'));
+                msg.innerHTML = '<span style="color:#2a8a2a">Green</span> = good! <span style="color:#cc3333">Red</span> = needs work.<br>These 7 rules score your wall.';
+                msg.classList.add('show');
+                // Auto-advance after 5s
+                setTimeout(() => {
+                    if (interactiveTutorialActive && interactiveTutorialStep === 2) {
+                        advanceInteractiveTutorial();
+                    }
+                }, 5000);
+
+            } else if (interactiveTutorialStep === 3) {
+                // Step 4: Tips + "You're ready!"
+                msg.innerHTML = 'Bank through stones with <span class="tutorial-key">B</span><br>Cut stones with <span class="tutorial-key">C</span> to fit tight gaps<br><br><em>You\'re ready \u2014 build your wall!</em>';
+                msg.classList.add('show');
+                setTimeout(() => {
+                    endInteractiveTutorial();
+                }, 5000);
+
+            } else {
+                endInteractiveTutorial();
+            }
+        }
+
+        function advanceInteractiveTutorial() {
+            interactiveTutorialStep++;
+            showInteractiveTutorialStep();
+        }
+
+        function endInteractiveTutorial() {
+            interactiveTutorialActive = false;
+            const msg = document.getElementById('interactiveTutorialMsg');
+            msg.classList.remove('show');
+            const wrapper = document.querySelector('.game-wrapper');
+            wrapper.classList.remove('tutorial-dim');
+            document.querySelectorAll('.tutorial-spotlight, .tutorial-highlight').forEach(el => {
+                el.classList.remove('tutorial-spotlight', 'tutorial-highlight');
+            });
+            localStorage.setItem('sbs_tutorial_done', '1');
+        }
+
         function showTutorial() {
             tutorialStep = 0;
             document.getElementById('tutorialOverlay').classList.add('show');
@@ -2181,10 +3223,13 @@
             document.getElementById('startBtn').addEventListener('click', handleStartReset);
             document.getElementById('pauseBtn').addEventListener('click', togglePause);
             document.getElementById('restartBtn').addEventListener('click', startGame);
+            document.getElementById('saveWallImageBtn').addEventListener('click', saveWallImage);
+            document.getElementById('reviewWallBtn').addEventListener('click', enterReviewMode);
             document.getElementById('resetConfirmYes').addEventListener('click', confirmReset);
             document.getElementById('resetConfirmNo').addEventListener('click', cancelReset);
-            document.getElementById('challengeBtn').addEventListener('click', () => switchMode('challenge'));
-            document.getElementById('designBtn').addEventListener('click', () => switchMode('design'));
+            document.getElementById('challengeBtn').addEventListener('click', () => { freestyleMode = false; switchMode('challenge'); updateModeButtons(); });
+            document.getElementById('freestyleBtn').addEventListener('click', () => { freestyleMode = true; switchMode('challenge'); updateModeButtons(); });
+            document.getElementById('designBtn').addEventListener('click', () => { freestyleMode = false; switchMode('design'); updateModeButtons(); });
             document.getElementById('clearWallBtn').addEventListener('click', clearDesignWall);
             document.getElementById('saveWallBtn').addEventListener('click', saveDesign);
             document.getElementById('loadWallBtn').addEventListener('click', () => document.getElementById('loadFileInput').click());
@@ -2200,6 +3245,21 @@
             document.getElementById('tutorialSkip').addEventListener('click', skipTutorial);
             document.getElementById('helpBtn').addEventListener('click', showHelp);
             document.addEventListener('keydown', handleKeyPress);
+
+            // Shift key overlay listener (Feature 27)
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'Shift' && showingShortcuts) {
+                    showingShortcuts = false;
+                    drawBoard();
+                }
+            });
+
+            // Double-click principle cards to expand (Feature 26)
+            document.querySelectorAll('.principle-card').forEach(card => {
+                card.addEventListener('dblclick', () => {
+                    card.classList.toggle('expanded');
+                });
+            });
 
             // Migrate old localStorage cheek design key to 12ft-specific key
             const oldCheek = localStorage.getItem('sbs_cheek_design');
@@ -2236,14 +3296,58 @@
             // Custom label dropdown
             initCustomSelect();
 
+            // Load and apply settings
+            loadSettings();
+            applySettings();
+
+            // Settings slider live-update listeners
+            ['settingMasterVol', 'settingSfxVol', 'settingMusicVol'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateSettingLivePreview);
+            });
+
             // Render sidebar high scores on init
             renderSidebarHighScores();
 
+            // Check for auto-saved game (Feature 33)
+            const savedState = checkAutoSave();
+            if (savedState) {
+                // Show resume prompt after assets load
+                const origOnLoad = () => {
+                    if (confirm('Resume your previous game?')) {
+                        restoreAutoSave(savedState);
+                    } else {
+                        clearAutoSave();
+                    }
+                };
+                // Defer until after canvas is visible
+                setTimeout(() => {
+                    if (canvas.classList.contains('loaded')) {
+                        origOnLoad();
+                    } else {
+                        // Wait for assets to load
+                        const observer = new MutationObserver((mutations, obs) => {
+                            if (canvas.classList.contains('loaded')) {
+                                obs.disconnect();
+                                origOnLoad();
+                            }
+                        });
+                        observer.observe(canvas, { attributes: true, attributeFilter: ['class'] });
+                    }
+                }, 500);
+            }
+
             // Build the pre-built wall data but DON'T draw yet — wait for
             // stone assets to finish loading so we never flash generic blocks.
-            canvas.style.visibility = 'hidden';
+            canvas.classList.remove('loaded'); // Start hidden, fade in when assets load
             createBoard(true);
             generateCompletedWall();
+
+            // Responsive scaling — fit game to viewport
+            updateGameScale();
+            // Fullscreen listener removed — re-enable with toggleFullscreen()
+            // document.addEventListener('fullscreenchange', () => {
+            //     setTimeout(updateGameScale, 100);
+            // });
         }
 
         function getSelectedLabel() {
@@ -2289,6 +3393,11 @@
             if (!handRow) return;
             handRow.innerHTML = '';
 
+            // Streak visual warmth on hand row (Feature 21)
+            handRow.classList.remove('warm', 'hot');
+            if (comboCount >= 5) handRow.classList.add('hot');
+            else if (comboCount >= 2) handRow.classList.add('warm');
+
             if (gamePhase !== 'playing' || hand.length === 0) return;
 
             hand.forEach((stone, index) => {
@@ -2326,7 +3435,7 @@
                     previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
                 }
                 // Use a preview ID based on stone properties + hand index so different variants show
-                const previewId = stone.id || (stone.width * 1000 + stone.height * 100 + index * 7 + stone.thickness);
+                const previewId = stone._previewId || stone.id || (stone.width * 1000 + stone.height * 100 + stone.thickness);
                 drawStoneBlock(previewCtx, 0, 0, previewCanvas.width, previewCanvas.height, stone.thickness, false, false, false, stone.width, stone.height, isThroughStone, previewId);
 
                 // Type label — only through stones get a label, others just show dimensions
@@ -2338,16 +3447,25 @@
                     ? `<button class="hand-card-bank-btn" onclick="event.stopPropagation(); bankStone()">Bank</button>`
                     : '';
                 // Cut button visible on selected card while dropping if stone is wide enough (unlimited cuts)
-                const showCut = !awaitingCardSelection && gameRunning && currentStone && currentStone.width > 2 && index === selectedCardIndex;
+                const showCut = !awaitingCardSelection && gameRunning && currentStone && (currentStone.width > 1 || currentStone.height > 1) && index === selectedCardIndex;
                 const cutLabel = cutsUsed < 3 ? `Cut (${3 - cutsUsed} free)` : `Cut (${cutsUsed})`;
                 const cutBtnStyle = cutsUsed < 3 ? 'background:#fde8e8; border-color:#cc4444; color:#cc4444;' : 'background:#f5e8e8; border-color:#996666; color:#996666;';
                 const cutBtn = showCut
                     ? `<button class="hand-card-bank-btn" style="${cutBtnStyle}" onclick="event.stopPropagation(); startCut()">${cutLabel}</button>`
                     : '';
+                // Card hints (Feature 24)
+                let hintText = '';
+                if (isThroughStone && awaitingCardSelection) {
+                    hintText = 'T: Bank';
+                } else if (awaitingCardSelection && getWallProgress() > 0.75 && copingBank.length < copingBankTarget) {
+                    hintText = 'B: Bank for coping';
+                }
+
                 card.innerHTML = `
                     <div class="hand-card-preview"></div>
                     <div class="hand-card-dims">${stone.height}" × ${stone.width}"</div>
                     ${typeLabel ? `<div class="hand-card-type">${typeLabel}</div>` : ''}
+                    ${hintText ? `<div class="hand-card-hint">${hintText}</div>` : ''}
                     ${bankBtn}${cutBtn}
                 `;
                 card.querySelector('.hand-card-preview').appendChild(previewCanvas);
@@ -2367,8 +3485,12 @@
             const pullBtnHtml = (awaitingCardSelection && pullsRemaining > 0)
                 ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" onclick="startPullMode()">Pull (U) <strong>${pullsRemaining}</strong></button>`
                 : (pullsRemaining > 0 ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" disabled>Pull (U) <strong>${pullsRemaining}</strong></button>` : '');
+            const deckPct = totalDeckSize > 0 ? Math.round((deck.length / totalDeckSize) * 100) : 0;
             info.innerHTML = `
-                <span><strong>${deck.length}</strong> in deck</span>
+                <div class="deck-bar-container">
+                    <div class="deck-bar"><div class="deck-bar-fill" style="width:${deckPct}%"></div></div>
+                    <span class="deck-count">${deck.length}</span>
+                </div>
                 ${pinBtnHtml}
                 ${throughBtnHtml}
                 ${pullBtnHtml}
@@ -2398,12 +3520,32 @@
             selectedCardIndex = index;
             awaitingCardSelection = false;
             hoveredCardIndex = -1;
+            cardSelectTimestamp = performance.now(); // Quick pick timing
 
             // Spawn the stone
             selectCard(index);
 
             // Update hand row to show disabled/placing state
             renderHandRow();
+
+            // Interactive tutorial: advance from "Pick a stone" to "Place it"
+            if (interactiveTutorialActive && interactiveTutorialStep === 0) {
+                advanceInteractiveTutorial();
+            }
+
+            // Hide cursor during stone drop
+            canvas.style.cursor = 'none';
+
+            // Weight feel: heavy stones drop faster, thin stones slower (Feature 14)
+            const selectedStone = hand[index];
+            if (selectedStone) {
+                const stoneArea = selectedStone.width * selectedStone.height;
+                if (selectedStone.thickness >= 3 || stoneArea >= 120) {
+                    dropInterval = Math.round(dropInterval * 0.8);
+                } else if (selectedStone.thickness <= 1 && stoneArea <= 16) {
+                    dropInterval = Math.round(dropInterval * 1.2);
+                }
+            }
 
             // Start the game loop for this stone's drop
             gameRunning = true;
@@ -2741,6 +3883,7 @@
             facePinMode = true;
             awaitingCardSelection = false;
             clearCardSelectTimer();
+            canvas.style.cursor = 'crosshair';
             showFeedback('Click a highlighted void to place face pin (' + facePinVoids.length + ' available)', 'neutral');
             drawBoard();
         }
@@ -2755,6 +3898,7 @@
             facePinMode = false;
             facePinVoids = [];
             facePinsRemaining--;
+            canvas.style.cursor = '';
 
             // Create and place the face pin stone
             const pinId = ++stoneIdCounter;
@@ -2789,6 +3933,7 @@
             facePinMode = false;
             facePinVoids = [];
             awaitingCardSelection = true;
+            canvas.style.cursor = '';
             startCardSelectTimer();
             drawBoard();
             showFeedback('Face pin cancelled', 'neutral');
@@ -2836,6 +3981,7 @@
 
             pullMode = true;
             clearCardSelectTimer();
+            canvas.style.cursor = 'crosshair';
             drawBoard();
             showFeedback('Click a blue stone to pull it off', 'neutral');
         }
@@ -2882,6 +4028,7 @@
             pullsRemaining--;
             pullMode = false;
             pullableStones = [];
+            canvas.style.cursor = '';
 
             // Resume card selection
             awaitingCardSelection = true;
@@ -2895,6 +4042,7 @@
             pullMode = false;
             pullableStones = [];
             awaitingCardSelection = true;
+            canvas.style.cursor = '';
             startCardSelectTimer();
             drawBoard();
             showFeedback('Pull cancelled', 'neutral');
@@ -2910,7 +4058,7 @@
 
         function startCut() {
             if (!gameRunning || !currentStone || gamePhase !== 'playing') return;
-            if (currentStone.width <= 2 && currentStone.height <= 2) {
+            if (currentStone.width <= 1 && currentStone.height <= 1) {
                 showFeedback('Stone too small to cut!', 'negative');
                 return;
             }
@@ -2918,7 +4066,7 @@
             cutMode = true;
             cutStone = { width: currentStone.width, height: currentStone.height, thickness: currentStone.thickness, isThroughStone: currentStone.isThroughStone || false };
             // Default to horizontal; if too narrow, auto-switch to vertical
-            if (currentStone.width <= 2 && currentStone.height > 2) {
+            if (currentStone.width <= 1 && currentStone.height > 1) {
                 cutOrientation = 'vertical';
                 cutLineX = Math.floor(cutStone.height / 2);
             } else {
@@ -3042,10 +4190,10 @@
 
         function toggleCutOrientation() {
             if (!cutMode || cutPhase !== 'position') return;
-            if (cutOrientation === 'horizontal' && cutStone.height > 2) {
+            if (cutOrientation === 'horizontal' && cutStone.height > 1) {
                 cutOrientation = 'vertical';
                 cutLineX = Math.floor(cutStone.height / 2);
-            } else if (cutOrientation === 'vertical' && cutStone.width > 2) {
+            } else if (cutOrientation === 'vertical' && cutStone.width > 1) {
                 cutOrientation = 'horizontal';
                 cutLineX = Math.floor(cutStone.width / 2);
             }
@@ -3059,8 +4207,8 @@
                 const leftW = cutLineX;
                 const rightW = cutStone.width - cutLineX;
 
-                if (leftW < 2 || rightW < 2) {
-                    showFeedback('Both pieces must be at least 2" wide!', 'negative');
+                if (leftW < 1 || rightW < 1) {
+                    showFeedback('Both pieces must be at least 1" wide!', 'negative');
                     return;
                 }
 
@@ -3074,8 +4222,8 @@
                 const topH = cutLineX;
                 const bottomH = cutStone.height - cutLineX;
 
-                if (topH < 2 || bottomH < 2) {
-                    showFeedback('Both pieces must be at least 2" tall!', 'negative');
+                if (topH < 1 || bottomH < 1) {
+                    showFeedback('Both pieces must be at least 1" tall!', 'negative');
                     return;
                 }
 
@@ -3189,6 +4337,7 @@
         // ============ CARD SELECTION TIMER ============
 
         function startCardSelectTimer() {
+            if (freestyleMode) return; // No timer in freestyle mode
             clearCardSelectTimer();
             cardsWinnowed = 0;
             cardSelectDeadline = performance.now() + CARD_SELECT_TIME * 1000;
@@ -3250,6 +4399,12 @@
         function winnowCard() {
             if (hand.length <= 1) return;
             cardsWinnowed++;
+
+            // One-time winnow explanation (Phase 6C)
+            if (!winnowExplainedThisSession) {
+                winnowExplainedThisSession = true;
+                showFeedback('Running out of time — cards are being removed!', 'negative');
+            }
 
             // Pick a random card to remove
             const removeIndex = Math.floor(Math.random() * hand.length);
@@ -3445,8 +4600,7 @@
             hoveredCell = null;
 
             // Update segmented control and reset start button
-            document.getElementById('challengeBtn').classList.toggle('active', !designMode);
-            document.getElementById('designBtn').classList.toggle('active', designMode);
+            updateModeButtons();
             document.getElementById('startBtn').textContent = 'Start';
             clearCardSelectTimer();
             document.getElementById('handRow').style.display = 'none';
@@ -3793,9 +4947,9 @@
             ctx.setLineDash([]);
 
             // "Through" label
-            ctx.font = '8px Georgia';
+            ctx.font = '24px Georgia';
             ctx.fillStyle = 'rgba(138, 106, 74, 0.6)';
-            ctx.fillText('through line', offsetPx + 4, throughRow * BLOCK_SIZE - 3);
+            ctx.fillText('through line', offsetPx + 4, throughRow * BLOCK_SIZE - 6);
 
             // Cope line — marks top of wall body / bottom of coping course
             const copeRow = groundRow - (WALL_HEIGHT - COPING_HEIGHT);
@@ -3807,11 +4961,12 @@
             ctx.lineTo((offset + CHEEK_BASE_WIDTH) * BLOCK_SIZE, copeRow * BLOCK_SIZE);
             ctx.stroke();
             ctx.setLineDash([]);
-            ctx.font = '8px Georgia';
+            ctx.font = '24px Georgia';
             ctx.fillStyle = 'rgba(90, 138, 90, 0.6)';
-            ctx.fillText('cope line', offsetPx + 4, copeRow * BLOCK_SIZE - 3);
+            ctx.fillText('cope line', offsetPx + 4, copeRow * BLOCK_SIZE - 6);
 
             // Height markers every 6 inches along left edge of cheek
+            ctx.font = '11px Georgia';
             ctx.fillStyle = 'rgba(42, 42, 42, 0.4)';
             ctx.textAlign = 'left';
             for (let h = 0; h <= WALL_HEIGHT; h += 6) {
@@ -4920,11 +6075,14 @@
             deconstructionStones = [...originalWallStones].sort((a, b) => a.y - b.y);
             deck = [];
 
-            // Start the deconstruction render loop for falling stones
-            deconRenderLoop = requestAnimationFrame(deconstructRenderStep);
-
-            console.log('Starting deconstruction of', originalWallStones.length, 'stones');
-            deconstructNextStone();
+            // Dramatic start: hold for 1s before stones start falling (Feature 16)
+            drawBoard(); // Show the complete wall first
+            setTimeout(() => {
+                // Start the deconstruction render loop for falling stones
+                deconRenderLoop = requestAnimationFrame(deconstructRenderStep);
+                console.log('Starting deconstruction of', originalWallStones.length, 'stones');
+                deconstructNextStone();
+            }, 1000);
         }
 
         function deconstructRenderStep() {
@@ -4997,6 +6155,23 @@
                 renderHandRow();
                 renderThroughBank();
                 renderCopingBank();
+
+                // Card deal-in animation: stagger card appearance (Feature 17)
+                const cards = document.querySelectorAll('.hand-card');
+                cards.forEach((card, i) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = '';
+                    }, 100 * i);
+                });
+
+                // Interactive tutorial: show step 0 ("Pick a stone") after cards deal in
+                if (interactiveTutorialActive && interactiveTutorialStep === 0) {
+                    setTimeout(() => showInteractiveTutorialStep(), 500);
+                }
                 return;
             }
 
@@ -5089,12 +6264,16 @@
             for (let i = 0; i < deck.length; i++) {
                 roll -= weights[i];
                 if (roll <= 0) {
-                    return deck.splice(i, 1)[0];
+                    const card = deck.splice(i, 1)[0];
+                    card._previewId = ++previewIdCounter;
+                    return card;
                 }
             }
 
             // Fallback
-            return deck.splice(deck.length - 1, 1)[0];
+            const card = deck.splice(deck.length - 1, 1)[0];
+            card._previewId = ++previewIdCounter;
+            return card;
         }
 
         function drawInitialHand() {
@@ -5104,7 +6283,7 @@
             console.log('Deck has', deck.length, 'cards after adding extras');
 
             hand = [];
-            for (let i = 0; i < HAND_SIZE && deck.length > 0; i++) {
+            for (let i = 0; i < getHandSize() && deck.length > 0; i++) {
                 hand.push(drawWeightedCard());
             }
 
@@ -5200,7 +6379,7 @@
             }
 
             shuffleDeck();
-            for (let i = 0; i < HAND_SIZE && deck.length > 0; i++) {
+            for (let i = 0; i < getHandSize() && deck.length > 0; i++) {
                 hand.push(drawWeightedCard());
             }
             selectedCardIndex = 0;
@@ -5284,6 +6463,21 @@
             bgCtx.lineTo(canvas.width, (ROWS - 1) * BLOCK_SIZE);
             bgCtx.stroke();
 
+            // Ground texture — deterministic pseudo-random patches for organic feel
+            const groundY = (ROWS - 1) * BLOCK_SIZE;
+            const groundH = BLOCK_SIZE;
+            const seedVal = 42; // Deterministic seed
+            for (let i = 0; i < 80; i++) {
+                const pseudoRand = ((i * 1327 + seedVal * 997) % 1000) / 1000;
+                const px = pseudoRand * canvas.width;
+                const pw = 8 + ((i * 773 + seedVal) % 20);
+                const ph = 2 + ((i * 431) % 4);
+                const py = groundY + ((i * 557) % (groundH - ph));
+                const lightDark = (i % 3 === 0) ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+                bgCtx.fillStyle = lightDark;
+                bgCtx.fillRect(px, py, pw, ph);
+            }
+
             // Ground hatching — batched into single stroke
             bgCtx.lineWidth = 1;
             bgCtx.beginPath();
@@ -5293,41 +6487,62 @@
             }
             bgCtx.stroke();
 
-            // Through stone reference line (1st Lift / 2nd Lift boundary)
             const groundRow = ROWS - 2;
-            const throughLineY = (groundRow - THROUGH_STONE_ROW) * BLOCK_SIZE;
-            bgCtx.save();
-            bgCtx.strokeStyle = '#8a6a4a';
-            bgCtx.lineWidth = 1;
-            bgCtx.setLineDash([4, 4]);
-            bgCtx.beginPath();
-            bgCtx.moveTo(0, throughLineY);
-            bgCtx.lineTo(canvas.width, throughLineY);
-            bgCtx.stroke();
-            bgCtx.setLineDash([]);
-            // Label
-            bgCtx.font = '9px Georgia';
-            bgCtx.fillStyle = '#8a6a4a';
-            bgCtx.textAlign = 'left';
-            bgCtx.fillText('Through Line (27")', 4, throughLineY - 3);
-            bgCtx.restore();
 
-            // Cope line — marks top of wall body / bottom of coping course (48" from ground)
-            const copeLineY = (groundRow - (WALL_HEIGHT - COPING_HEIGHT)) * BLOCK_SIZE;
-            bgCtx.save();
-            bgCtx.strokeStyle = '#5a8a5a';
-            bgCtx.lineWidth = 1;
-            bgCtx.setLineDash([4, 4]);
-            bgCtx.beginPath();
-            bgCtx.moveTo(0, copeLineY);
-            bgCtx.lineTo(canvas.width, copeLineY);
-            bgCtx.stroke();
-            bgCtx.setLineDash([]);
-            bgCtx.font = '9px Georgia';
-            bgCtx.fillStyle = '#5a8a5a';
-            bgCtx.textAlign = 'left';
-            bgCtx.fillText('Cope Line (48")', 4, copeLineY - 3);
-            bgCtx.restore();
+            // Optional grid lines (settings)
+            if (gameSettings.showGridLines) {
+                bgCtx.strokeStyle = 'rgba(0,0,0,0.04)';
+                bgCtx.lineWidth = 0.5;
+                bgCtx.beginPath();
+                // Vertical lines every 6 inches
+                for (let c = 0; c <= COLS; c += 6) {
+                    bgCtx.moveTo(c * BLOCK_SIZE, 0);
+                    bgCtx.lineTo(c * BLOCK_SIZE, canvas.height);
+                }
+                // Horizontal lines every 6 inches
+                for (let r = 0; r <= ROWS; r += 6) {
+                    bgCtx.moveTo(0, r * BLOCK_SIZE);
+                    bgCtx.lineTo(canvas.width, r * BLOCK_SIZE);
+                }
+                bgCtx.stroke();
+            }
+
+            // Through stone reference line and cope line (togglable via settings)
+            if (gameSettings.showGuides) {
+                const throughLineY = (groundRow - THROUGH_STONE_ROW) * BLOCK_SIZE;
+                bgCtx.save();
+                bgCtx.strokeStyle = '#8a6a4a';
+                bgCtx.lineWidth = 1;
+                bgCtx.setLineDash([4, 4]);
+                bgCtx.beginPath();
+                bgCtx.moveTo(0, throughLineY);
+                bgCtx.lineTo(canvas.width, throughLineY);
+                bgCtx.stroke();
+                bgCtx.setLineDash([]);
+                // Label
+                bgCtx.font = '13px Georgia';
+                bgCtx.fillStyle = '#8a6a4a';
+                bgCtx.textAlign = 'left';
+                bgCtx.fillText('Through Line (27")', 4, throughLineY - 5);
+                bgCtx.restore();
+
+                // Cope line — marks top of wall body / bottom of coping course (48" from ground)
+                const copeLineY = (groundRow - (WALL_HEIGHT - COPING_HEIGHT)) * BLOCK_SIZE;
+                bgCtx.save();
+                bgCtx.strokeStyle = '#5a8a5a';
+                bgCtx.lineWidth = 1;
+                bgCtx.setLineDash([4, 4]);
+                bgCtx.beginPath();
+                bgCtx.moveTo(0, copeLineY);
+                bgCtx.lineTo(canvas.width, copeLineY);
+                bgCtx.stroke();
+                bgCtx.setLineDash([]);
+                bgCtx.font = '13px Georgia';
+                bgCtx.fillStyle = '#5a8a5a';
+                bgCtx.textAlign = 'left';
+                bgCtx.fillText('Cope Line (48")', 4, copeLineY - 5);
+                bgCtx.restore();
+            }
 
             _bgCache = bgCanvas;
             ctx.drawImage(_bgCache, 0, 0);
@@ -5612,9 +6827,30 @@
                 const stoneH = s.maxR - s.minR + 1;
                 const w = stoneW * BLOCK_SIZE;
                 const h = stoneH * BLOCK_SIZE;
-                const isCheek = parseInt(id) < 0;
+                const numId = parseInt(id);
+                const isCheek = numId < 0;
 
-                drawStoneBlock(ctx, x, y, w, h, s.thickness, false, isCheek, s.isCoping, stoneW, stoneH, s.isThroughStone, parseInt(id));
+                // Subtle inner shadow on bottom-right edges (stays within stone bounds)
+                ctx.fillStyle = 'rgba(0,0,0,0.10)';
+                ctx.fillRect(x + w - 2, y + 1, 2, h - 1); // right edge
+                ctx.fillRect(x + 1, y + h - 2, w - 1, 2); // bottom edge
+                const isWobbling = wobbleStone && wobbleStone.id === numId;
+                if (isWobbling) {
+                    const elapsed = performance.now() - wobbleStone.startTime;
+                    const t = Math.min(elapsed / 300, 1);
+                    const decay = 1 - t;
+                    const angle = decay * 0.02 * Math.sin(elapsed * 0.04);
+                    const cx = x + w / 2;
+                    const cy = y + h / 2;
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(angle);
+                    ctx.translate(-cx, -cy);
+                }
+
+                drawStoneBlock(ctx, x, y, w, h, s.thickness, false, isCheek, s.isCoping, stoneW, stoneH, s.isThroughStone, numId);
+
+                if (isWobbling) ctx.restore();
 
                 // Face pin marker — small '+' cross
                 if (s.isFacePin) {
@@ -5854,29 +7090,29 @@
 
         function drawGameHUD() {
             ctx.save();
-            const hudX = canvas.width - 10;  // Right-aligned
+            const hudX = canvas.width - 14;  // Right-aligned
             const hudY = 10;                  // Top of canvas (sky area)
-            const dotSize = 6;
-            const dotGap = 4;
-            const rowHeight = 18;
+            const dotSize = 14;
+            const dotGap = 6;
+            const rowHeight = 38;
 
-            ctx.font = 'bold 10px Georgia';
+            ctx.font = 'bold 26px Georgia';
             ctx.textAlign = 'right';
 
             // --- Cuts used (unlimited, show count) ---
             const cutColor = cutsUsed <= 3 ? '#cc4444' : '#996666';
             ctx.fillStyle = cutColor;
-            ctx.fillText('CUTS ' + cutsUsed, hudX, hudY + 9);
+            ctx.fillText('CUTS ' + cutsUsed, hudX, hudY + 22);
 
             // --- Face pins remaining (5 dots) ---
             ctx.fillStyle = facePinsRemaining > 0 ? '#2a8a2a' : 'rgba(100,100,100,0.4)';
-            ctx.fillText('PINS', hudX, hudY + 9 + rowHeight);
+            ctx.fillText('PINS', hudX, hudY + 16 + rowHeight);
 
             const pinsLabelW = ctx.measureText('PINS').width;
-            const pinsDotsStartX = hudX - pinsLabelW - 8;
+            const pinsDotsStartX = hudX - pinsLabelW - 12;
             for (let i = 4; i >= 0; i--) {
                 const dx = pinsDotsStartX - i * (dotSize + dotGap);
-                const cy = hudY + 5 + rowHeight;
+                const cy = hudY + 10 + rowHeight;
                 ctx.beginPath();
                 ctx.arc(dx, cy, dotSize / 2, 0, Math.PI * 2);
                 if (i < facePinsRemaining) {
@@ -5884,20 +7120,20 @@
                     ctx.fill();
                 } else {
                     ctx.strokeStyle = 'rgba(100,100,100,0.35)';
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = 1.5;
                     ctx.stroke();
                 }
             }
 
             // --- Pulls remaining (3 dots, blue) ---
             ctx.fillStyle = pullsRemaining > 0 ? '#2a64b4' : 'rgba(100,100,100,0.4)';
-            ctx.fillText('PULLS', hudX, hudY + 9 + rowHeight * 2);
+            ctx.fillText('PULLS', hudX, hudY + 16 + rowHeight * 2);
 
             const pullsLabelW = ctx.measureText('PULLS').width;
-            const pullsDotsStartX = hudX - pullsLabelW - 8;
+            const pullsDotsStartX = hudX - pullsLabelW - 12;
             for (let i = 2; i >= 0; i--) {
                 const dx = pullsDotsStartX - i * (dotSize + dotGap);
-                const cy = hudY + 5 + rowHeight * 2;
+                const cy = hudY + 10 + rowHeight * 2;
                 ctx.beginPath();
                 ctx.arc(dx, cy, dotSize / 2, 0, Math.PI * 2);
                 if (i < pullsRemaining) {
@@ -5905,7 +7141,7 @@
                     ctx.fill();
                 } else {
                     ctx.strokeStyle = 'rgba(100,100,100,0.35)';
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = 1.5;
                     ctx.stroke();
                 }
             }
@@ -5913,7 +7149,7 @@
             // --- Combo streak ---
             if (comboCount >= 2) {
                 ctx.fillStyle = '#c4882a';
-                ctx.fillText('×' + comboCount + ' STREAK', hudX, hudY + 9 + rowHeight * 3);
+                ctx.fillText('×' + comboCount + ' STREAK', hudX, hudY + 16 + rowHeight * 3);
             }
 
             ctx.restore();
@@ -5923,7 +7159,70 @@
 
         function drawBoard() {
             drawEmptyBoard();
+
+            // Sky warmth overlay — sky warms as wall rises (Feature 8)
+            if (gamePhase === 'playing') {
+                const progress = getWallProgress();
+                if (progress > 0.1) {
+                    const skyAlpha = Math.min(0.08, (progress - 0.1) * 0.114); // 0→0.08 from 10%→80%
+                    ctx.fillStyle = `rgba(230,180,80,${skyAlpha})`;
+                    const skyH = (ROWS - 2 - WALL_HEIGHT) * BLOCK_SIZE; // Sky region above wall
+                    ctx.fillRect(0, 0, canvas.width, Math.max(skyH, 180));
+                }
+
+                // Combo warmth overlay — golden tint at combo ≥ 2 (Feature 9)
+                if (comboCount >= 2) {
+                    const comboAlpha = Math.min(0.06, comboCount * 0.012);
+                    ctx.fillStyle = `rgba(255,200,50,${comboAlpha})`;
+                    const skyH = (ROWS - 2 - WALL_HEIGHT) * BLOCK_SIZE;
+                    ctx.fillRect(0, 0, canvas.width, Math.max(skyH, 180));
+                }
+            }
+
             drawBoardStones();
+
+            // Clean placement glow effect (Feature 10)
+            if (glowStone) {
+                const elapsed = performance.now() - glowStone.startTime;
+                if (elapsed < 200) {
+                    const t = elapsed / 200;
+                    const alpha = 0.35 * (1 - easeOutCubic(t));
+                    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+                    ctx.fillRect(
+                        glowStone.x * BLOCK_SIZE, glowStone.y * BLOCK_SIZE,
+                        glowStone.w * BLOCK_SIZE, glowStone.h * BLOCK_SIZE
+                    );
+                } else {
+                    glowStone = null;
+                }
+            }
+
+            // Snug fit edge glow (Feature 12)
+            if (snugFitGlow) {
+                const elapsed = performance.now() - snugFitGlow.startTime;
+                if (elapsed < 300) {
+                    const t = elapsed / 300;
+                    const alpha = 0.6 * (1 - easeOutCubic(t));
+                    ctx.save();
+                    ctx.strokeStyle = `rgba(180,200,80,${alpha})`;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(
+                        snugFitGlow.x * BLOCK_SIZE - 1, snugFitGlow.y * BLOCK_SIZE - 1,
+                        snugFitGlow.w * BLOCK_SIZE + 2, snugFitGlow.h * BLOCK_SIZE + 2
+                    );
+                    ctx.restore();
+                } else {
+                    snugFitGlow = null;
+                }
+            }
+
+            // Stone wobble on violations (Feature 11) — request redraw during animation
+            if (wobbleStone) {
+                const elapsed = performance.now() - wobbleStone.startTime;
+                if (elapsed >= 300) {
+                    wobbleStone = null;
+                }
+            }
 
             if (currentStone) {
                 const ghostY = getGhostY();
@@ -6008,6 +7307,27 @@
                 drawDustParticles();
             }
 
+            // Ambient dust motes in sky area during gameplay
+            if (gamePhase === 'playing' && !designMode) {
+                drawAmbientMotes();
+            }
+
+            // Pause overlay
+            if (gamePaused && gamePhase === 'playing') {
+                ctx.fillStyle = 'rgba(42, 42, 42, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.fillStyle = '#fffdf7';
+                ctx.font = 'bold 28px Georgia';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
+                ctx.font = '13px Georgia';
+                ctx.fillStyle = 'rgba(255,253,247,0.6)';
+                ctx.fillText('Press P to resume', canvas.width / 2, canvas.height / 2 + 35);
+                ctx.restore();
+            }
+
             // In-game HUD — show cuts & face pins remaining during active play
             if (gamePhase === 'playing' && !designMode) {
                 drawGameHUD();
@@ -6028,6 +7348,47 @@
                 ctx.lineTo(canvas.width, r * BLOCK_SIZE);
             }
             ctx.stroke();
+
+            // Hold-Shift shortcut overlay (Feature 27)
+            if (showingShortcuts && gamePhase === 'playing') {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.fillStyle = '#fffdf7';
+                ctx.font = 'bold 16px Georgia';
+                ctx.textAlign = 'center';
+                const cx = canvas.width / 2;
+                let sy = canvas.height / 2 - 120;
+                ctx.fillText('KEYBOARD SHORTCUTS', cx, sy);
+                ctx.font = '12px Georgia';
+                sy += 30;
+                const shortcuts = awaitingCardSelection ? [
+                    ['1-5', 'Select card'],
+                    ['F', 'Place face pin'],
+                    ['U', 'Pull stone off wall'],
+                    ['T', 'Retrieve through stone'],
+                    ['R', 'Redraw hand'],
+                ] : [
+                    ['← → / A D', 'Move stone'],
+                    ['↑ / W', 'Rotate stone'],
+                    ['↓ / S', 'Soft drop'],
+                    ['Space', 'Hard drop'],
+                    ['B', 'Bank stone'],
+                    ['C', 'Cut stone'],
+                ];
+                shortcuts.forEach(([key, desc]) => {
+                    ctx.fillStyle = '#e6a817';
+                    ctx.font = 'bold 12px Courier New';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(key, cx - 10, sy);
+                    ctx.fillStyle = '#fffdf7';
+                    ctx.font = '12px Georgia';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(desc, cx + 10, sy);
+                    sy += 22;
+                });
+                ctx.restore();
+            }
 
             // Phase-specific messages
             if (gamePhase === 'showing') {
@@ -6178,11 +7539,45 @@
             );
 
             analyzeStone(positions, currentStone);
-            playSound('thunk', 0.7);
 
-            // Drop speed escalation: 1200ms at start → 900ms at end
-            const progress = getWallProgress();
-            dropInterval = Math.round(1200 - progress * 300);
+            // Interactive tutorial: advance from "Place it" to "Watch the rules"
+            if (interactiveTutorialActive && interactiveTutorialStep === 1) {
+                advanceInteractiveTutorial();
+            }
+
+            // Restore cursor after stone drop
+            canvas.style.cursor = '';
+
+            // Wall settling micro-animation (Feature 20) — skip if shake is active
+            if (!shakeAnimFrame) {
+                const container = document.querySelector('.game-board-container');
+                if (container) {
+                    container.style.transition = 'transform 0.1s ease';
+                    container.style.transform = 'scale(1.001)';
+                    setTimeout(() => {
+                        container.style.transform = '';
+                        setTimeout(() => { container.style.transition = ''; }, 100);
+                    }, 100);
+                }
+            }
+
+            // Size-based sound names (Feature 25) — all silently no-op until clips embedded
+            if (currentStone.isThroughStone) {
+                playSound('bass', 0.7);
+            } else if (currentStone.thickness >= 3) {
+                playSound('deepThud', 0.7);
+            } else if (currentStone.thickness <= 1 && currentStone.width * currentStone.height <= 16) {
+                playSound('tap', 0.7);
+            } else {
+                playSound('thunk', 0.7);
+            }
+
+            // Drop speed escalation: base interval at start → 75% of base at end (skip in freestyle)
+            if (!freestyleMode) {
+                const progress = getWallProgress();
+                const base = getBaseDropInterval();
+                dropInterval = Math.round(base - progress * (base * 0.25));
+            }
 
             stats.stonesPlaced++;
             document.getElementById('stonesPlaced').textContent = stats.stonesPlaced;
@@ -6216,6 +7611,9 @@
             awaitingCardSelection = true;
             renderHandRow();
             renderThroughBank();
+
+            // Auto-save after each placement (Feature 33)
+            autoSaveState();
         }
 
         function checkCopingFailsafe() {
@@ -6283,7 +7681,13 @@
             clearCardSelectTimer();
             awaitingCardSelection = false;
 
-            startCopingAnimation();
+            // Building→Coping transition beat: flash all principle cards (Feature 18)
+            const principleCards = document.querySelectorAll('.principle-card');
+            principleCards.forEach(el => el.classList.add('active'));
+            setTimeout(() => {
+                principleCards.forEach(el => el.classList.remove('active'));
+                startCopingAnimation();
+            }, 500);
         }
 
         function startCopingAnimation() {
@@ -6316,54 +7720,47 @@
             // so the narrow dimension is horizontal and the tall dimension is vertical.
             // Each stone drops from the sky to the lowest position where it can rest
             // (gravity — lands on top of whatever is below it).
-            //
-            // The face boundary (where the cheek ends and the open face begins)
-            // varies per row due to the cheek taper. We scan the board at each
-            // column to find the actual left/right face edges based on cheek stones.
             const placements = [];
             const groundRow = ROWS - 2;
             const cheekOffset = getCheekOffset();
 
-            // Find the face boundaries by scanning the board for cheek stones.
-            // Use the coping zone bottom row (where cheeks are widest in the coping
-            // zone) to find the tightest face — this is where coping starts.
+            // Scan the board at the wall top to find where cheek stones actually end.
+            // This is more reliable than the formula, since cheek stones are hand-placed.
+            // Look at the top portion of the wall (top 10 rows of the coping zone).
             const wallTopRow = groundRow - WALL_HEIGHT + 1;
-            const copingZoneBottom = wallTopRow + COPING_HEIGHT - 1;
+            const copingZoneTop = wallTopRow;
+            const copingZoneBot = wallTopRow + COPING_HEIGHT - 1;
+            let startCol = cheekOffset; // fallback: start at cheek offset
+            let endCol = COLS - cheekOffset; // fallback: end at opposite cheek offset
 
-            // Scan left side: find rightmost cheek stone column at coping zone bottom
-            let startCol = cheekOffset;
-            for (let c = 0; c < COLS; c++) {
-                if (board[copingZoneBottom] && stoneInfo[copingZoneBottom] &&
-                    board[copingZoneBottom][c] && stoneInfo[copingZoneBottom][c] < 0) {
-                    startCol = c + 1; // Face starts right after last cheek column
-                } else if (board[copingZoneBottom] && board[copingZoneBottom][c] &&
-                    stoneInfo[copingZoneBottom] && stoneInfo[copingZoneBottom][c] > 0) {
-                    break; // Hit a player stone — stop
+            // Find the rightmost cheek stone column on the left side.
+            // Scan only the top few rows of the coping zone (wallTopRow to wallTopRow+2)
+            // so we get the narrowest cheek extent — that's where coping sits.
+            const scanTop = copingZoneTop;
+            const scanBot = Math.min(copingZoneTop + 2, copingZoneBot);
+            for (let r = scanTop; r <= scanBot; r++) {
+                for (let c = cheekOffset; c < COLS / 2; c++) {
+                    if (stoneInfo[r] && stoneInfo[r][c] < 0) {
+                        if (c + 1 > startCol) startCol = c + 1;
+                    }
                 }
             }
+            // startCol is now the first clear column after the leftmost cheek stones
 
-            // Scan right side: find leftmost cheek stone column at coping zone bottom
-            let endCol = COLS - cheekOffset;
-            for (let c = COLS - 1; c >= 0; c--) {
-                if (board[copingZoneBottom] && stoneInfo[copingZoneBottom] &&
-                    board[copingZoneBottom][c] && stoneInfo[copingZoneBottom][c] < 0) {
-                    endCol = c; // Face ends right before first right cheek column
-                } else if (board[copingZoneBottom] && board[copingZoneBottom][c] &&
-                    stoneInfo[copingZoneBottom] && stoneInfo[copingZoneBottom][c] > 0) {
-                    break;
+            // Find the leftmost cheek stone column on the right side
+            endCol = COLS - cheekOffset;
+            for (let r = scanTop; r <= scanBot; r++) {
+                for (let c = COLS - cheekOffset - 1; c >= COLS / 2; c--) {
+                    if (stoneInfo[r] && stoneInfo[r][c] < 0) {
+                        if (c < endCol) endCol = c;
+                    }
                 }
             }
-
-            // Fallback if no cheek stones found: use the formula
-            if (startCol <= cheekOffset) {
-                const cheekW = getCheekWidthAtRow(copingZoneBottom);
-                startCol = cheekOffset + cheekW;
-                endCol = COLS - cheekOffset - cheekW;
-            }
+            // endCol is now the first cheek stone column on the right side
 
             let col = startCol;
             const available = [...copingBank]; // Work with a copy
-            copingBank.length = 0; // Clear the bank
+            copingBank.length = 0; // Clear the bank (unplaced stones returned at end)
 
             while (col < endCol && available.length > 0) {
                 let placed = false;
@@ -6426,6 +7823,12 @@
                 }
             }
 
+            // Return any unplaced stones to the coping bank so the player
+            // doesn't lose them (they can try again after building more wall)
+            for (const s of available) {
+                copingBank.push(s);
+            }
+
             return placements;
         }
 
@@ -6457,8 +7860,19 @@
                 }
                 updateUI();
                 drawBoard();
-                // Post-coping celebration
-                showPostCopingCelebration();
+
+                if (placements.length > 0) {
+                    // Coping was placed — celebrate and end the game
+                    showPostCopingCelebration();
+                } else {
+                    // No coping could be placed — return to gameplay
+                    // so the player can keep building or try again
+                    awaitingCardSelection = true;
+                    document.getElementById('handRow').style.display = 'flex';
+                    renderHandRow();
+                    renderCopingBank();
+                    renderThroughBank();
+                }
                 return;
             }
 
@@ -6524,23 +7938,40 @@
         function showPostCopingCelebration() {
             const stars = calculateStars(true, stability);
             const duration = 5000; // 5 seconds of celebration
-            const startTime = performance.now();
+            const container = document.querySelector('.game-board-container');
 
-            function celebrationFrame(now) {
-                const elapsed = now - startTime;
-                const progress = Math.min(elapsed / duration, 1);
+            // The final stone moment (Feature 28) — dramatic pause before celebration
+            playSound('chime', 0.8);
 
-                drawBoard();
-                drawCelebrationOverlay(progress, stars);
-
-                if (progress < 1) {
-                    requestAnimationFrame(celebrationFrame);
-                } else {
-                    // Wait 1 more second then show game over
-                    setTimeout(() => gameOver(true), 1000);
-                }
+            // Subtle zoom-out over 2s
+            if (container) {
+                container.style.transition = 'transform 2s ease-out';
+                container.style.transform = 'scale(0.98)';
             }
-            requestAnimationFrame(celebrationFrame);
+
+            // Begin celebration 800ms into the zoom
+            setTimeout(() => {
+                const startTime = performance.now();
+                function celebrationFrame(now) {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+
+                    drawBoard();
+                    drawCelebrationOverlay(progress, stars);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(celebrationFrame);
+                    } else {
+                        // Reset container transform, then show game over
+                        if (container) {
+                            container.style.transition = '';
+                            container.style.transform = '';
+                        }
+                        setTimeout(() => gameOver(true), 1000);
+                    }
+                }
+                requestAnimationFrame(celebrationFrame);
+            }, 800);
         }
 
         function drawCelebrationOverlay(progress, stars) {
@@ -6613,12 +8044,44 @@
             const minY = Math.min(...positions.map(p => p.y));
             const maxY = Math.max(...positions.map(p => p.y));
 
-            // LAY FLAT (except coping stones at the top which should be on end)
-            // Wall top calculated from WALL_HEIGHT constant
-            // Coping zone is top 3 rows of wall
+            // Wall geometry constants (used by multiple checks below)
             const groundRow = ROWS - 2;
             const wallTopRow = groundRow - WALL_HEIGHT + 1;
             const copingZoneBottom = wallTopRow + COPING_HEIGHT - 1;
+
+            // PLACEMENT BOUNDARY CHECK — penalize stones placed outside the wall face
+            // A) Resting on cheek copes: stone sits on top of cheek stones (negative IDs)
+            let restingOnCheek = false;
+            if (maxY < ROWS - 2) {
+                for (let c = minX; c <= maxX; c++) {
+                    const belowId = stoneInfo[maxY + 1][c];
+                    if (belowId && belowId < 0) { restingOnCheek = true; break; }
+                }
+            }
+            // B) Outside wall face: stone extends beyond the playable area at its row
+            let outsideFace = false;
+            const playableBounds = getPlayableArea(maxY);
+            if (minX < playableBounds.left || maxX >= playableBounds.right) {
+                outsideFace = true;
+            }
+            // C) Above the wall: stone top is above the wall top row
+            const aboveWall = minY < wallTopRow;
+
+            if (restingOnCheek) {
+                stability = Math.max(0, stability - 8);
+                violations.push('Stone on cheek wall!');
+            }
+            if (outsideFace) {
+                stability = Math.max(0, stability - 8);
+                violations.push('Stone outside wall face!');
+            }
+            if (aboveWall) {
+                stability = Math.max(0, stability - 5);
+                violations.push('Stone above wall!');
+            }
+
+            // LAY FLAT (except coping stones at the top which should be on end)
+            // Coping zone is top rows of wall
             const isAtTop = minY >= wallTopRow && minY <= copingZoneBottom;
             if (isLaidFlat(stone)) {
                 bonus += 15;
@@ -6676,7 +8139,7 @@
                 highlightPrinciple('principle-1over2', 'bad');
             }
 
-            // MIDDLE THIRD — 3-tier placement quality:
+            // MIDDLE THIRD — placement quality based on center of mass:
             //   Dead center (within middle sixth): +50 bonus, +4 stability
             //   Middle third: +40 bonus, +3 stability
             //   Middle half (but outside third): neutral — no bonus, no penalty
@@ -6691,26 +8154,28 @@
                 }
                 const bw = bMaxX - bMinX + 1;
                 if (bw >= 3) {
-                    const sixth = bw / 6;
-                    const third = bw / 3;
-                    const quarter = bw / 4;
-                    const inMiddleSixth = minX >= bMinX + sixth * 2.5 - 0.5 && maxX <= bMaxX - sixth * 2.5 + 0.5;
-                    const inMiddleThird = minX >= bMinX + third - 0.5 && maxX <= bMaxX - third + 0.5;
-                    const inMiddleHalf = minX >= bMinX + quarter - 0.5 && maxX <= bMaxX - quarter + 0.5;
+                    // Check where the placed stone's center falls within the below span
+                    const stoneCenterX = (minX + maxX + 1) / 2; // +1 because maxX is inclusive
+                    const belowCenterX = (bMinX + bMaxX + 1) / 2;
+                    const offset = Math.abs(stoneCenterX - belowCenterX);
+                    const halfBw = bw / 2;
 
-                    if (inMiddleSixth) {
+                    // offset as a fraction of the half-span (0 = dead center, 1 = edge)
+                    const offRatio = offset / halfBw;
+
+                    if (offRatio <= 1/6) {
                         // Dead center — bang on
                         bonus += 50;
                         principles.push('middlethird');
                         highlightPrinciple('principle-middlethird', 'good');
                         stability = Math.min(100, stability + 4);
-                    } else if (inMiddleThird) {
+                    } else if (offRatio <= 1/3) {
                         // Good placement — within middle third
                         bonus += 40;
                         principles.push('middlethird');
                         highlightPrinciple('principle-middlethird', 'good');
                         stability = Math.min(100, stability + 3);
-                    } else if (inMiddleHalf) {
+                    } else if (offRatio <= 1/2) {
                         // Acceptable — within middle half but outside third. Neutral.
                         // No bonus, no penalty, no highlight
                     } else {
@@ -6747,35 +8212,48 @@
 
             // ZIPPER JOINT: 3+ courses with joints stacking at roughly the same
             // column — stones barely overlapping, creating a running crack.
-            // This stone's edge is the newest joint; count consecutive joints
-            // in the courses below at the same column. If this stone makes it
-            // 3 in a row (this stone + 2 below), flag a zipper.
-            let zipperJoint = false;
+            // This stone's edge is the newest joint; count consecutive COURSE-LEVEL
+            // joints below. Since stones are multi-row (a 6" stone = 6 rows, all
+            // same ID), we track the last stone pair to avoid counting one physical
+            // boundary between two stones as multiple joints.
+            let zipperLength = 0; // 0 = no zipper, 3+ = zipper (courses of aligned joints)
             if (maxY < ROWS - 2) {
                 for (const edgeCol of [minX, maxX + 1]) {
                     if (edgeCol <= 0 || edgeCol >= COLS) continue;
-                    let consecutiveJoints = 1; // This stone's edge counts as 1
-                    // Walk downward through courses below (ignore cheek stones with negative IDs)
+                    let consecutiveCourseJoints = 1; // The placed stone's edge counts as 1
+                    let lastLeftId = 0, lastRightId = 0;
                     for (let checkRow = maxY + 1; checkRow < ROWS - 1; checkRow++) {
                         const leftId = stoneInfo[checkRow][edgeCol - 1];
                         const rightId = stoneInfo[checkRow][edgeCol];
-                        if (!leftId || leftId < 0 || !rightId || rightId < 0 || leftId === rightId) break; // No joint here
-                        consecutiveJoints++;
-                        if (consecutiveJoints >= 3) { zipperJoint = true; break; }
+                        if (!leftId || leftId < 0 || !rightId || rightId < 0 || leftId === rightId) break;
+                        // Same stone pair as previous row — still the same course boundary, skip
+                        if (leftId === lastLeftId && rightId === lastRightId) continue;
+                        // New course-level joint at this column
+                        consecutiveCourseJoints++;
+                        lastLeftId = leftId;
+                        lastRightId = rightId;
                     }
-                    if (zipperJoint) break;
+                    zipperLength = Math.max(zipperLength, consecutiveCourseJoints);
                 }
             }
 
-            if (!coldJoint && !zipperJoint && below.size >= 1) {
+            if (!coldJoint && zipperLength < 3 && below.size >= 1) {
                 bonus += 20;
                 principles.push('2into1');
                 highlightPrinciple('principle-2into1', 'good');
                 stability = Math.min(100, stability + 2);
-            } else if (zipperJoint) {
-                // 3+ courses with joints stacking — structural weakness
-                stability = Math.max(0, stability - 10);
-                violations.push('Zipper joint!');
+            } else if (zipperLength >= 3) {
+                // Graduated zipper penalty — scales with how many courses the zipper spans
+                //   3 courses (barely a zipper): -3
+                //   4 courses: -6
+                //   5 courses: -10
+                //   6+ courses: -15 (capped)
+                const zipperPenalty = Math.min(15, (zipperLength - 2) * 3);
+                stability = Math.max(0, stability - zipperPenalty);
+                const zipperMsg = zipperLength >= 6 ? 'Dangerous zipper!' :
+                    zipperLength >= 5 ? 'Long zipper joint!' :
+                    zipperLength >= 4 ? 'Zipper joint!' : 'Short zipper joint';
+                violations.push(zipperMsg);
                 highlightPrinciple('principle-2into1', 'bad');
             } else if (coldJoint) {
                 // Edge aligns with joint below — no bonding across the joint
@@ -6832,6 +8310,47 @@
                 }
             }
 
+            // SNUG FIT BONUS (Feature 12) — stone fits tightly between neighbors
+            let isSnugFit = false;
+            if (violations.length === 0) {
+                // Check left gap: distance from stone's left edge to nearest filled cell to the left
+                let leftGap = 0;
+                for (let c = minX - 1; c >= 0; c--) {
+                    let filled = false;
+                    for (let r = minY; r <= maxY; r++) {
+                        if (board[r][c]) { filled = true; break; }
+                    }
+                    if (filled) break;
+                    leftGap++;
+                }
+                // Check right gap: distance from stone's right edge to nearest filled cell to the right
+                let rightGap = 0;
+                for (let c = maxX + 2; c < COLS; c++) {
+                    let filled = false;
+                    for (let r = minY; r <= maxY; r++) {
+                        if (board[r][c]) { filled = true; break; }
+                    }
+                    if (filled) break;
+                    rightGap++;
+                }
+                if (leftGap <= 2 && rightGap <= 2 && (leftGap + rightGap) <= 3 && leftGap + rightGap > 0) {
+                    isSnugFit = true;
+                    bonus += 25;
+                    snugFitGlow = { startTime: performance.now(), x: minX, y: minY, w: stone.width, h: stone.height };
+                    playSound('tight', 0.6);
+                }
+            }
+
+            // QUICK PICK BONUS (Feature 13) — fast card selection + clean placement
+            let isQuickPick = false;
+            if (violations.length === 0 && cardSelectTimestamp > 0) {
+                const elapsed = performance.now() - cardSelectTimestamp;
+                if (elapsed < 3000) {
+                    isQuickPick = true;
+                    bonus += 10;
+                }
+            }
+
             // Combo scoring: clean placements build streaks
             if (violations.length === 0) {
                 comboCount++;
@@ -6848,6 +8367,12 @@
             // Inch-based score: area * 0.3 + bonuses (keeps proportional without dwarfing bonuses)
             score += Math.round(stone.width * stone.height * 0.3) + bonus;
 
+            // Stability bar pulse on significant changes (Phase 6D)
+            const stabilityDelta = stability - oldStability;
+            if (Math.abs(stabilityDelta) >= 5) {
+                pulseStabilityBar(stabilityDelta);
+            }
+
             // Screen shake on stability threshold crossings
             const shakeIndex = checkStabilityThresholdCrossing(oldStability, stability);
             if (shakeIndex >= 0) {
@@ -6856,48 +8381,126 @@
             }
 
             if (violations.length > 0) {
+                // Stone wobble on violations (Feature 11)
+                wobbleStone = { id: stone.id, startTime: performance.now(), cx: minX + stone.width / 2, cy: minY + stone.height / 2 };
                 showFeedback(violations.join(', '), 'negative');
                 playSound('violation', 0.6);
-            } else if (principles.length > 0) {
-                const msgs = {
-                    layflat: 'Flat!',
-                    '1over2': '1/2!',
-                    middlethird: 'Mid third!',
-                    '2into1': 'Good joint!',
-                    coursing: 'Coursed!',
-                    coping: 'Coping!',
-                    through: 'Through!'
-                };
-                let feedbackText = `+${bonus} ${principles.slice(0, 2).map(p => msgs[p]).join(' ')}`;
-                // Add combo streak info
-                if (comboCount >= 2) {
-                    feedbackText += ` (×${comboCount})`;
+            } else {
+                // Brief glow on clean placements (Feature 10)
+                glowStone = { id: stone.id, startTime: performance.now(), x: minX, y: minY, w: stone.width, h: stone.height };
+
+                if (principles.length > 0) {
+                    const msgs = {
+                        layflat: 'Flat!',
+                        '1over2': '1/2!',
+                        middlethird: 'Mid third!',
+                        '2into1': 'Good joint!',
+                        coursing: 'Coursed!',
+                        coping: 'Coping!',
+                        through: 'Through!'
+                    };
+                    let feedbackText = `+${bonus} ${principles.slice(0, 2).map(p => msgs[p]).join(' ')}`;
+                    // Add snug fit and quick pick feedback
+                    if (isSnugFit) feedbackText += ' Snug fit!';
+                    if (isQuickPick) feedbackText += ' Quick pick!';
+                    // Add combo streak info
+                    if (comboCount >= 2) {
+                        feedbackText += ` (×${comboCount})`;
+                    }
+                    // Show streak phrase at milestones
+                    const phrase = COMBO_PHRASES[comboCount];
+                    if (phrase) {
+                        feedbackText = phrase;
+                    }
+                    showFeedback(feedbackText, 'positive');
+                    playSound('chime', 0.5);
                 }
-                // Show streak phrase at milestones
-                const phrase = COMBO_PHRASES[comboCount];
-                if (phrase) {
-                    feedbackText = phrase;
-                }
-                showFeedback(feedbackText, 'positive');
-                playSound('chime', 0.5);
             }
 
+            // Track peak stability
+            peakStability = Math.max(peakStability, stability);
+
+            // Record placement in history (for wall review, auto-save, stone naming)
+            const stoneName = computeStoneName(stone, positions, principles, violations, oldStability, stability);
+            placementHistory.push({
+                id: stone.id,
+                x: minX,
+                y: minY,
+                w: stone.width,
+                h: stone.height,
+                thickness: stone.thickness,
+                principles: [...principles],
+                violations: [...violations],
+                bonus: bonus,
+                score: score,
+                stability: Math.round(stability),
+                name: stoneName,
+                timestamp: performance.now()
+            });
+
             updateUI();
-            if (stability <= 0) gameOver(false);
+            if (stability <= 0) {
+                if (freestyleMode) {
+                    // Freestyle: wall settles, lose 20% score, big shake, keep playing
+                    stability = 20;
+                    score = Math.round(score * 0.8);
+                    updateUI();
+                    shakeCanvas(4); // Biggest shake
+                    showFeedback('Wall settled! -20% score', 'negative');
+                } else {
+                    gameOver(false);
+                }
+            }
+        }
+
+        // Stone naming for review mode (Feature 32)
+        function computeStoneName(stone, positions, principles, violations, oldStab, newStab) {
+            // "The Bridge": bridged 3+ stones below, no violations
+            if (violations.length === 0) {
+                const belowIds = new Set();
+                const bottomY = Math.max(...positions.map(p => p.y)) + 1;
+                const minX = Math.min(...positions.map(p => p.x));
+                const maxX = Math.max(...positions.map(p => p.x));
+                for (let c = minX; c <= maxX; c++) {
+                    if (bottomY < ROWS - 1 && stoneInfo[bottomY] && stoneInfo[bottomY][c] > 0) {
+                        belowIds.add(stoneInfo[bottomY][c]);
+                    }
+                }
+                if (belowIds.size >= 3) return 'The Bridge';
+            }
+            // "The Keystone": stability was < 30% and improved by 5+, no violations
+            if (violations.length === 0 && oldStab < 30 && (newStab - oldStab) >= 5) {
+                return 'The Keystone';
+            }
+            // "The Misfit": 3+ violations
+            if (violations.length >= 3) return 'The Misfit';
+            return null;
         }
 
         function highlightPrinciple(id, type) {
             const el = document.getElementById(id);
             el.classList.remove('active', 'violation');
             el.classList.add(type === 'good' ? 'active' : 'violation');
-            setTimeout(() => el.classList.remove('active', 'violation'), 1000);
+            setTimeout(() => el.classList.remove('active', 'violation'), 2000);
         }
 
         function showFeedback(msg, type) {
             const toast = document.getElementById('feedbackToast');
             toast.textContent = msg;
             toast.className = `feedback-toast ${type} show`;
-            setTimeout(() => toast.classList.remove('show'), 1500);
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Phase 6D: Pulse stability bar on significant changes (≥5 points)
+        function pulseStabilityBar(delta) {
+            const container = document.querySelector('.stability-container');
+            if (!container) return;
+            const cls = delta > 0 ? 'pulse-up' : 'pulse-down';
+            container.classList.remove('pulse-up', 'pulse-down');
+            // Force reflow to restart animation
+            void container.offsetWidth;
+            container.classList.add(cls);
+            setTimeout(() => container.classList.remove(cls), 250);
         }
 
         function updateUI() {
@@ -6959,6 +8562,22 @@
             // Ignore key events when typing in an input field
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+            // Quick restart from game over screen
+            if (document.getElementById('gameOverOverlay').classList.contains('show')) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    startGame();
+                    return;
+                }
+            }
+
+            // Hold-Shift shortcut overlay (Feature 27)
+            if (e.key === 'Shift' && gamePhase === 'playing') {
+                showingShortcuts = true;
+                drawBoard();
+                return;
+            }
+
             // Cut mode intercepts all keys
             if (cutMode) {
                 if (cutPhase === 'position') {
@@ -6999,6 +8618,8 @@
                     case '3': onCardClicked(2); break;
                     case '4': onCardClicked(3); break;
                     case '5': onCardClicked(4); break;
+                    case '6': onCardClicked(5); break;
+                    case '7': onCardClicked(6); break;
                     case 'f':
                     case 'F': startFacePinMode(); break;
                     case 'u':
@@ -7051,9 +8672,9 @@
                 if (gameRunning || awaitingCardSelection) gamePaused = true;
                 document.getElementById('resetConfirmOverlay').classList.add('show');
             } else {
-                // First time? Show tutorial
+                // First time? Run interactive tutorial
                 if (!localStorage.getItem('sbs_tutorial_done')) {
-                    showTutorial();
+                    startInteractiveTutorial();
                 } else {
                     startGame();
                 }
@@ -7063,6 +8684,7 @@
         function confirmReset() {
             document.getElementById('resetConfirmOverlay').classList.remove('show');
             gamePaused = false;
+            stopBgMusic();
             // Reset to title state with pre-built wall displayed
             if (deconstructTimer) { clearTimeout(deconstructTimer); deconstructTimer = null; }
             if (copingTimer) { clearTimeout(copingTimer); copingTimer = null; }
@@ -7144,6 +8766,8 @@
         }
 
         function startGame() {
+            clearAutoSave(); // Clear auto-save when starting fresh
+
             // Clear any pending deconstruction / animations
             if (deconstructTimer) {
                 clearTimeout(deconstructTimer);
@@ -7158,8 +8782,9 @@
             createBoard(true);
             score = 0;
             stability = 100;
-            dropInterval = 1200;
+            dropInterval = getBaseDropInterval();
             stoneIdCounter = 0;
+            previewIdCounter = 0;
             deck = [];
             hand = [];
             redraws = MAX_REDRAWS;
@@ -7202,9 +8827,19 @@
             pullableStones = [];
             cutsUsed = 0;
             fallingDeconStones = [];
+            // Reset polish pass state
+            placementHistory = [];
+            peakStability = 100;
+            glowStone = null;
+            wobbleStone = null;
+            snugFitGlow = null;
+            cardSelectTimestamp = 0;
+            showingShortcuts = false;
+            reviewMode = false;
 
             // Init audio on first game start (requires user interaction)
             initAudio();
+            startBgMusic();
 
             document.getElementById('gameOverOverlay').classList.remove('show');
             document.getElementById('cutOverlay').classList.remove('show');
@@ -7240,6 +8875,8 @@
                     clearTimeout(copingTimer);
                     copingTimer = null;
                 }
+                // Pause background music
+                if (bgMusic && bgMusicBuffer) bgMusicBuffer.pause();
                 // Pause card select timer — store remaining time
                 if (cardSelectDeadline > 0) {
                     cardTimerRemaining = Math.max(0, cardSelectDeadline - performance.now());
@@ -7253,6 +8890,7 @@
                 // Resume
                 lastDrop = performance.now();
                 if (gameRunning) requestAnimationFrame(gameLoop);
+                if (bgMusic && bgMusicBuffer) bgMusicBuffer.play().catch(() => {});
                 // Resume card select timer from stored remaining time
                 if (awaitingCardSelection && cardTimerRemaining > 0) {
                     cardSelectDeadline = performance.now() + cardTimerRemaining;
@@ -7266,10 +8904,19 @@
 
         function calculateStars(complete, stab) {
             if (!complete) return 0;
-            if (stab > 95) return 5;
-            if (stab > 85) return 4;
-            if (stab > 75) return 3;
-            if (stab > 50) return 2;
+            // Star rating considers both stability AND wall completion.
+            // Can't earn stars without actually building the wall properly.
+            const progress = getWallProgress();
+            // Hard progress gates — you must build the wall, not just trigger coping
+            if (progress < 0.4) return 0;  // Barely started → 0 stars
+            if (progress < 0.6) return 1;  // Less than 60% filled → 1 star max
+            // Combined score: weighted average (60% stability, 40% fill)
+            const combined = stab * 0.6 + (progress * 100) * 0.4;
+            if (progress < 0.75) return Math.min(2, combined > 45 ? 2 : 1); // Cap at 2 stars
+            if (combined > 92) return 5;
+            if (combined > 80) return 4;
+            if (combined > 65) return 3;
+            if (combined > 45) return 2;
             return 1; // Finished
         }
 
@@ -7323,9 +8970,127 @@
             panel.innerHTML = html;
         }
 
+        // Phase 5: Score Breakdown — compute per-principle points from placement history
+        function computeScoreBreakdown() {
+            const breakdown = {
+                layFlat: { count: 0, points: 0 },
+                oneOver2: { count: 0, points: 0 },
+                middleThird: { count: 0, points: 0 },
+                twoInto1: { count: 0, points: 0 },
+                coursing: { count: 0, points: 0 },
+                through: { count: 0, points: 0 },
+                coping: { count: 0, points: 0 },
+                snugFit: { count: 0, points: 0 },
+                quickPick: { count: 0, points: 0 },
+                baseArea: 0,
+                comboExtra: 0
+            };
+
+            // Reconstruct per-stone scoring from placement history
+            // Each entry has principles[] array and bonus total
+            // We need to estimate per-principle contribution
+            for (const entry of placementHistory) {
+                // Base area score
+                const areaScore = Math.round(entry.w * entry.h * 0.3);
+                breakdown.baseArea += areaScore;
+
+                // Count principle contributions from the principles array
+                for (const p of entry.principles) {
+                    switch (p) {
+                        case 'layflat':
+                            breakdown.layFlat.count++;
+                            breakdown.layFlat.points += 15;
+                            break;
+                        case '1over2':
+                            // Could be +35 (sits on 2) or +20 (sits on 1)
+                            // We'll estimate: check bonus vs known values
+                            breakdown.oneOver2.count++;
+                            // If bonus is high enough to include +35, assume 35; otherwise 20
+                            breakdown.oneOver2.points += 35; // Approximate — most placements sit on 2
+                            break;
+                        case 'middlethird':
+                            breakdown.middleThird.count++;
+                            breakdown.middleThird.points += 45; // Average of 40 and 50
+                            break;
+                        case '2into1':
+                            breakdown.twoInto1.count++;
+                            breakdown.twoInto1.points += 20;
+                            break;
+                        case 'coursing':
+                            breakdown.coursing.count++;
+                            breakdown.coursing.points += 15;
+                            break;
+                        case 'through':
+                            breakdown.through.count++;
+                            breakdown.through.points += 60;
+                            break;
+                    }
+                }
+            }
+
+            // Compute total from known components
+            const principleTotal = breakdown.layFlat.points + breakdown.oneOver2.points +
+                breakdown.middleThird.points + breakdown.twoInto1.points +
+                breakdown.coursing.points + breakdown.through.points;
+
+            return breakdown;
+        }
+
+        function renderScoreBreakdown(breakdown, totalScore, stonesPlaced, craftsmanshipBonus, pullBonus) {
+            const details = document.getElementById('scoreBreakdownDetails');
+            if (!details) return;
+
+            const rows = [];
+
+            // Base area score
+            rows.push({ label: 'Stone Area', count: stonesPlaced, value: breakdown.baseArea });
+
+            // Per-principle breakdown (only show ones with >0)
+            if (breakdown.layFlat.count > 0)
+                rows.push({ label: 'Lay Flat', count: breakdown.layFlat.count, value: breakdown.layFlat.points });
+            if (breakdown.oneOver2.count > 0)
+                rows.push({ label: '1 Over 2', count: breakdown.oneOver2.count, value: breakdown.oneOver2.points });
+            if (breakdown.middleThird.count > 0)
+                rows.push({ label: 'Middle Third', count: breakdown.middleThird.count, value: breakdown.middleThird.points });
+            if (breakdown.twoInto1.count > 0)
+                rows.push({ label: '2 Into 1', count: breakdown.twoInto1.count, value: breakdown.twoInto1.points });
+            if (breakdown.coursing.count > 0)
+                rows.push({ label: 'Coursing', count: breakdown.coursing.count, value: breakdown.coursing.points });
+            if (breakdown.through.count > 0)
+                rows.push({ label: 'Through Stone', count: breakdown.through.count, value: breakdown.through.points });
+
+            // End-game bonuses
+            if (craftsmanshipBonus > 0)
+                rows.push({ label: 'Craftsmanship', count: null, value: craftsmanshipBonus });
+            if (pullBonus > 0)
+                rows.push({ label: 'Unused Pulls', count: null, value: pullBonus });
+
+            let html = '';
+            for (const row of rows) {
+                const countStr = row.count !== null ? ` <span class="breakdown-count">(${row.count})</span>` : '';
+                html += `<div class="breakdown-row">
+                    <span class="breakdown-label">${row.label}${countStr}</span>
+                    <span class="breakdown-value">+${row.value}</span>
+                </div>`;
+            }
+
+            // Average per stone
+            if (stonesPlaced > 0) {
+                const avg = Math.round(totalScore / stonesPlaced);
+                html += `<div class="breakdown-row avg">
+                    <span class="breakdown-label">Avg per stone</span>
+                    <span class="breakdown-value">${avg}</span>
+                </div>`;
+            }
+
+            details.innerHTML = html;
+        }
+
         function gameOver(complete) {
             gameRunning = false;
+            stopBgMusic();
             clearCardSelectTimer();
+            canvas.style.cursor = ''; // Restore cursor
             document.getElementById('handRow').style.display = 'none';
             document.getElementById('copingBankStrip').style.display = 'none';
             document.getElementById('throughBankStrip').style.display = 'none';
@@ -7355,6 +9120,13 @@
             const starDiv = document.getElementById('starRating');
             if (starDiv) starDiv.innerHTML = renderStarsHTML(stars);
 
+            // Phase 5: Score Breakdown
+            const breakdown = computeScoreBreakdown();
+            renderScoreBreakdown(breakdown, score, stats.stonesPlaced, craftsmanshipBonus, pullBonus);
+            // Reset the breakdown toggle state
+            const breakdownEl = document.getElementById('scoreBreakdown');
+            if (breakdownEl) breakdownEl.classList.remove('open');
+
             const msg = document.getElementById('wallCompleteMsg');
             if (complete) {
                 msg.textContent = 'Wall section completed!';
@@ -7367,14 +9139,45 @@
                 msg.style.color = '#666';
             }
 
-            // High scores
-            const isNew = isNewHighScore(activeWallSize, score);
-            const top3 = saveHighScore(activeWallSize, {
-                score: score,
-                stability: Math.round(stability),
-                stars: stars,
-                date: new Date().toLocaleDateString()
-            });
+            // High scores — only save for completed walls
+            let isNew = false;
+            let top3 = getHighScores(activeWallSize);
+
+            // Phase 5: Personal Best Comparison (before saving new score)
+            const bestComp = document.getElementById('bestComparison');
+            if (bestComp) {
+                const previousBest = top3.length > 0 ? top3[0].score : null;
+                if (previousBest !== null) {
+                    const delta = score - previousBest;
+                    if (delta > 0) {
+                        bestComp.textContent = '+' + delta + ' above your best!';
+                        bestComp.className = 'best-comparison above';
+                        bestComp.style.display = 'block';
+                    } else if (delta < 0) {
+                        bestComp.textContent = Math.abs(delta) + ' below your best';
+                        bestComp.className = 'best-comparison below';
+                        bestComp.style.display = 'block';
+                    } else {
+                        bestComp.textContent = 'Tied your personal best!';
+                        bestComp.className = 'best-comparison above';
+                        bestComp.style.display = 'block';
+                    }
+                } else {
+                    bestComp.textContent = 'First game — setting your benchmark!';
+                    bestComp.className = 'best-comparison first';
+                    bestComp.style.display = 'block';
+                }
+            }
+
+            if (complete) {
+                isNew = isNewHighScore(activeWallSize, score);
+                top3 = saveHighScore(activeWallSize, {
+                    score: score,
+                    stability: Math.round(stability),
+                    stars: stars,
+                    date: new Date().toLocaleDateString()
+                });
+            }
 
             const newHsMsg = document.getElementById('newHighScoreMsg');
             if (newHsMsg) {
@@ -7386,7 +9189,7 @@
             if (hsSection) {
                 let hsHtml = '';
                 top3.forEach((entry, i) => {
-                    const isCurrent = entry.score === score && entry.stability === Math.round(stability);
+                    const isCurrent = complete && entry.score === score && entry.stability === Math.round(stability);
                     hsHtml += `<div class="high-score-entry${isCurrent ? ' current' : ''}">
                         <span class="hs-rank">#${i + 1}</span>
                         <span class="hs-score">${entry.score}</span>
@@ -7396,14 +9199,310 @@
                 hsSection.innerHTML = hsHtml;
             }
 
+            // "What you missed" summary (Feature 29)
+            const missedDiv = document.getElementById('missedSummary');
+            if (missedDiv) {
+                const stonesUsed = placementHistory.length;
+                const totalStones = stonesUsed + deck.length + hand.length;
+                const unusedThrough = deck.filter(s => s.isThroughStone).length + hand.filter(s => s.isThroughStone).length;
+                let missedLines = [];
+                missedLines.push(`Used ${stonesUsed} of ${totalStones} stones`);
+                if (unusedThrough > 0) missedLines.push(`${unusedThrough} through stone${unusedThrough > 1 ? 's' : ''} unused`);
+                missedLines.push(`Peak stability: ${Math.round(peakStability)}%`);
+                missedDiv.textContent = missedLines.join(' · ');
+            }
+
             document.getElementById('gameOverOverlay').classList.add('show');
+
+            // Game over section-by-section reveal (Feature 19)
+            const goContent = document.querySelector('.game-over-content');
+            if (goContent) {
+                goContent.classList.add('revealing');
+                const children = goContent.children;
+                for (let i = 0; i < children.length; i++) {
+                    children[i].classList.remove('revealed');
+                    ((idx) => {
+                        setTimeout(() => {
+                            if (children[idx]) children[idx].classList.add('revealed');
+                        }, idx * 200);
+                    })(i);
+                }
+            }
 
             // Update sidebar high scores
             renderSidebarHighScores();
 
+            // Clear auto-save on game over
+            clearAutoSave();
+
             // Re-enable wall size toggle after game ends
             document.getElementById('wallSize12').disabled = false;
             document.getElementById('wallSize6').disabled = false;
+        }
+
+        // ============ AUTO-SAVE SYSTEM (Feature 33) ============
+
+        function autoSaveState() {
+            try {
+                const state = {
+                    board: board,
+                    stoneInfo: stoneInfo,
+                    stoneRegistry: stoneRegistry,
+                    deck: deck,
+                    hand: hand,
+                    score: score,
+                    stability: stability,
+                    dropInterval: dropInterval,
+                    stoneIdCounter: stoneIdCounter,
+                    previewIdCounter: previewIdCounter,
+                    redraws: redraws,
+                    comboCount: comboCount,
+                    pullsRemaining: pullsRemaining,
+                    cutsUsed: cutsUsed,
+                    facePinsRemaining: facePinsRemaining,
+                    copingBank: copingBank,
+                    copingBankTarget: copingBankTarget,
+                    throughBank: throughBank,
+                    throughBankUsedCount: throughBankUsedCount,
+                    totalBankedCount: totalBankedCount,
+                    totalDeckSize: totalDeckSize,
+                    stats: stats,
+                    previousStability: previousStability,
+                    placementHistory: placementHistory,
+                    peakStability: peakStability,
+                    activeWallSize: activeWallSize,
+                    freestyleMode: typeof freestyleMode !== 'undefined' ? freestyleMode : false,
+                    gamePhase: gamePhase
+                };
+                localStorage.setItem('sbs_autosave', JSON.stringify(state));
+            } catch (e) {
+                // Silently fail — quota exceeded or private browsing
+            }
+        }
+
+        function clearAutoSave() {
+            localStorage.removeItem('sbs_autosave');
+        }
+
+        function checkAutoSave() {
+            try {
+                const data = localStorage.getItem('sbs_autosave');
+                if (!data) return false;
+                const state = JSON.parse(data);
+                if (!state.board || !state.stoneInfo || !state.hand) return false;
+                return state;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function restoreAutoSave(state) {
+            board = state.board;
+            stoneInfo = state.stoneInfo;
+            stoneRegistry = state.stoneRegistry || {};
+            deck = state.deck || [];
+            hand = state.hand || [];
+            score = state.score || 0;
+            stability = state.stability || 100;
+            dropInterval = state.dropInterval || 1200;
+            stoneIdCounter = state.stoneIdCounter || 0;
+            previewIdCounter = state.previewIdCounter || 0;
+            redraws = state.redraws || MAX_REDRAWS;
+            comboCount = state.comboCount || 0;
+            pullsRemaining = state.pullsRemaining !== undefined ? state.pullsRemaining : 3;
+            cutsUsed = state.cutsUsed || 0;
+            facePinsRemaining = state.facePinsRemaining !== undefined ? state.facePinsRemaining : 5;
+            copingBank = state.copingBank || [];
+            copingBankTarget = state.copingBankTarget || 0;
+            throughBank = state.throughBank || [];
+            throughBankUsedCount = state.throughBankUsedCount || 0;
+            totalBankedCount = state.totalBankedCount || 0;
+            totalDeckSize = state.totalDeckSize || 0;
+            stats = state.stats || { stonesPlaced: 0, laidFlat: 0, oneOverTwo: 0, copingStones: 0, violations: 0 };
+            previousStability = state.previousStability || 100;
+            placementHistory = state.placementHistory || [];
+            peakStability = state.peakStability || 100;
+            if (state.activeWallSize) setWallSize(state.activeWallSize);
+            if (typeof freestyleMode !== 'undefined') freestyleMode = state.freestyleMode || false;
+
+            // Clear caches and rebuild UI
+            _bgCache = null;
+            _overlayCache = {};
+            gamePhase = 'playing';
+            gameRunning = false;
+            awaitingCardSelection = true;
+            currentStone = null;
+
+            document.getElementById('gameOverOverlay').classList.remove('show');
+            document.getElementById('startBtn').textContent = 'Reset';
+            document.getElementById('handRow').style.display = 'flex';
+            document.getElementById('wallSize12').disabled = true;
+            document.getElementById('wallSize6').disabled = true;
+
+            initAudio();
+            updateUI();
+            renderHandRow();
+            renderCopingBank();
+            renderThroughBank();
+            drawBoard();
+
+            showFeedback('Game restored!', 'positive');
+        }
+
+        // ============ WALL REVIEW MODE (Feature 31) ============
+
+        function enterReviewMode() {
+            reviewMode = true;
+            document.getElementById('gameOverOverlay').classList.remove('show');
+            document.getElementById('reviewControls').style.display = 'block';
+
+            const scrubber = document.getElementById('reviewScrubber');
+            scrubber.max = placementHistory.length;
+            scrubber.value = placementHistory.length;
+            document.getElementById('reviewScrubberLabel').textContent = `All ${placementHistory.length} stones`;
+
+            scrubber.addEventListener('input', handleReviewScrub);
+            document.getElementById('reviewBackBtn').addEventListener('click', exitReviewMode);
+            canvas.addEventListener('mousemove', handleReviewHover);
+            canvas.addEventListener('mouseleave', hideReviewTooltip);
+
+            drawBoard();
+        }
+
+        function exitReviewMode() {
+            reviewMode = false;
+            document.getElementById('reviewControls').style.display = 'none';
+            hideReviewTooltip();
+            canvas.removeEventListener('mousemove', handleReviewHover);
+            canvas.removeEventListener('mouseleave', hideReviewTooltip);
+
+            // Restore the full board and show game over again
+            reconstructBoardFromHistory(placementHistory.length);
+            drawBoard();
+            document.getElementById('gameOverOverlay').classList.add('show');
+        }
+
+        function handleReviewScrub() {
+            const scrubber = document.getElementById('reviewScrubber');
+            const n = parseInt(scrubber.value);
+            document.getElementById('reviewScrubberLabel').textContent =
+                n === placementHistory.length ? `All ${n} stones` : `Stone ${n} of ${placementHistory.length}`;
+            reconstructBoardFromHistory(n);
+            drawBoard();
+        }
+
+        function reconstructBoardFromHistory(upToN) {
+            // Clear board of all player stones (keep cheeks)
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (stoneInfo[r][c] > 0) {
+                        board[r][c] = 0;
+                        stoneInfo[r][c] = null;
+                    }
+                }
+            }
+            // Clear positive entries from registry
+            for (const id in stoneRegistry) {
+                if (parseInt(id) > 0) delete stoneRegistry[id];
+            }
+            // Clear overlay cache for player stones
+            for (const key in _overlayCache) {
+                const numKey = parseInt(key);
+                if (!isNaN(numKey) && numKey > 0) delete _overlayCache[key];
+            }
+            // Replay placements up to N
+            for (let i = 0; i < upToN && i < placementHistory.length; i++) {
+                const p = placementHistory[i];
+                for (let r = p.y; r < p.y + p.h; r++) {
+                    for (let c = p.x; c < p.x + p.w; c++) {
+                        if (r >= 0 && r < ROWS - 1 && c >= 0 && c < COLS) {
+                            board[r][c] = p.thickness;
+                            stoneInfo[r][c] = p.id;
+                        }
+                    }
+                }
+                registerStone(p.id, p.y, p.y + p.h - 1, p.x, p.x + p.w - 1, p.thickness, false, false);
+            }
+            _bgCache = null; // Force background redraw
+        }
+
+        function handleReviewHover(e) {
+            if (!reviewMode) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const col = Math.floor((e.clientX - rect.left) * scaleX / BLOCK_SIZE);
+            const row = Math.floor((e.clientY - rect.top) * scaleY / BLOCK_SIZE);
+
+            if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
+                hideReviewTooltip();
+                return;
+            }
+
+            const sid = stoneInfo[row] && stoneInfo[row][col];
+            if (!sid || sid <= 0) {
+                hideReviewTooltip();
+                return;
+            }
+
+            // Find this stone in placement history
+            const entry = placementHistory.find(p => p.id === sid);
+            if (!entry) {
+                hideReviewTooltip();
+                return;
+            }
+
+            const tooltip = document.getElementById('reviewTooltip');
+            let html = `<strong>${entry.h}" × ${entry.w}"</strong> (thickness ${entry.thickness})`;
+            if (entry.name) html = `<strong>${entry.name}</strong><br>${html}`;
+            html += `<br>Score: +${entry.bonus}`;
+            if (entry.principles.length > 0) {
+                html += `<br>✓ ${entry.principles.join(', ')}`;
+            }
+            if (entry.violations.length > 0) {
+                html += `<br>✗ ${entry.violations.join(', ')}`;
+            }
+            html += `<br>Stability: ${entry.stability}%`;
+
+            tooltip.innerHTML = html;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX + 12) + 'px';
+            tooltip.style.top = (e.clientY - 10) + 'px';
+        }
+
+        function hideReviewTooltip() {
+            document.getElementById('reviewTooltip').style.display = 'none';
+        }
+
+        // Save wall as image (Feature 30)
+        function saveWallImage() {
+            try {
+                // Draw a score overlay at the bottom of the canvas
+                ctx.save();
+                const barH = 30;
+                const barY = canvas.height - barH;
+                ctx.fillStyle = 'rgba(42,42,42,0.85)';
+                ctx.fillRect(0, barY, canvas.width, barH);
+                ctx.fillStyle = '#fffdf7';
+                ctx.font = 'bold 12px Georgia';
+                ctx.textAlign = 'center';
+                const stars = calculateStars(true, stability);
+                const starText = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+                ctx.fillText(`Stone By Stone  |  Score: ${score}  |  ${starText}  |  Stability: ${Math.round(stability)}%`, canvas.width / 2, barY + 20);
+                ctx.restore();
+
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `stone-by-stone-wall-${Date.now()}.png`;
+                link.href = dataUrl;
+                link.click();
+
+                // Redraw board to remove overlay
+                drawBoard();
+            } catch (e) {
+                showFeedback('Cannot save image (canvas tainted by SVG assets on file:// protocol)', 'negative');
+                drawBoard();
+            }
         }
 
         function gameLoop(ts) {
@@ -7418,6 +9517,8 @@
 
         window.onload = init;
         window.addEventListener('resize', function() {
+            // Responsive scaling — fit game to viewport
+            updateGameScale();
             // Re-align bank stones with canvas on resize
             if (gamePhase === 'playing') {
                 renderCopingBank();
