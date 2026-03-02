@@ -785,6 +785,46 @@
             gap: 10px;
         }
 
+        /* Pause Overlay */
+        .pause-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(245, 241, 232, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .pause-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .pause-content {
+            background: #fffdf7;
+            border: 3px solid #2a2a2a;
+            padding: 28px 40px;
+            text-align: center;
+            max-width: 300px;
+        }
+        .pause-content h2 {
+            font-family: 'Georgia', serif;
+            font-size: 24px;
+            letter-spacing: 4px;
+            color: #2a2a2a;
+            margin: 0 0 8px;
+            font-weight: normal;
+        }
+        .pause-content p {
+            font-family: 'Georgia', serif;
+            font-size: 12px;
+            color: #888;
+            margin: 0;
+            font-style: italic;
+        }
+
         /* Settings Overlay */
         .settings-overlay {
             position: fixed;
@@ -921,7 +961,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(42, 42, 42, 0.92);
+            background: rgba(42, 42, 42, 0.55);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1025,6 +1065,90 @@
         }
         .tutorial-skip:hover {
             color: #444;
+        }
+
+        /* Tutorial see-through variant for "Reading the Wall" step */
+        .tutorial-content.see-through {
+            background: rgba(255, 253, 247, 0.80);
+        }
+
+        /* Welcome Banner Overlay */
+        .welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(245, 241, 232, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: var(--banner-pad-bottom, 0px);
+            padding-right: var(--banner-pad-right, 0px);
+            z-index: 1150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .welcome-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .welcome-content {
+            background: rgba(255, 253, 247, 0.92);
+            border: 3px solid #2a2a2a;
+            padding: 36px 48px 28px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+        }
+        .welcome-title {
+            font-family: 'Georgia', serif;
+            font-size: 28px;
+            letter-spacing: 6px;
+            color: #2a2a2a;
+            margin-bottom: 4px;
+            font-weight: normal;
+        }
+        .welcome-subtitle {
+            font-family: 'Georgia', serif;
+            font-size: 14px;
+            font-style: italic;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .welcome-tagline {
+            font-family: 'Georgia', serif;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #4a4a4a;
+            margin-bottom: 24px;
+        }
+        .welcome-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .welcome-btn {
+            padding: 10px 28px;
+            font-size: 13px;
+            min-width: 120px;
+            cursor: pointer;
+        }
+        .welcome-btn-primary {
+            background: #2a2a2a;
+            color: #fffdf7;
+            border-color: #2a2a2a;
+        }
+        .welcome-btn-primary:hover {
+            background: #444;
+        }
+        .welcome-hint {
+            font-family: 'Georgia', serif;
+            font-size: 10px;
+            color: #999;
+            font-style: italic;
         }
 
         /* Card Selection Popup */
@@ -1608,59 +1732,7 @@
             margin-left: 8px;
         }
 
-        /* Interactive Tutorial Highlight System */
-        .tutorial-dim {
-            position: relative;
-        }
-        .tutorial-dim .game-board-column,
-        .tutorial-dim .side-panel,
-        .tutorial-dim .game-header {
-            opacity: 0.3;
-            pointer-events: none;
-            transition: opacity 0.4s ease;
-        }
-        .tutorial-dim .tutorial-spotlight {
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-        .tutorial-highlight {
-            animation: tutorialPulse 1.2s ease-in-out infinite;
-        }
-        @keyframes tutorialPulse {
-            0%, 100% { box-shadow: 0 0 0 3px rgba(230, 168, 23, 0.3); }
-            50% { box-shadow: 0 0 0 6px rgba(230, 168, 23, 0.6); }
-        }
-        .interactive-tutorial-msg {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(42, 42, 42, 0.92);
-            color: #fffdf7;
-            padding: 12px 24px;
-            font-family: Georgia, serif;
-            font-size: 15px;
-            z-index: 1300;
-            text-align: center;
-            max-width: 400px;
-            letter-spacing: 0.5px;
-            line-height: 1.5;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            pointer-events: none;
-        }
-        .interactive-tutorial-msg.show {
-            opacity: 1;
-        }
-        .interactive-tutorial-msg .tutorial-key {
-            display: inline-block;
-            background: #e6a817;
-            color: #2a2a2a;
-            padding: 1px 6px;
-            font-size: 12px;
-            font-weight: bold;
-            margin: 0 2px;
-        }
+        /* Interactive tutorial CSS removed — replaced by welcome banner */
 
         /* Accessibility: Colorblind Mode */
         .colorblind-mode .principle-card.violation {
@@ -1838,13 +1910,13 @@
             <div class="principle-card" id="principle-coping">
                 <h4>COPING</h4>
                 <p>Stones stood on end cap the wall.</p>
-                <div class="principle-detail">Coping stones are set upright along the wall top to lock everything together. Bank stones early using B, then click "Set Copes" when ready.</div>
+                <div class="principle-detail">Coping stones are set upright along the wall top to lock everything together. Bank stones using B — through stones route to the through bank, others to the coping bank. Click "Set Copes" when ready.</div>
             </div>
 
             <div class="principle-card" id="principle-through">
                 <h4>THROUGH STONE</h4>
                 <p>Dark stones at the halfway point (27").</p>
-                <div class="principle-detail">Through stones span the full wall thickness at the 27" through line. Bank them with T when drawn, then retrieve with T when you reach the line.</div>
+                <div class="principle-detail">Through stones span the full wall thickness at the 27" through line. Bank them with B when drawn (routes to through bank), then retrieve with T when you reach the line. Place them 2.5-3.5 feet apart for best stability.</div>
             </div>
 
             <!-- Design Mode Panel (hidden by default) -->
@@ -1942,6 +2014,13 @@
                 <button class="btn" id="resetConfirmYes">Reset</button>
                 <button class="btn" id="resetConfirmNo">Cancel</button>
             </div>
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-content">
+            <h2>PAUSED</h2>
+            <p>Press P or click Resume to continue</p>
         </div>
     </div>
 
@@ -2050,8 +2129,19 @@
         </div>
     </div>
 
-    <!-- Interactive Tutorial Message -->
-    <div class="interactive-tutorial-msg" id="interactiveTutorialMsg"></div>
+    <!-- Welcome Banner -->
+    <div class="welcome-overlay" id="welcomeOverlay">
+        <div class="welcome-content">
+            <h1 class="welcome-title">STONE BY STONE</h1>
+            <p class="welcome-subtitle">The Dry Stone Walling Game</p>
+            <p class="welcome-tagline">Learn the ancient craft of building walls without mortar,<br>held together only by skill and gravity.</p>
+            <div class="welcome-buttons">
+                <button class="btn welcome-btn welcome-btn-primary" id="welcomeStartBtn">Start</button>
+                <button class="btn welcome-btn" id="welcomeHowToBtn">How To Play</button>
+            </div>
+            <p class="welcome-hint">Study the reference wall behind this banner before you begin.</p>
+        </div>
+    </div>
 
     <!-- Settings Overlay -->
     <div class="settings-overlay" id="settingsOverlay">
@@ -2208,6 +2298,7 @@
         let totalSealedVoidArea = 0;       // Running total of all sealed void sq inches (for end-game bonus)
         let gameRunning = false;
         let gamePaused = false;
+        let wasPausedBeforeReset = false;
         let dropInterval = 1200;
         let lastDrop = 0;
         let stoneIdCounter = 0;
@@ -2372,6 +2463,28 @@
 
         // One-shot SFX file paths (randomly selected per play)
         let sfxFiles = {};
+
+        // Folk music layer state
+        let folkMusic = null;           // Audio element for current folk track
+        let folkMusicPlaying = false;
+        let folkMusicTimer = null;      // setTimeout ID for 5-second delay
+        const FOLK_TRACKS = [
+            'Audio/Daughter.mp3',
+            'Audio/JohnieScot.mp3',
+            'Audio/BarbaraAllen.mp3',
+            'Audio/SirLionel.mp3'
+        ];
+        let folkTrackOrder = [];        // Shuffled playlist
+        let folkTrackIndex = 0;
+
+        function shuffleArray(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
 
         // ============ EASING UTILITY FUNCTIONS ============
         function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
@@ -2674,39 +2787,7 @@
 
         let titleAnimFrame = null;
 
-        function drawTitleScreenOverlay() {
-            const now = Date.now();
-            ctx.save();
-
-            // Center text on the wall, not the full canvas
-            const wallCenterX = ((getCheekOffset() + COLS - getCheekOffsetRight()) / 2) * BLOCK_SIZE;
-
-            // Semi-transparent banner background for readability
-            const bannerW = 280;
-            const bannerH = 60;
-            const bannerY = canvas.height * 0.62;
-            ctx.fillStyle = 'rgba(255, 253, 247, 0.65)';
-            ctx.fillRect(wallCenterX - bannerW / 2, bannerY, bannerW, bannerH);
-
-            // Subtitle: "The Dry Stone Walling Game"
-            ctx.font = 'italic 16px Georgia';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = 'rgba(42, 42, 42, 0.75)';
-            const subtitleY = bannerY + 20;
-            ctx.fillText('The Dry Stone Walling Game', wallCenterX, subtitleY);
-
-            // Pulsing "PRESS START" hint
-            const pulse = Math.sin(now / 800) * 0.25 + 0.55; // 0.3 ↔ 0.8
-            ctx.font = '13px Georgia';
-            ctx.fillStyle = `rgba(42, 42, 42, ${pulse})`;
-            const hintY = bannerY + 44;
-            // Manual letter-spacing for broad browser compat
-            const hintChars = 'P R E S S     S T A R T';
-            ctx.fillText(hintChars, wallCenterX, hintY);
-
-            ctx.restore();
-        }
+        // drawTitleScreenOverlay() removed — replaced by welcome banner HTML overlay
 
         function startTitleAnimation() {
             if (titleAnimFrame) return;
@@ -2814,6 +2895,10 @@
                             'Audio/323725__reitanna__thunk.wav'
                         ]
                     };
+
+                    // Initialize folk music playlist
+                    folkTrackOrder = shuffleArray(FOLK_TRACKS);
+                    folkTrackIndex = 0;
                 } catch (e) {
                     console.warn('Audio element loading failed:', e);
                 }
@@ -2848,6 +2933,7 @@
                 bgMusicBuffer.currentTime = 0;
                 bgMusicBuffer.play().catch(() => {});
                 bgMusic = true;
+                startFolkMusic(); // Folk music starts 5s after meadow sounds
             } catch (e) {
                 console.warn('Background music start failed:', e);
             }
@@ -2860,12 +2946,87 @@
                     bgMusicBuffer.currentTime = 0;
                 } catch(e) {}
                 bgMusic = false;
+                stopFolkMusic();
             }
         }
 
         function updateBgMusicVolume() {
             if (bgMusicBuffer) {
                 bgMusicBuffer.volume = soundEnabled ? musicVolume * (gameSettings.masterVolume / 100) : 0;
+            }
+            updateFolkMusicVolume();
+        }
+
+        // ============ FOLK MUSIC LAYER ============
+
+        function getFolkVolume() {
+            // Folk music at 1/4 of meadow volume — like music drifting across a field
+            return soundEnabled ? musicVolume * (gameSettings.masterVolume / 100) * 0.25 : 0;
+        }
+
+        function startFolkMusic() {
+            // Called from startBgMusic() — starts folk music after 5-second delay
+            if (folkMusicTimer) clearTimeout(folkMusicTimer);
+            folkMusicTimer = setTimeout(() => {
+                folkMusicTimer = null;
+                if (bgMusic && soundEnabled) {
+                    playNextFolkTrack();
+                }
+            }, 5000);
+        }
+
+        function playNextFolkTrack() {
+            // Stop any currently playing folk track
+            if (folkMusic) {
+                folkMusic.pause();
+                folkMusic.removeEventListener('ended', onFolkTrackEnded);
+                folkMusic = null;
+            }
+
+            // Reshuffle when playlist is exhausted
+            if (folkTrackIndex >= folkTrackOrder.length) {
+                folkTrackOrder = shuffleArray(FOLK_TRACKS);
+                folkTrackIndex = 0;
+            }
+
+            const trackPath = folkTrackOrder[folkTrackIndex];
+            folkTrackIndex++;
+
+            folkMusic = new Audio(trackPath);
+            folkMusic.volume = getFolkVolume();
+            folkMusic.addEventListener('ended', onFolkTrackEnded);
+            folkMusic.play().catch(() => {});
+            folkMusicPlaying = true;
+        }
+
+        function onFolkTrackEnded() {
+            folkMusicPlaying = false;
+            // Play next track after a short pause (2 seconds of silence between songs)
+            folkMusicTimer = setTimeout(() => {
+                folkMusicTimer = null;
+                if (bgMusic && soundEnabled) {
+                    playNextFolkTrack();
+                }
+            }, 2000);
+        }
+
+        function stopFolkMusic() {
+            if (folkMusicTimer) {
+                clearTimeout(folkMusicTimer);
+                folkMusicTimer = null;
+            }
+            if (folkMusic) {
+                folkMusic.pause();
+                folkMusic.removeEventListener('ended', onFolkTrackEnded);
+                folkMusic.currentTime = 0;
+                folkMusic = null;
+            }
+            folkMusicPlaying = false;
+        }
+
+        function updateFolkMusicVolume() {
+            if (folkMusic && folkMusicPlaying) {
+                folkMusic.volume = getFolkVolume();
             }
         }
 
@@ -2924,6 +3085,7 @@
             const vol = getSfxVolume();
             if (deconAudio && deconAudioPlaying) deconAudio.volume = vol;
             if (cutAudio && cutAudioPlaying) cutAudio.volume = vol;
+            updateFolkMusicVolume();
         }
 
         // ============ SYNTHESIZED SOUND GENERATION ============
@@ -3050,13 +3212,17 @@
                 soundMasterGain.gain.value = soundEnabled ? (gameSettings.masterVolume / 100) : 0;
             }
             updateBgMusicVolume();
-            // Pause/resume ambient loops
+            // Pause/resume ambient loops and folk music
             if (!soundEnabled) {
                 if (deconAudio && deconAudioPlaying) deconAudio.pause();
                 if (cutAudio && cutAudioPlaying) cutAudio.pause();
+                if (folkMusic && folkMusicPlaying) folkMusic.pause();
+                if (folkMusicTimer) { clearTimeout(folkMusicTimer); folkMusicTimer = null; }
             } else {
                 if (deconAudio && deconAudioPlaying) deconAudio.play().catch(() => {});
                 if (cutAudio && cutAudioPlaying) cutAudio.play().catch(() => {});
+                if (folkMusic && folkMusicPlaying) folkMusic.play().catch(() => {});
+                else if (bgMusic && !folkMusicPlaying) startFolkMusic();
             }
             updateAmbientVolumes();
             const btn = document.getElementById('soundToggleBtn');
@@ -3067,12 +3233,19 @@
 
         let currentScale = 1;
 
-        function updateGameScale() {
+        function updateGameScale(animate) {
             const wrapper = document.querySelector('.game-wrapper');
             if (!wrapper) return;
 
-            // Temporarily remove scale to measure natural size
+            // Save current transform for animation start point
+            const prevTransform = wrapper.style.transform || 'none';
+
+            // Disable transition during measurement to prevent visual flash
+            // (browser batches synchronous style changes into a single paint)
+            wrapper.style.transition = 'none';
             wrapper.style.transform = 'none';
+
+            // Force reflow to measure natural (unscaled) size
             const naturalW = wrapper.scrollWidth;
             const naturalH = wrapper.scrollHeight;
 
@@ -3085,14 +3258,47 @@
             currentScale = scale;
 
             if (scale < 0.999) {
-                wrapper.style.transform = 'scale(' + scale + ')';
+                if (animate) {
+                    // Restore previous transform instantly (no transition, no paint)
+                    wrapper.style.transform = prevTransform;
+                    wrapper.offsetHeight; // Force reflow to sync computed state
+                    // Enable transition and set new scale — browser animates between them
+                    wrapper.style.transition = 'transform 0.3s ease';
+                    wrapper.style.transform = 'scale(' + scale + ')';
+                    // Clean up transition after animation so resize events stay instant
+                    wrapper.addEventListener('transitionend', function handler() {
+                        wrapper.style.transition = '';
+                        wrapper.removeEventListener('transitionend', handler);
+                    }, { once: true });
+                } else {
+                    wrapper.style.transform = 'scale(' + scale + ')';
+                    wrapper.style.transition = ''; // Clear residual transition from measurement
+                }
                 // Shrink the body's layout height so no scrollbar appears
                 document.body.style.height = (naturalH * scale + 20) + 'px';
                 document.body.style.overflow = 'hidden';
             } else {
                 wrapper.style.transform = 'none';
+                wrapper.style.transition = ''; // Clear residual transition from measurement
                 document.body.style.height = '';
                 document.body.style.overflow = '';
+            }
+
+            // Center welcome banner over the canvas (clamped so banner stays on screen)
+            var canvasEl = document.getElementById('gameCanvas');
+            if (canvasEl) {
+                wrapper.offsetHeight; // Ensure transform is applied before measuring
+                var rect = canvasEl.getBoundingClientRect();
+                // Vertical: center on wall face (0.52 accounts for sky being thinner than ground)
+                var canvasCenterY = rect.top + rect.height * 0.52;
+                // Banner is ~320px tall; need at least 170px above center to stay visible
+                var clampedCenterY = Math.max(170, canvasCenterY);
+                var padBottom = Math.max(0, Math.round(window.innerHeight - 2 * clampedCenterY));
+                document.documentElement.style.setProperty('--banner-pad-bottom', padBottom + 'px');
+                // Horizontal: center on canvas (sidebar shifts viewport center rightward)
+                var canvasCenterX = rect.left + rect.width / 2 + 60;
+                var padRight = Math.max(0, Math.round(window.innerWidth - 2 * canvasCenterX));
+                document.documentElement.style.setProperty('--banner-pad-right', padRight + 'px');
             }
         }
 
@@ -3119,8 +3325,11 @@
             sidePanelCollapsed = true;
             panel.classList.add('collapsed');
             panel.classList.add('gameplay-active');
-            // Recalculate scale after transition completes
-            setTimeout(updateGameScale, 320);
+            // Recalculate scale after transition — skip during active gameplay
+            // to avoid disrupting the game loop with transform reflows
+            if (gamePhase !== 'playing') {
+                setTimeout(updateGameScale, 320);
+            }
         }
 
         function expandSidePanel() {
@@ -3129,8 +3338,10 @@
             sidePanelCollapsed = false;
             panel.classList.remove('collapsed');
             // Keep gameplay-active so the collapse button remains visible
-            // Recalculate scale after transition completes
-            setTimeout(updateGameScale, 320);
+            // Recalculate scale after transition — skip during active gameplay
+            if (gamePhase !== 'playing') {
+                setTimeout(updateGameScale, 320);
+            }
         }
 
         function toggleSidePanel() {
@@ -3430,143 +3641,99 @@
         let tutorialStep = 0;
         const TUTORIAL_STEPS = [
             {
-                title: 'Welcome to Stone By Stone',
-                body: `<p>Learn the ancient craft of <strong>dry stone walling</strong> — building walls without mortar, held together only by the skill of the waller and the weight of the stones.</p>
-<p>This game teaches the real principles used by wallers certified under the <strong>Dry Stone Walling Association (DSWA)</strong>.</p>
-<div class="tutorial-diagram">    ╔══════════════════════════════╗
-    ║   COPING (cap stones)        ║
-    ║ ┌──────────────────────────┐ ║
-    ║ │      2ND LIFT            │ ║
-    ║ │ ─ ─ THROUGH LINE ─ ─ ─  │ ║
-    ║ │      1ST LIFT            │ ║
-    ║ └──────────────────────────┘ ║
-    ║ CHEEK                  CHEEK ║
-    ╚══════════════════════════════╝</div>`
+                title: 'The Art of Dry Stone Walling',
+                body: `<p>Dry stone walling is the ancient craft of building walls without mortar, held together not by anything added, but by the skill of the waller and the weight of the stones themselves.</p>
+<p>This game teaches real principles used by wallers certified under the Dry Stone Walling Association (DSWA), drawn from their Level I test wall specification.</p>
+<p>The wall behind this overlay is your reference. Study how it's built before you begin.</p>`
             },
             {
                 title: 'How The Game Works',
-                body: `<p>A reference wall is built, then <strong>deconstructed</strong> stone by stone. Your job is to <strong>rebuild it</strong> using the same stones.</p>
-<p>You'll be dealt a hand of <strong>5 cards</strong> — each card is a stone. Pick one, and it drops Tetris-style from the top. Position it in the wall using:</p>
-<p><span class="key-hint">A</span> <span class="key-hint">D</span> or <span class="key-hint">←</span> <span class="key-hint">→</span> Move left/right</p>
-<p><span class="key-hint">W</span> or <span class="key-hint">↑</span> Rotate the stone</p>
-<p><span class="key-hint">S</span> or <span class="key-hint">↓</span> Drop faster</p>
-<p><span class="key-hint">Space</span> Hard drop (instant placement)</p>`
+                body: `<p>The reference wall is <strong>stripped out</strong> stone by stone. Your job is to <strong>rebuild it</strong> using the same stones.</p>
+<p>You're dealt <strong>5 cards</strong> — each card is a stone. Pick one, and it drops Tetris-style from the top.</p>
+<p><span class="key-hint">←</span> <span class="key-hint">→</span> Move left/right</p>
+<p><span class="key-hint">↑</span> or <span class="key-hint">W</span> Rotate the stone</p>
+<p><span class="key-hint">↓</span> Drop faster</p>
+<p><span class="key-hint">Space</span> Hard drop (instant placement)</p>
+<p style="margin-top:8px;font-size:12px;color:#666;">A 15-second timer counts down for each pick. Too slow and cards get winnowed from your hand.</p>`
             },
             {
-                title: 'The Golden Rules',
+                title: 'The 7 Golden Rules',
                 body: `<p>Score points by following the real rules of dry stone walling:</p>
-<p><span class="rule-name">Lay Flat</span> — Stones should be wider than tall. Gravity is your mortar.</p>
-<p><span class="rule-name">1 Over 2</span> — Each stone should sit on exactly two stones below, bridging the joint. This is the most important rule.</p>
-<p><span class="rule-name">2 Into 1</span> — Avoid "zipper joints" where vertical gaps line up.</p>
-<p><span class="rule-name">Coursing</span> — Large, heavy stones go at the base. Lighter stones go higher.</p>`
+<p><span class="rule-name">Lay Flat</span> — Stones must be wider than tall.</p>
+<p><span class="rule-name">1 Over 2</span> — Each stone sits on two below, bridging the joint.</p>
+<p><span class="rule-name">2 Into 1</span> — No "zipper joints" where vertical gaps line up.</p>
+<p><span class="rule-name">Middle Third</span> — Joints should fall in the middle third of the stone below.</p>
+<p><span class="rule-name">Coursing</span> — Heavier stones at the base, lighter toward the top.</p>
+<p><span class="rule-name">Coping</span> — Cap stones stood on end along the top.</p>
+<p><span class="rule-name">Through Stone</span> — Dark stones spanning the full width at the halfway line.</p>
+<p style="margin-top:8px;font-size:12px;color:#666;">The sidebar cards flash <span style="color:#2a8a2a;">green</span> for good placement, <span style="color:#cc4444;">red</span> for violations.</p>`
             },
             {
-                title: 'Special Stones & Lines',
-                body: `<p><span class="rule-name">Through Stones</span> — Dark stones that span the wall\'s full width at the <strong>through line</strong> (halfway up). They tie the wall together.</p>
-<p><span class="rule-name">Coping Stones</span> — The cap on top. Press <span class="key-hint">B</span> while a stone is dropping to <strong>bank</strong> it for coping. Coping stones are stood on end — you\'ll need to <span class="key-hint">↑</span> rotate them! Once enough are banked, they auto-place in a wave. The stone bank shows the expected cope height.</p>
-<div class="tutorial-diagram">  Coping:  ┃│┃│┃│┃│┃│┃│┃ (stood on end)
-           ─────────────────
-  Through: ████████████████ (dark, spans width)
-           ─────────────────</div>`
+                title: 'Reading the Wall',
+                seeThrough: true,
+                body: `<p><strong>Look at the wall behind this card.</strong></p>
+<p>Notice the thick <strong>foundation stones</strong> at the base — the heaviest courses go down low.</p>
+<p>Near the middle, the dark <strong>through stones</strong> span the wall's full width, tying it together.</p>
+<p>At the top, <strong>coping stones</strong> are stood on end to cap the wall and shed rain.</p>
+<p>On each side, the tapered <strong>cheek ends</strong> give the wall its characteristic battered profile.</p>`
             },
             {
-                title: 'Your Tools',
-                body: `<p>You have special tools to help fit stones precisely:</p>
-<p><span class="key-hint">C</span> <span class="rule-name">Cut</span> — Split a dropping stone into two pieces. Keep one, the other goes back in the deck. You get <strong>10 cuts</strong> per game.</p>
-<p><span class="key-hint">F</span> <span class="rule-name">Face Pin</span> — Fill a small void with a pinning stone (1×1, 1×2, 2×1, or 2×2). Use these to patch holes. You get <strong>5 face pins</strong> per game.</p>
-<p><span class="key-hint">T</span> <span class="rule-name">Through Stone</span> — Retrieve a banked through stone and place it on the through line.</p>
-<p>Watch the <strong>Integrity bar</strong> at the top — bad placement drains it. If it hits 0%, the wall collapses!</p>
-<p style="margin-top:12px;font-size:11px;color:#666;">Cuts and face pins remaining are shown in the top-right of the game field.</p>`
+                title: 'Your Waller\'s Tools',
+                body: `<p>Special tools help you fit stones precisely:</p>
+<p><span class="key-hint">C</span> <span class="rule-name">Cut</span> — Split a stone into two pieces. First 3 cuts are free; more reduces your craftsmanship bonus.</p>
+<p><span class="key-hint">F</span> <span class="rule-name">Face Pin</span> — Fill a small void with a pinning stone. 5 per game.</p>
+<p><span class="key-hint">T</span> <span class="rule-name">Through Bank</span> — Store a through stone for later, or retrieve one when you reach the through line.</p>
+<p><span class="key-hint">U</span> <span class="rule-name">Pull</span> — Remove a placed stone from the wall. 3 per game.</p>
+<p><span class="key-hint">X</span> <span class="rule-name">Set Aside</span> — Discard a card you don't want — it returns to the deck.</p>
+<p><span class="key-hint">B</span> <span class="rule-name">Bank</span> — Bank through stones and coping stones. Through stones go to the through bank; other stones go to the coping bank. Press "Set Copes" when ready to cap the wall.</p>`
+            },
+            {
+                title: 'Integrity & Scoring',
+                body: `<p>The <strong>Integrity bar</strong> at the top tracks your wall's structural health. It starts at 100% — bad placements drain it. If it hits 0%, the wall collapses.</p>
+<p><span class="rule-name">Sealed voids</span> — Trapped empty spaces inside the wall weaken its integrity.</p>
+<p><span class="rule-name">Combo scoring</span> — Consecutive clean placements multiply your bonuses. Any violation resets the streak.</p>
+<p><span class="rule-name">End-game bonuses</span> — Craftsmanship (fewer cuts), unused pulls, and fill quality (fewer sealed voids) all add to your final score.</p>
+<p style="margin-top:8px;font-size:12px;color:#666;">Tools remaining are shown in the top-right of the game field.</p>`
             },
             {
                 title: 'Ready to Build',
-                body: `<p>Study the reference wall on screen before you begin. Notice how stones are laid, where the through stones sit, and how the cheek ends taper.</p>
-<p>The <strong>"How to Wall"</strong> cards in the sidebar will light up <span style="color:#2a8a2a;">green</span> when you place well, or <span style="color:#cc4444;">red</span> when you violate a rule.</p>
-<p>Good luck, waller. Build it <strong>stone by stone</strong>.</p>`
+                body: `<p>Take one more look at the reference wall before you begin.</p>
+<p>The <strong>"How to Wall"</strong> cards in the sidebar will guide you as you build — watch for the green and red flashes.</p>
+<p>Good luck, waller.</p>`
             }
         ];
 
-        // ============ INTERACTIVE TUTORIAL ============
+        // ============ WELCOME BANNER ============
 
-        let interactiveTutorialStep = 0;
-        let interactiveTutorialActive = false;
+        let tutorialLaunchedFromWelcome = false;
 
-        function startInteractiveTutorial() {
-            interactiveTutorialActive = true;
-            interactiveTutorialStep = 0;
-            // Start the game normally — tutorial runs during gameplay
-            startGame();
+        function showWelcomeBanner() {
+            document.getElementById('welcomeOverlay').classList.add('show');
         }
 
-        function showInteractiveTutorialStep() {
-            const msg = document.getElementById('interactiveTutorialMsg');
-            const wrapper = document.querySelector('.game-wrapper');
+        function hideWelcomeBanner() {
+            document.getElementById('welcomeOverlay').classList.remove('show');
+        }
 
-            // Clear all highlights/dims
-            wrapper.classList.remove('tutorial-dim');
-            document.querySelectorAll('.tutorial-spotlight, .tutorial-highlight').forEach(el => {
-                el.classList.remove('tutorial-spotlight', 'tutorial-highlight');
-            });
-
-            if (interactiveTutorialStep === 0) {
-                // Step 1: "Pick a stone"
-                wrapper.classList.add('tutorial-dim');
-                const handRow = document.getElementById('handRow');
-                handRow.classList.add('tutorial-spotlight', 'tutorial-highlight');
-                msg.innerHTML = 'Choose a stone from your hand';
-                msg.classList.add('show');
-
-            } else if (interactiveTutorialStep === 1) {
-                // Step 2: "Place it on the wall"
-                wrapper.classList.add('tutorial-dim');
-                const boardCol = document.querySelector('.game-board-column');
-                boardCol.classList.add('tutorial-spotlight');
-                msg.innerHTML = '<span class="tutorial-key">\u2190 \u2192</span> move &nbsp; <span class="tutorial-key">\u2191</span> rotate &nbsp; <span class="tutorial-key">Space</span> drop';
-                msg.classList.add('show');
-
-            } else if (interactiveTutorialStep === 2) {
-                // Step 3: "Watch the rules" — highlight principle cards
-                wrapper.classList.add('tutorial-dim');
-                const panel = document.querySelector('.side-panel');
-                panel.classList.add('tutorial-spotlight');
-                document.querySelectorAll('.principle-card').forEach(c => c.classList.add('tutorial-highlight'));
-                msg.innerHTML = '<span style="color:#2a8a2a">Green</span> = good! <span style="color:#cc3333">Red</span> = needs work.<br>These 7 rules score your wall.';
-                msg.classList.add('show');
-                // Auto-advance after 5s
-                setTimeout(() => {
-                    if (interactiveTutorialActive && interactiveTutorialStep === 2) {
-                        advanceInteractiveTutorial();
-                    }
-                }, 5000);
-
-            } else if (interactiveTutorialStep === 3) {
-                // Step 4: Tips + "You're ready!"
-                msg.innerHTML = 'Bank through stones with <span class="tutorial-key">B</span><br>Cut stones with <span class="tutorial-key">C</span> to fit tight gaps<br><br><em>You\'re ready \u2014 build your wall!</em>';
-                msg.classList.add('show');
-                setTimeout(() => {
-                    endInteractiveTutorial();
-                }, 5000);
-
+        function welcomeStart() {
+            hideWelcomeBanner();
+            const savedState = checkAutoSave();
+            if (savedState) {
+                if (confirm('Resume your previous game?')) {
+                    restoreAutoSave(savedState);
+                } else {
+                    clearAutoSave();
+                    startGame();
+                }
             } else {
-                endInteractiveTutorial();
+                startGame();
             }
         }
 
-        function advanceInteractiveTutorial() {
-            interactiveTutorialStep++;
-            showInteractiveTutorialStep();
-        }
-
-        function endInteractiveTutorial() {
-            interactiveTutorialActive = false;
-            const msg = document.getElementById('interactiveTutorialMsg');
-            msg.classList.remove('show');
-            const wrapper = document.querySelector('.game-wrapper');
-            wrapper.classList.remove('tutorial-dim');
-            document.querySelectorAll('.tutorial-spotlight, .tutorial-highlight').forEach(el => {
-                el.classList.remove('tutorial-spotlight', 'tutorial-highlight');
-            });
-            localStorage.setItem('sbs_tutorial_done', '1');
+        function welcomeHowTo() {
+            hideWelcomeBanner();
+            tutorialLaunchedFromWelcome = true;
+            showTutorial();
         }
 
         function showTutorial() {
@@ -3580,6 +3747,7 @@
             if (gameRunning || awaitingCardSelection || copingAnimationActive) {
                 if (!gamePaused) togglePause();
             }
+            tutorialLaunchedFromWelcome = false;
             showTutorial();
         }
 
@@ -3587,6 +3755,14 @@
             const step = TUTORIAL_STEPS[tutorialStep];
             document.getElementById('tutorialTitle').textContent = step.title;
             document.getElementById('tutorialBody').innerHTML = step.body;
+
+            // Semi-transparent card for "Reading the Wall" step
+            const content = document.querySelector('.tutorial-content');
+            if (step.seeThrough) {
+                content.classList.add('see-through');
+            } else {
+                content.classList.remove('see-through');
+            }
 
             // Step dots
             const dotsEl = document.getElementById('tutorialDots');
@@ -3602,10 +3778,10 @@
             // Back button
             document.getElementById('tutorialPrev').style.display = tutorialStep > 0 ? 'inline-block' : 'none';
 
-            // Next/Start button
+            // Next/Start button — context-aware label
             const nextBtn = document.getElementById('tutorialNext');
             if (tutorialStep === TUTORIAL_STEPS.length - 1) {
-                nextBtn.textContent = 'Start Building';
+                nextBtn.textContent = tutorialLaunchedFromWelcome ? 'Start Building' : 'Back to Building';
             } else {
                 nextBtn.textContent = 'Next';
             }
@@ -3618,7 +3794,11 @@
             } else {
                 closeTutorial();
                 localStorage.setItem('sbs_tutorial_done', '1');
-                startGame();
+                if (tutorialLaunchedFromWelcome) {
+                    tutorialLaunchedFromWelcome = false;
+                    startGame();
+                }
+                // If opened via ? help button, just close (game already running/paused)
             }
         }
 
@@ -3632,7 +3812,10 @@
         function skipTutorial() {
             closeTutorial();
             localStorage.setItem('sbs_tutorial_done', '1');
-            startGame();
+            if (tutorialLaunchedFromWelcome) {
+                tutorialLaunchedFromWelcome = false;
+                showWelcomeBanner(); // Go back to welcome banner instead of starting game
+            }
         }
 
         function closeTutorial() {
@@ -3668,6 +3851,8 @@
             document.getElementById('tutorialSkip').addEventListener('click', skipTutorial);
             document.getElementById('helpBtn').addEventListener('click', showHelp);
             document.getElementById('panelExpandBtn').addEventListener('click', toggleSidePanel);
+            document.getElementById('welcomeStartBtn').addEventListener('click', welcomeStart);
+            document.getElementById('welcomeHowToBtn').addEventListener('click', welcomeHowTo);
             document.addEventListener('keydown', handleKeyPress);
 
 
@@ -3730,32 +3915,9 @@
             // Render sidebar high scores on init
             renderSidebarHighScores();
 
-            // Check for auto-saved game (Feature 33)
-            const savedState = checkAutoSave();
-            if (savedState) {
-                // Show resume prompt after assets load
-                const origOnLoad = () => {
-                    if (confirm('Resume your previous game?')) {
-                        restoreAutoSave(savedState);
-                    } else {
-                        clearAutoSave();
-                    }
-                };
-                // Defer until after canvas is visible
-                setTimeout(() => {
-                    if (canvas.classList.contains('loaded')) {
-                        origOnLoad();
-                    } else {
-                        // Wait for assets to load
-                        const observer = new MutationObserver((mutations, obs) => {
-                            if (canvas.classList.contains('loaded')) {
-                                obs.disconnect();
-                                origOnLoad();
-                            }
-                        });
-                        observer.observe(canvas, { attributes: true, attributeFilter: ['class'] });
-                    }
-                }, 500);
+            // If an auto-save exists, update welcome banner button to "Continue"
+            if (checkAutoSave()) {
+                document.getElementById('welcomeStartBtn').textContent = 'Continue';
             }
 
             // Build the pre-built wall data but DON'T draw yet — wait for
@@ -3766,6 +3928,8 @@
 
             // Responsive scaling — fit game to viewport
             updateGameScale();
+            // Show welcome banner after positioning is computed (prevents jump)
+            showWelcomeBanner();
             // Fullscreen listener removed — re-enable with toggleFullscreen()
             // document.addEventListener('fullscreenchange', () => {
             //     setTimeout(updateGameScale, 100);
@@ -3880,7 +4044,7 @@
                 if (isThroughStone && awaitingCardSelection) {
                     hintText = 'T: Bank';
                 } else if (awaitingCardSelection && getWallProgress() > 0.75 && copingBank.length < copingBankTarget) {
-                    hintText = 'B: Bank for coping';
+                    hintText = 'B: Bank for coping / through';
                 }
 
                 card.innerHTML = `
@@ -3954,10 +4118,7 @@
             // Update hand row to show disabled/placing state
             renderHandRow();
 
-            // Interactive tutorial: advance from "Pick a stone" to "Place it"
-            if (interactiveTutorialActive && interactiveTutorialStep === 0) {
-                advanceInteractiveTutorial();
-            }
+
 
             // Hide cursor during stone drop
             canvas.style.cursor = 'none';
@@ -4015,6 +4176,9 @@
             renderHandRow();
             renderCopingBank();
             drawBoard();
+
+            // Smooth re-scale to accommodate bank strip height change
+            updateGameScale(true);
         }
 
         function renderCopingBank() {
@@ -6612,18 +6776,27 @@
                 // Redraw the cleared board
                 drawBoard();
 
-                // Compute coping bank target (how many stones needed)
-                const _groundRow = ROWS - 2;
-                const _wallTopRow = _groundRow - WALL_HEIGHT + 1;
-                const _playable = getPlayableArea(_wallTopRow);
-                const _faceWidth = _playable.right - _playable.left;
-                copingBankTarget = Math.ceil(_faceWidth / 3.5);
+                // Compute coping bank target — count actual coping stones from reference wall
+                // originalWallStones has isCoping flags set during generateCompletedWall()
+                copingBankTarget = originalWallStones.filter(function(s) { return s.isCoping; }).length;
+                if (copingBankTarget === 0) {
+                    // Fallback: geometric estimate if reference wall has no coping data
+                    const _groundRow = ROWS - 2;
+                    const _copeRow = _groundRow - (WALL_HEIGHT - COPING_HEIGHT);
+                    const _cheekW = getCheekWidthAtRow(_copeRow);
+                    const _faceWidth = COLS - getCheekOffset() - getCheekOffsetRight() - 2 * _cheekW;
+                    copingBankTarget = Math.ceil(Math.max(1, _faceWidth) / 3.5);
+                }
 
                 // Show persistent hand row, bank strips, and await card selection
                 awaitingCardSelection = true;
                 document.getElementById('handRow').style.display = 'flex';
                 renderHandRow();
                 renderCopingBank();
+
+                // Re-scale to fit hand row + bank strip + collapsed sidebar.
+                // 350ms delay waits for sidebar collapse transition (0.3s) to finish.
+                setTimeout(function() { updateGameScale(false); }, 350);
 
                 // Card deal-in animation: stagger card appearance with scale (Feature 17)
                 const cards = document.querySelectorAll('.hand-card');
@@ -6644,10 +6817,7 @@
                     cards.forEach(c => { c.style.transitionDelay = ''; });
                 }, 800);
 
-                // Interactive tutorial: show step 0 ("Pick a stone") after cards deal in
-                if (interactiveTutorialActive && interactiveTutorialStep === 0) {
-                    setTimeout(() => showInteractiveTutorialStep(), 500);
-                }
+
                 return;
             }
 
@@ -7061,6 +7231,42 @@
             }
 
             return totalCells > 0 ? filledCells / totalCells : 0;
+        }
+
+        function getBodyProgress() {
+            // Measure only the wall body (ground up to cope line, excluding coping zone)
+            const groundRow = ROWS - 2;
+            const copeLineRow = groundRow - (WALL_HEIGHT - COPING_HEIGHT);
+            let totalCells = 0;
+            let filledCells = 0;
+            for (let r = copeLineRow; r < ROWS - 1; r++) {
+                const playable = getPlayableArea(r);
+                if (playable.right - playable.left > 2) {
+                    for (let c = playable.left; c < playable.right; c++) {
+                        totalCells++;
+                        if (board[r][c] && stoneInfo[r][c] > 0) {
+                            filledCells++;
+                        }
+                    }
+                }
+            }
+            return totalCells > 0 ? filledCells / totalCells : 0;
+        }
+
+        function isCopeLineCovered() {
+            // Check if the cope line row is covered with stones across the face
+            const groundRow = ROWS - 2;
+            const copeLineRow = groundRow - (WALL_HEIGHT - COPING_HEIGHT);
+            const playable = getPlayableArea(copeLineRow);
+            let total = 0;
+            let filled = 0;
+            for (let c = playable.left; c < playable.right; c++) {
+                total++;
+                if (board[copeLineRow][c] && stoneInfo[copeLineRow][c] > 0) {
+                    filled++;
+                }
+            }
+            return total > 0 && filled === total;
         }
 
         function isLaidFlat(stone) {
@@ -7845,23 +8051,6 @@
 
             // Title screen canvas enhancements (ambient motes only — subtitle/press-start removed)
 
-            // Pause overlay
-            if (gamePaused && gamePhase === 'playing') {
-                ctx.fillStyle = 'rgba(42, 42, 42, 0.5)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.save();
-                ctx.fillStyle = '#fffdf7';
-                ctx.font = 'bold 28px Georgia';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const pauseCenterX = ((getCheekOffset() + COLS - getCheekOffsetRight()) / 2) * BLOCK_SIZE;
-                ctx.fillText('PAUSED', pauseCenterX, canvas.height / 2);
-                ctx.font = '13px Georgia';
-                ctx.fillStyle = 'rgba(255,253,247,0.6)';
-                ctx.fillText('Press P to resume', pauseCenterX, canvas.height / 2 + 35);
-                ctx.restore();
-            }
-
             // In-game HUD — show cuts & face pins remaining during active play
             if (gamePhase === 'playing' && !designMode) {
                 drawGameHUD();
@@ -8030,10 +8219,6 @@
 
             analyzeStone(positions, currentStone);
 
-            // Interactive tutorial: advance from "Place it" to "Watch the rules"
-            if (interactiveTutorialActive && interactiveTutorialStep === 1) {
-                advanceInteractiveTutorial();
-            }
 
             // Restore cursor after stone drop
             canvas.style.cursor = '';
@@ -8106,26 +8291,19 @@
 
         function checkCopingFailsafe() {
             // Two-tier coping trigger:
-            // 1. Primary: body stones reach the cope line (row 27 ≥90% filled)
-            // 2. Emergency: 12+ player stones ABOVE the cope line (rows 18–26 only)
-            // Row 27 is the cope line itself — body stones legitimately reach it.
-            // The normal trigger is the manual "Set Copes" button.
-            const groundRow = ROWS - 2;
-            const copeLineRow = groundRow - (WALL_HEIGHT - COPING_HEIGHT); // Row 27
+            // 1. Primary: player has banked enough coping stones to cover the wall face
+            // 2. Emergency: 12+ player stones ABOVE the cope line (overbuilding safety valve)
+            // The normal trigger remains the manual "Set Copes" button.
 
-            // Primary: check if the cope line row is filled across the playable width
-            const playable = getPlayableArea(copeLineRow);
-            const playableWidth = playable.right - playable.left;
-            let filledCols = 0;
-            for (let c = playable.left; c < playable.right; c++) {
-                if (board[copeLineRow][c] > 0) filledCols++;
-            }
-            if (playableWidth > 0 && filledCols / playableWidth >= 0.90) {
-                return true; // Body built up to cope line — ready for coping
+            // Primary: enough coping stones banked AND cope line is covered with stones
+            if (copingBankTarget > 0 && copingBank.length >= copingBankTarget && isCopeLineCovered()) {
+                return true;
             }
 
             // Emergency: 12+ unique player stones ABOVE the cope line (rows 18–26)
             // Row 27 excluded — body stones at the cope line are normal, not overbuilding
+            const groundRow = ROWS - 2;
+            const copeLineRow = groundRow - (WALL_HEIGHT - COPING_HEIGHT);
             let aboveCount = 0;
             const seen = new Set();
             for (let r = copeLineRow - 1; r >= copeLineRow - (COPING_HEIGHT - 1) && r >= 0; r--) {
@@ -8162,6 +8340,24 @@
                 stability = Math.min(100 - stabilityScar, stability + 5);
                 showFeedback('Through stones level! +' + levelBonus + ' bonus', 'positive');
                 highlightPrinciple('principle-through', 'good');
+            }
+
+            // Check horizontal spacing between through stones (2.5-3.5 feet = 30-42 inches)
+            const sorted = throughStones.slice().sort((a, b) => a.minC - b.minC);
+            for (let i = 0; i < sorted.length - 1; i++) {
+                const centerA = (sorted[i].minC + sorted[i].maxC) / 2;
+                const centerB = (sorted[i + 1].minC + sorted[i + 1].maxC) / 2;
+                const spacing = Math.abs(centerB - centerA);
+                if (spacing < 30 || spacing > 42) {
+                    stability = Math.max(0, stability - 10);
+                    addScar(3);
+                    const ft = (spacing / 12).toFixed(1);
+                    showFeedback('Through stones ' + ft + '\' apart — need 2.5-3.5\'!', 'negative');
+                    highlightPrinciple('principle-through', 'bad');
+                } else {
+                    const ft = (spacing / 12).toFixed(1);
+                    showFeedback('Through stones well spaced at ' + ft + '\'!', 'positive');
+                }
             }
         }
 
@@ -8460,14 +8656,39 @@
                     registerStone(id, row, row + stone.height - 1, col, col + stone.width - 1, stone.thickness, true, false);
 
                     // Award coping bonus (60 base + area)
-                    score += 60 + Math.round(stone.width * stone.height * 0.3);
+                    // Coping bonus: full 60 for standard height (10"), reduced 30 for non-standard
+                    const isStandardHeight = (stone.height === COPING_HEIGHT);
+                    const copingBaseBonus = isStandardHeight ? 60 : 30;
+                    score += copingBaseBonus + Math.round(stone.width * stone.height * 0.3);
                     stats.copingStones++;
                     stats.stonesPlaced++;
                     updateUI();
 
                     // Highlight coping principle card
-                    highlightPrinciple('principle-coping', 'good');
+                    highlightPrinciple('principle-coping', isStandardHeight ? 'good' : 'bad');
+                    if (!isStandardHeight) {
+                        showFeedback('Non-standard coping height (' + stone.height + '")', 'negative');
+                    }
                     playSound('tap', 0.5);
+
+                    // Add coping stone to placement history for review mode
+                    const copingViolations = [];
+                    if (!isStandardHeight) {
+                        copingViolations.push('Non-standard coping height (' + stone.height + '")');
+                    }
+                    placementHistory.push({
+                        id: id,
+                        x: col,
+                        y: row,
+                        w: stone.width,
+                        h: stone.height,
+                        thickness: stone.thickness,
+                        bonus: copingBaseBonus + Math.round(stone.width * stone.height * 0.3),
+                        stability: Math.round(stability),
+                        principles: ['Coping'],
+                        violations: copingViolations,
+                        isCoping: true
+                    });
 
                     drawBoard();
 
@@ -9462,6 +9683,8 @@
             // P key toggles pause
             if (e.key === 'p' || e.key === 'P') {
                 if (gamePhase === 'playing') {
+                    // Don't toggle pause while reset confirmation is showing
+                    if (document.getElementById('resetConfirmOverlay').classList.contains('show')) return;
                     togglePause();
                     e.preventDefault();
                 }
@@ -9563,22 +9786,25 @@
             const btn = document.getElementById('startBtn');
             if (btn.textContent === 'Reset') {
                 // Game in progress — show confirmation
-                if (gameRunning || awaitingCardSelection) gamePaused = true;
+                wasPausedBeforeReset = gamePaused;
+                if (gameRunning || awaitingCardSelection) {
+                    if (!gamePaused) gamePaused = true;
+                }
                 document.getElementById('resetConfirmOverlay').classList.add('show');
             } else {
-                // First time? Run interactive tutorial
-                if (!localStorage.getItem('sbs_tutorial_done')) {
-                    startInteractiveTutorial();
-                } else {
-                    startGame();
-                }
+                // Hide welcome banner and start game
+                hideWelcomeBanner();
+                startGame();
             }
         }
 
         function confirmReset() {
             document.getElementById('resetConfirmOverlay').classList.remove('show');
+            document.getElementById('pauseOverlay').classList.remove('show');
             gamePaused = false;
+            wasPausedBeforeReset = false;
             expandSidePanel(); // Show full panel on reset to title
+            setTimeout(updateGameScale, 320); // Recalculate scale for expanded sidebar
             document.getElementById('sidePanel').classList.remove('gameplay-active');
             stopBgMusic();
             stopDeconAudio();
@@ -9656,26 +9882,38 @@
             drawBoard();
             // Restart title screen animation loop
             startTitleAnimation();
+            // Show welcome banner on reset to title
+            clearAutoSave();
+            document.getElementById('welcomeStartBtn').textContent = 'Start';
+            showWelcomeBanner();
         }
 
         function cancelReset() {
             document.getElementById('resetConfirmOverlay').classList.remove('show');
-            gamePaused = false;
-            document.getElementById('pauseBtn').textContent = 'Pause';
-            // Resume timer if was awaiting card selection
-            if (awaitingCardSelection && cardTimerRemaining > 0) {
-                cardSelectDeadline = performance.now() + cardTimerRemaining;
-                cardTimerRemaining = 0;
-                cardSelectAnimFrame = requestAnimationFrame(updateCardTimerBar);
-            }
-            if (gameRunning) {
-                lastDrop = performance.now();
-                requestAnimationFrame(gameLoop);
+            if (wasPausedBeforeReset) {
+                // Was already paused before reset — stay paused
+                gamePaused = true;
+                document.getElementById('pauseBtn').textContent = 'Resume';
+            } else {
+                // Was actively playing — resume
+                gamePaused = false;
+                document.getElementById('pauseBtn').textContent = 'Pause';
+                // Resume timer if was awaiting card selection
+                if (awaitingCardSelection && cardTimerRemaining > 0) {
+                    cardSelectDeadline = performance.now() + cardTimerRemaining;
+                    cardTimerRemaining = 0;
+                    cardSelectAnimFrame = requestAnimationFrame(updateCardTimerBar);
+                }
+                if (gameRunning) {
+                    lastDrop = performance.now();
+                    requestAnimationFrame(gameLoop);
+                }
             }
         }
 
         function startGame() {
             clearAutoSave(); // Clear auto-save when starting fresh
+            document.getElementById('pauseOverlay').classList.remove('show');
             stopTitleAnimation();
 
             // Clear any pending deconstruction / animations
@@ -9777,6 +10015,7 @@
 
             gameRunning = false;
             gamePaused = false;
+            wasPausedBeforeReset = false;
 
             // Generate completed wall and start deconstruction immediately.
             // The wall is already visible from the title screen, so no preview delay needed.
@@ -9791,16 +10030,19 @@
             gamePaused = !gamePaused;
             document.getElementById('pauseBtn').textContent = gamePaused ? 'Resume' : 'Pause';
             if (gamePaused) {
+                document.getElementById('pauseOverlay').classList.add('show');
                 expandSidePanel(); // Show full panel while paused
                 // Pause coping animation
                 if (copingTimer) {
                     clearTimeout(copingTimer);
                     copingTimer = null;
                 }
-                // Pause background music and ambient loops
+                // Pause background music, ambient loops, and folk music
                 if (bgMusic && bgMusicBuffer) bgMusicBuffer.pause();
                 if (deconAudio && deconAudioPlaying) deconAudio.pause();
                 if (cutAudio && cutAudioPlaying) cutAudio.pause();
+                if (folkMusic && folkMusicPlaying) folkMusic.pause();
+                if (folkMusicTimer) { clearTimeout(folkMusicTimer); folkMusicTimer = null; }
                 // Pause card select timer — store remaining time
                 if (cardSelectDeadline > 0) {
                     cardTimerRemaining = Math.max(0, cardSelectDeadline - performance.now());
@@ -9811,6 +10053,7 @@
                     cardSelectDeadline = 0;
                 }
             } else {
+                document.getElementById('pauseOverlay').classList.remove('show');
                 // Resume — collapse sidebar back
                 collapseSidePanel();
                 lastDrop = performance.now();
@@ -9818,6 +10061,8 @@
                 if (bgMusic && bgMusicBuffer) bgMusicBuffer.play().catch(() => {});
                 if (deconAudio && deconAudioPlaying) deconAudio.play().catch(() => {});
                 if (cutAudio && cutAudioPlaying) cutAudio.play().catch(() => {});
+                if (folkMusic && folkMusicPlaying) folkMusic.play().catch(() => {});
+                else if (bgMusic && !folkMusicPlaying) startFolkMusic();
                 // Resume card select timer from stored remaining time
                 if (awaitingCardSelection && cardTimerRemaining > 0) {
                     cardSelectDeadline = performance.now() + cardTimerRemaining;
@@ -10017,7 +10262,12 @@
 
         function gameOver(complete) {
             gameRunning = false;
+            gamePaused = false;
+            wasPausedBeforeReset = false;
+            document.getElementById('pauseOverlay').classList.remove('show');
+            document.getElementById('pauseBtn').textContent = 'Pause';
             expandSidePanel(); // Show full panel on game over
+            setTimeout(updateGameScale, 320); // Recalculate scale for expanded sidebar
             document.getElementById('sidePanel').classList.remove('gameplay-active');
             stopBgMusic();
             stopDeconAudio();
@@ -10316,11 +10566,14 @@
                     const isBad = (faces.left >= 3 || faces.right >= 3) ||
                                   (faces.left >= 2 && faces.right >= 2);
                     if (isBad) {
+                        // Trace the joint extent through the stones below
+                        var jTop = belowRow, jBot = belowRow;
+                        while (jBot + 1 < ROWS - 1 && stoneInfo[jBot + 1][c - 1] === leftId && stoneInfo[jBot + 1][c] === rightId) jBot++;
                         ctx.strokeStyle = color;
                         ctx.lineWidth = lineWidth;
                         ctx.beginPath();
-                        ctx.moveTo(c * BLOCK_SIZE, entry.y * BLOCK_SIZE);
-                        ctx.lineTo(c * BLOCK_SIZE, (entry.y + entry.h) * BLOCK_SIZE);
+                        ctx.moveTo(c * BLOCK_SIZE, jTop * BLOCK_SIZE);
+                        ctx.lineTo(c * BLOCK_SIZE, (jBot + 1) * BLOCK_SIZE);
                         ctx.stroke();
                     }
                 }
@@ -10331,11 +10584,14 @@
                 const leftId = stoneInfo[belowRow][edgeCol - 1];
                 const rightId = stoneInfo[belowRow][edgeCol];
                 if (leftId > 0 && rightId > 0 && leftId !== rightId) {
+                    // Trace the joint extent through the stones below
+                    var ljBot = belowRow;
+                    while (ljBot + 1 < ROWS - 1 && stoneInfo[ljBot + 1][edgeCol - 1] === leftId && stoneInfo[ljBot + 1][edgeCol] === rightId) ljBot++;
                     ctx.strokeStyle = color;
                     ctx.lineWidth = lineWidth;
                     ctx.beginPath();
-                    ctx.moveTo(edgeCol * BLOCK_SIZE, entry.y * BLOCK_SIZE);
-                    ctx.lineTo(edgeCol * BLOCK_SIZE, (entry.y + entry.h) * BLOCK_SIZE);
+                    ctx.moveTo(edgeCol * BLOCK_SIZE, belowRow * BLOCK_SIZE);
+                    ctx.lineTo(edgeCol * BLOCK_SIZE, (ljBot + 1) * BLOCK_SIZE);
                     ctx.stroke();
                 }
             }
@@ -10365,11 +10621,11 @@
                         ctx.fillStyle = 'rgba(200,40,40,0.25)';
                         ctx.fillRect(px, py, pw, ph);
                     } else if (v === 'Cold joint' || v === 'Weak joint' || v === 'Dangerous joint!') {
-                        // Red vertical line at offending edge(s)
-                        drawJointHighlight(entry, 'rgba(200,40,40,0.6)', 2);
+                        // Bold red vertical line at offending edge(s)
+                        drawJointHighlight(entry, 'rgba(200,40,40,0.85)', 4);
                     } else if (v.includes('zipper') || v.includes('Zipper')) {
-                        // Orange vertical line at offending edge(s)
-                        drawJointHighlight(entry, 'rgba(220,140,30,0.6)', 2);
+                        // Bold orange vertical line at offending edge(s)
+                        drawJointHighlight(entry, 'rgba(220,140,30,0.85)', 4);
                     } else if (v === 'Off-center!') {
                         // Yellow wash
                         ctx.fillStyle = 'rgba(220,180,30,0.2)';
@@ -10393,6 +10649,10 @@
                     } else if (v === 'Stone on cheek wall!' || v === 'Stone outside wall face!' || v === 'Stone above wall!') {
                         // Red wash for boundary violations
                         ctx.fillStyle = 'rgba(200,40,40,0.2)';
+                        ctx.fillRect(px, py, pw, ph);
+                    } else if (v.includes('Non-standard coping height')) {
+                        // Amber wash for non-standard coping
+                        ctx.fillStyle = 'rgba(200,160,40,0.2)';
                         ctx.fillRect(px, py, pw, ph);
                     }
                 }
