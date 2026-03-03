@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stone by Stone - The Dry Stone Walling Game</title>
+    <title>Waller - The Dry Stone Walling Game</title>
     <style>
         * {
             margin: 0;
@@ -36,10 +36,9 @@
         }
 
         .game-title {
-            color: #2a2a2a;
-            font-size: 20px;
-            font-weight: normal;
+            font-size: 22px;
             letter-spacing: 3px;
+            color: #2a2a2a;
             white-space: nowrap;
         }
 
@@ -1781,7 +1780,7 @@
 <body>
     <div class="game-wrapper">
     <div class="game-header">
-        <h1 class="game-title">STONE BY STONE</h1>
+        <h1 class="game-title">WALLER</h1>
         <div class="stats-row">
             <div class="stat-box">
                 <span class="stat-label">Score</span>
@@ -2110,8 +2109,8 @@
                     <div class="end-stat-value" id="statCuts">0</div>
                 </div>
                 <div class="end-stat">
-                    <div class="end-stat-label">Set Aside</div>
-                    <div class="end-stat-value" id="statSetAside">0</div>
+                    <div class="end-stat-label">Redraws Used</div>
+                    <div class="end-stat-value" id="statRedraws">0</div>
                 </div>
                 <div class="end-stat">
                     <div class="end-stat-label">Through Banked</div>
@@ -2148,7 +2147,7 @@
     <!-- Welcome Banner -->
     <div class="welcome-overlay" id="welcomeOverlay">
         <div class="welcome-content">
-            <h1 class="welcome-title">STONE BY STONE</h1>
+            <h1 class="welcome-title">WALLER</h1>
             <p class="welcome-subtitle">The Dry Stone Walling Game</p>
             <p class="welcome-tagline">Learn the ancient craft of building walls without mortar,<br>held together only by skill and gravity.</p>
             <div class="welcome-buttons">
@@ -2446,10 +2445,15 @@
 
         // Combo scoring state
         let comboCount = 0;
-        const COMBO_PHRASES = {
-            3: "Now we're cooking with gas!",
-            5: "Mamby jamby!"
-        };
+        const COMBO_PHRASES = [
+            "Now yer cookin' with gas!",
+            "Mamby jamby!",
+            "Right ho!",
+            "Bosh!",
+            "That dog'll hunt",
+            "Right smart!",
+            "Well butter my biscuit"
+        ];
 
         // "Pull It Off The Wall" state
         let pullsRemaining = 3;
@@ -2459,7 +2463,7 @@
         // Cut bonus system: unlimited cuts, first 3 free, 4th+ reduces craftsmanship bonus
         let cutsUsed = 0;
         let pendingOffcut = null; // Offcut from a cut, guaranteed in next hand drawn
-        let stonesSetAside = 0; // Stones discarded via "Set Aside" mechanic
+        let redrawsRemaining = 3; // Hand redraws available per game
 
         // Dramatic deconstruction state
         let fallingDeconStones = [];
@@ -3574,30 +3578,37 @@
             // Asset naming convention: stone_assets/{H}_{W} {variant}.svg
             // H:W ratio is the reduced aspect ratio (height:width)
             // 9-slice scaling stretches one asset to render any stone with a matching ratio
-            // Multiple variants (A, B, C, D) per ratio are randomly assigned per stone ID
+            // Multiple variants (A–F) per ratio are randomly assigned per stone ID
             const assets = [
                 // 1:1 — squares (covers 2x2, 4x4, 6x6, 8x8, 12x12)
                 { ratio: '1:1', src: 'stone_assets/1_1 A.svg' },
                 { ratio: '1:1', src: 'stone_assets/1_1 B.svg' },
                 { ratio: '1:1', src: 'stone_assets/1_1 C 2.svg' },
                 { ratio: '1:1', src: 'stone_assets/1_1 D.svg' },
+                { ratio: '1:1', src: 'stone_assets/1_1 E.svg' },
+                { ratio: '1:1', src: 'stone_assets/1_1 F.svg' },
 
                 // 1:2 — 2:1 wide (covers 2x4, 4x8, 6x12, 8x16)
                 { ratio: '1:2', src: 'stone_assets/1_2 A.svg' },
                 { ratio: '1:2', src: 'stone_assets/1_2 B.svg' },
                 { ratio: '1:2', src: 'stone_assets/1_2 C.svg' },
                 { ratio: '1:2', src: 'stone_assets/1_2 D.svg' },
+                { ratio: '1:2', src: 'stone_assets/1_2 E.svg' },
+                { ratio: '1:2', src: 'stone_assets/1_2 F.svg' },
 
                 // 1:3 — 3:1 wide (covers 2x6, 4x12)
                 { ratio: '1:3', src: 'stone_assets/1_3 A.svg' },
                 { ratio: '1:3', src: 'stone_assets/1_3 B.svg' },
                 { ratio: '1:3', src: 'stone_assets/1_3 C.svg' },
                 { ratio: '1:3', src: 'stone_assets/1_3 D.svg' },
+                { ratio: '1:3', src: 'stone_assets/1_3 E.svg' },
+                { ratio: '1:3', src: 'stone_assets/1_3 F.svg' },
 
                 // 1:4 — 4:1 wide (covers 2x8)
                 { ratio: '1:4', src: 'stone_assets/1_4 A.svg' },
                 { ratio: '1:4', src: 'stone_assets/1_4 B.svg' },
                 { ratio: '1:4', src: 'stone_assets/1_4 C.svg' },
+                { ratio: '1:4', src: 'stone_assets/1_4 D.svg' },
 
                 // 1:5 — 5:1 wide (covers 2x10, 4x20 through stones)
                 { ratio: '1:5', src: 'stone_assets/1_5 A.svg' },
@@ -3606,12 +3617,14 @@
 
                 // 1:6 — 6:1 wide
                 { ratio: '1:6', src: 'stone_assets/1_6 A.svg' },
+                { ratio: '1:6', src: 'stone_assets/1_6 B.svg' },
 
                 // 2:3 — 3:2 wide (covers 4x6, 6x10, 8x12, 12x18)
                 { ratio: '2:3', src: 'stone_assets/2_3 A.svg' },
                 { ratio: '2:3', src: 'stone_assets/2_3 B.svg' },
-                { ratio: '2:3', src: 'stone_assets/2_3 C.svg' },
+                { ratio: '2:3', src: 'stone_assets/2_3 E.svg' },
                 { ratio: '2:3', src: 'stone_assets/2_3 D.svg' },
+                { ratio: '2:3', src: 'stone_assets/2_3 C.svg' },
             ];
             let loadedCount = 0;
             const totalAssets = assets.length;
@@ -3691,8 +3704,9 @@
         const TUTORIAL_STEPS = [
             {
                 title: 'The Art of Dry Stone Walling',
-                body: `<p>Dry stone walling is the ancient craft of building walls without mortar, held together not by anything added, but by the skill of the waller and the weight of the stones themselves.</p>
-<p>This game teaches real principles used by wallers certified under the Dry Stone Walling Association (DSWA), drawn from their Level I test wall specification.</p>
+                body: `<p><em>"A dry stone wall is more than a pile of rocks. It is a carefully built combination of specialized stones, each co-operating with the other to create something useful, strong, and attractive. No mortar is used. The wall relies on friction and gravity, and the skill of the builder, to keep it together."</em></p>
+<p style="text-align:right;font-size:12px;color:#888;margin-top:-4px;">— Nick Aitken</p>
+<p>This game draws on the real principles taught by the Dry Stone Walling Association's (DSWA) <a href="https://thestonetrust.org/certification/level-i-initial/" target="_blank" rel="noopener">Level I certification</a> program.</p>
 <p>The wall behind this overlay is your reference. Study how it's built before you begin.</p>`
             },
             {
@@ -3710,11 +3724,11 @@
                 body: `<p>Score points by following the real rules of dry stone walling:</p>
 <p><span class="rule-name">Lay Flat</span> — Stones must be wider than tall.</p>
 <p><span class="rule-name">1 Over 2</span> — Each stone sits on two below, bridging the joint.</p>
-<p><span class="rule-name">2 Into 1</span> — No "zipper joints" where vertical gaps line up.</p>
+<p><span class="rule-name">2 Into 1</span> — No "zipper joints" or "cold joints" where vertical gaps line up.</p>
 <p><span class="rule-name">Middle Third</span> — Joints should fall in the middle third of the stone below.</p>
 <p><span class="rule-name">Coursing</span> — Heavier stones at the base, lighter toward the top.</p>
-<p><span class="rule-name">Coping</span> — Cap stones stood on end along the top.</p>
-<p><span class="rule-name">Through Stone</span> — Dark stones spanning the full width at the halfway line.</p>
+<p><span class="rule-name">Coping</span> — Cope stones stood on end along the top.</p>
+<p><span class="rule-name">Through Stone</span> — Special, tying stones that span the full width of the wall, placed at the halfway line.</p>
 <p style="margin-top:8px;font-size:12px;color:#666;">The sidebar cards flash <span style="color:#2a8a2a;">green</span> for good placement, <span style="color:#cc4444;">red</span> for violations.</p>`
             },
             {
@@ -3723,7 +3737,7 @@
                 body: `<p><strong>Look at the wall behind this card.</strong></p>
 <p>Notice the thick <strong>foundation stones</strong> at the base — the heaviest courses go down low.</p>
 <p>Near the middle, the dark <strong>through stones</strong> span the wall's full width, tying it together.</p>
-<p>At the top, <strong>coping stones</strong> are stood on end to cap the wall and shed rain.</p>
+<p>At the top, <strong>coping stones</strong> are stood on end to cap the wall.</p>
 <p>On each side, the tapered <strong>cheek ends</strong> give the wall its characteristic battered profile.</p>`
             },
             {
@@ -3731,9 +3745,9 @@
                 body: `<p>Special tools help you fit stones precisely:</p>
 <p><span class="key-hint">C</span> <span class="rule-name">Cut</span> — Split a stone into two pieces. First 3 cuts are free; more reduces your craftsmanship bonus.</p>
 <p><span class="key-hint">F</span> <span class="rule-name">Face Pin</span> — Fill a small void with a pinning stone. 5 per game.</p>
-<p><span class="key-hint">T</span> <span class="rule-name">Through Bank</span> — Store a through stone for later, or retrieve one when you reach the through line.</p>
+<p><span class="key-hint">T</span> <span class="rule-name">Through Bank</span> — Place a banked through stone, or click the stone itself in the bank strip.</p>
 <p><span class="key-hint">U</span> <span class="rule-name">Pull</span> — Remove a placed stone from the wall. 3 per game.</p>
-<p><span class="key-hint">X</span> <span class="rule-name">Set Aside</span> — Discard a card you don't want, it returns to the deck.</p>
+<p><span class="key-hint">X</span> <span class="rule-name">Redraw</span> — Shuffle your hand back into the deck and draw fresh cards. 3 per game.</p>
 <p><span class="key-hint">B</span> <span class="rule-name">Bank</span> — Bank through stones and coping stones. Through stones go to the through bank; other stones go to the coping bank. Press "Set Copes" when ready to cap the wall.</p>`
             },
             {
@@ -3748,7 +3762,10 @@
                 title: 'Ready to Build',
                 body: `<p>Take one more look at the reference wall before you begin.</p>
 <p>The <strong>"How to Wall"</strong> cards in the sidebar will guide you as you build — watch for the green and red flashes.</p>
-<p>Good luck, waller.</p>`
+<p>Good luck, waller.</p>
+<p style="margin-top:12px;font-size:12px;color:#888;">Additional reading:<br>
+<a href="https://www.dswa.org.uk/discover-more/" target="_blank" rel="noopener">DSWA — Discover More</a><br>
+<a href="https://thestonetrust.org/resource-information/how-to/#basic-rules-section" target="_blank" rel="noopener">The Stone Trust — Basic Rules of Dry Stone Walling</a></p>`
             }
         ];
 
@@ -4136,9 +4153,9 @@
             const pullBtnHtml = (awaitingCardSelection && pullsRemaining > 0)
                 ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" onclick="startPullMode()">Pull (U) <strong>${pullsRemaining}</strong></button>`
                 : (pullsRemaining > 0 ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" disabled>Pull (U) <strong>${pullsRemaining}</strong></button>` : '');
-            const setAsideBtnHtml = (awaitingCardSelection && hand.length > 1)
-                ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" onclick="discardCard(hoveredCardIndex >= 0 ? hoveredCardIndex : 0)">Set Aside (X)</button>`
-                : '';
+            const redrawBtnHtml = (awaitingCardSelection && redrawsRemaining > 0)
+                ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" onclick="redrawHand()">Redraw (X) <strong>${redrawsRemaining}</strong></button>`
+                : (redrawsRemaining > 0 ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" disabled>Redraw (X) <strong>${redrawsRemaining}</strong></button>` : '');
             const deckPct = totalDeckSize > 0 ? Math.round((deck.length / totalDeckSize) * 100) : 0;
             info.innerHTML = `
                 <div class="deck-bar-container">
@@ -4148,7 +4165,7 @@
                 ${pinBtnHtml}
                 ${throughBtnHtml}
                 ${pullBtnHtml}
-                ${setAsideBtnHtml}
+                ${redrawBtnHtml}
             `;
             handRow.appendChild(info);
 
@@ -5096,33 +5113,18 @@
             }
         }
 
-        function discardCard(index) {
-            // "Set Aside" — permanently remove a stone from the game
-            // A good waller knows which stones to set aside
-            if (!awaitingCardSelection || hand.length <= 1) return;
-            if (index < 0 || index >= hand.length) return;
+        function redrawHand() {
+            // "Redraw" — return all cards to deck and draw a fresh hand
+            // 3 uses per game
+            if (!awaitingCardSelection || redrawsRemaining <= 0) return;
 
-            const removed = hand.splice(index, 1)[0];
-            // Stone is permanently removed — NOT returned to deck
-            stonesSetAside++;
-            score += 10;
+            redrawsRemaining--;
+            drawFreshHand();
 
-            showFeedback('Stone set aside (+10)', 'positive');
+            showFeedback('Hand redrawn! (' + redrawsRemaining + ' left)', 'positive');
             updateUI();
-
-            // Animate the card out (reuse winnow animation)
-            const handRow = document.getElementById('handRow');
-            const cards = handRow.querySelectorAll('.hand-card');
-            if (cards[index]) {
-                cards[index].classList.add('winnowing');
-                setTimeout(() => {
-                    renderHandRow();
-                    drawBoard();
-                }, 420);
-            } else {
-                renderHandRow();
-                drawBoard();
-            }
+            renderHandRow();
+            drawBoard();
         }
 
         function autoSelectCard() {
@@ -8844,30 +8846,62 @@
                 ctx.globalAlpha = 1;
             }
 
-            // Stars appearing progressively (one every 15% progress starting at 40%)
+            // Cairn stones appearing progressively (bottom to top, starting at 40%)
             if (progress > 0.4 && stars > 0) {
-                const starSize = 32;
-                const starSpacing = 40;
-                const startX = w / 2 - ((stars - 1) * starSpacing) / 2;
-                const starY = bannerY + bannerH + 30;
-
-                ctx.font = `${starSize}px Georgia`;
-                ctx.textAlign = 'center';
+                const cairnH = 160;
+                const gap = Math.max(1, Math.round(cairnH * 0.02));
+                const stoneH = Math.floor((cairnH - gap * 4) / 5);
+                const maxW = Math.round(cairnH * 0.8);
+                const cairnX = w / 2;
+                const cairnBaseY = bannerY + bannerH + 20 + cairnH;
 
                 for (let i = 0; i < stars; i++) {
-                    const starProgress = (progress - 0.4 - i * 0.08);
-                    if (starProgress <= 0) break;
+                    const stoneProgress = (progress - 0.4 - i * 0.08);
+                    if (stoneProgress <= 0) break;
 
-                    const starAlpha = Math.min(starProgress / 0.1, 1);
-                    const scale = 0.5 + Math.min(starProgress / 0.1, 1) * 0.5;
+                    const spec = CAIRN_STONES[i];
+                    const sw = Math.round(maxW * spec.widthFactor);
+                    const sh = stoneH;
+                    const sx = cairnX - sw / 2;
+                    // Stack bottom-up
+                    const sy = cairnBaseY - (i + 1) * (stoneH + gap);
 
-                    ctx.save();
-                    ctx.globalAlpha = starAlpha;
-                    ctx.translate(startX + i * starSpacing, starY);
-                    ctx.scale(scale, scale);
-                    ctx.fillStyle = '#e6a817';
-                    ctx.fillText('\u2605', 0, 0);
-                    ctx.restore();
+                    const stoneAlpha = Math.min(stoneProgress / 0.1, 1);
+                    const scale = 0.5 + Math.min(stoneProgress / 0.1, 1) * 0.5;
+
+                    const images = stoneImages[spec.ratio];
+                    if (images && images.length > 0) {
+                        const img = pickVariant(images, i + 100);
+                        if (img) {
+                            // Gold-tinted stone with gold border on offscreen canvas
+                            const pad = 2;
+                            const ofc = document.createElement('canvas');
+                            ofc.width = sw + pad * 2; ofc.height = sh + pad * 2;
+                            const oCtx = ofc.getContext('2d');
+                            drawStone9Slice(oCtx, pad, pad, sw, sh, img, NINE_SLICE_CORNER);
+                            // Gold tint overlay
+                            oCtx.globalCompositeOperation = 'source-atop';
+                            oCtx.fillStyle = 'rgba(210, 170, 50, 0.4)';
+                            oCtx.fillRect(0, 0, ofc.width, ofc.height);
+                            oCtx.globalCompositeOperation = 'source-over';
+                            // Gold border
+                            const r = Math.min(sw, sh) * 0.12;
+                            oCtx.strokeStyle = '#c9a028';
+                            oCtx.lineWidth = 2;
+                            oCtx.beginPath();
+                            oCtx.roundRect(pad, pad, sw, sh, r);
+                            oCtx.stroke();
+
+                            ctx.save();
+                            ctx.globalAlpha = stoneAlpha;
+                            const cx = sx + sw / 2;
+                            const cy = sy + sh / 2;
+                            ctx.translate(cx, cy);
+                            ctx.scale(scale, scale);
+                            ctx.drawImage(ofc, -sw / 2 - pad, -sh / 2 - pad);
+                            ctx.restore();
+                        }
+                    }
                 }
             }
 
@@ -9384,10 +9418,10 @@
                     if (comboCount >= 2) {
                         feedbackText += ` (×${comboCount})`;
                     }
-                    // Show streak phrase at milestones
-                    const phrase = COMBO_PHRASES[comboCount];
-                    if (phrase) {
-                        feedbackText = phrase;
+                    // Show streak phrase at milestones (combo 3, 5, 7, 9...)
+                    if (comboCount >= 3 && comboCount % 2 === 1) {
+                        const phraseIndex = Math.floor((comboCount - 3) / 2) % COMBO_PHRASES.length;
+                        feedbackText = COMBO_PHRASES[phraseIndex];
                     }
                     showFeedback(feedbackText, 'positive');
                 }
@@ -9810,7 +9844,7 @@
                         break;
                     case 'x':
                     case 'X':
-                        discardCard(hoveredCardIndex >= 0 ? hoveredCardIndex : 0);
+                        redrawHand();
                         break;
                 }
                 return;
@@ -9932,7 +9966,7 @@
             pullableStones = [];
             cutsUsed = 0;
             pendingOffcut = null;
-            stonesSetAside = 0;
+            redrawsRemaining = 3;
             fallingDeconStones = [];
             sealedVoidCells = new Set();
             totalSealedVoidArea = 0;
@@ -10044,7 +10078,7 @@
             pullableStones = [];
             cutsUsed = 0;
             pendingOffcut = null;
-            stonesSetAside = 0;
+            redrawsRemaining = 3;
             fallingDeconStones = [];
             // Reset void tracking
             sealedVoidCells = new Set();
@@ -10139,28 +10173,86 @@
 
         function calculateStars(complete, stab) {
             if (!complete) return 0;
-            // Star rating considers both stability AND wall completion.
-            // Can't earn stars without actually building the wall properly.
-            const progress = getWallProgress();
-            // Hard progress gates — you must build the wall, not just trigger coping
-            if (progress < 0.4) return 0;  // Barely started → 0 stars
-            if (progress < 0.6) return 1;  // Less than 60% filled → 1 star max
-            // Combined score: weighted average (60% stability, 40% fill)
-            const combined = stab * 0.6 + (progress * 100) * 0.4;
-            if (progress < 0.75) return Math.min(2, combined > 45 ? 2 : 1); // Cap at 2 stars
-            if (combined > 92) return 5;
-            if (combined > 80) return 4;
-            if (combined > 65) return 3;
-            if (combined > 45) return 2;
-            return 1; // Finished
+            // Star rating based on final integrity (which already includes volume penalty)
+            if (stab >= 96) return 5;
+            if (stab >= 90) return 4;
+            if (stab >= 85) return 3;
+            if (stab >= 80) return 2;
+            if (stab >= 70) return 1;
+            return 0;
         }
 
-        function renderStarsHTML(count) {
-            let html = '';
+        // Cairn stone layout: width factors and asset ratios (bottom to top)
+        const CAIRN_STONES = [
+            { widthFactor: 0.45, ratio: '1:1' },   // 1st (bottom) — narrow base
+            { widthFactor: 0.75, ratio: '1:2' },   // 2nd — wide mid
+            { widthFactor: 0.35, ratio: '1:1' },   // 3rd — narrowest
+            { widthFactor: 0.55, ratio: '1:2' },   // 4th — narrow mid
+            { widthFactor: 1.0,  ratio: '1:3' },   // 5th (top) — widest cap
+        ];
+
+        function renderCairnCanvas(count, totalHeight) {
+            const gap = Math.max(1, Math.round(totalHeight * 0.02));
+            const stoneH = Math.floor((totalHeight - gap * 4) / 5);
+            const maxW = Math.round(totalHeight * 0.8);
+            const cw = maxW + 4;
+            const ch = totalHeight;
+
+            const offscreen = document.createElement('canvas');
+            offscreen.width = cw;
+            offscreen.height = ch;
+            const octx = offscreen.getContext('2d');
+
             for (let i = 0; i < 5; i++) {
-                html += `<span class="star ${i < count ? 'filled' : 'empty'}">${i < count ? '\u2605' : '\u2606'}</span>`;
+                const spec = CAIRN_STONES[i];
+                const sw = Math.round(maxW * spec.widthFactor);
+                const sx = Math.round((cw - sw) / 2);
+                // Stack bottom-up: stone 0 at bottom, stone 4 at top
+                const sy = ch - (i + 1) * (stoneH + gap) + gap;
+
+                if (i < count) {
+                    // Earned stone — gold-tinted stone with gold border
+                    const images = stoneImages[spec.ratio];
+                    if (images && images.length > 0) {
+                        const img = pickVariant(images, i + 100);
+                        if (img) {
+                            const pad = 2;
+                            const tmp = document.createElement('canvas');
+                            tmp.width = sw + pad * 2; tmp.height = stoneH + pad * 2;
+                            const tctx = tmp.getContext('2d');
+                            // Draw stone texture
+                            drawStone9Slice(tctx, pad, pad, sw, stoneH, img, NINE_SLICE_CORNER);
+                            // Gold tint overlay
+                            tctx.globalCompositeOperation = 'source-atop';
+                            tctx.fillStyle = 'rgba(210, 170, 50, 0.4)';
+                            tctx.fillRect(0, 0, tmp.width, tmp.height);
+                            tctx.globalCompositeOperation = 'source-over';
+                            // Gold border
+                            const r = Math.min(sw, stoneH) * 0.12;
+                            tctx.strokeStyle = '#c9a028';
+                            tctx.lineWidth = 2;
+                            tctx.beginPath();
+                            tctx.roundRect(pad, pad, sw, stoneH, r);
+                            tctx.stroke();
+                            octx.drawImage(tmp, sx - pad, sy - pad);
+                            continue;
+                        }
+                    }
+                    // Fallback if no asset loaded
+                    octx.fillStyle = '#b0a48a';
+                    octx.fillRect(sx, sy, sw, stoneH);
+                } else {
+                    // Unearned — skip, no placeholder
+                }
             }
-            return html;
+
+            return offscreen;
+        }
+
+        function renderStarsHTML(count, small) {
+            const h = small ? 50 : 120;
+            const cairn = renderCairnCanvas(count, h);
+            return `<img src="${cairn.toDataURL()}" style="display:block;margin:0 auto;" height="${h}">`;
         }
 
         function getHighScores(wallSize) {
@@ -10195,11 +10287,11 @@
             }
             let html = '';
             scores.forEach((entry, i) => {
-                const stars = renderStarsHTML(entry.stars || 0);
+                const cairn = renderStarsHTML(entry.stars || 0, true);
                 html += `<div class="high-score-entry">
                     <span class="hs-rank">#${i + 1}</span>
                     <span class="hs-score">${entry.score}</span>
-                    <span class="hs-stars">${stars}</span>
+                    <span class="hs-stars">${cairn}</span>
                 </div>`;
             });
             panel.innerHTML = html;
@@ -10342,11 +10434,23 @@
 
             // Calculate end-of-game bonuses
             const pullBonus = pullsRemaining * 50;
-            const craftsmanshipBonus = Math.max(0, 200 - Math.max(0, cutsUsed - 3) * 30);
+            const craftsmanshipBonus = Math.max(0, 200 - Math.max(0, cutsUsed - 5) * 30);
             const fillQualityBonus = Math.max(0, 150 - totalSealedVoidArea * 10);
             score += pullBonus + craftsmanshipBonus + fillQualityBonus;
 
-            // Star rating
+            // Volume penalty: based on wall body fill (excludes coping zone, which is auto-placed)
+            // ≤50% fill = instant failure (stability → 0), 90% fill = -30, 100% fill = 0
+            // Linear scale: penalty = (1 - fill) * 300
+            const wallFill = getBodyProgress();
+            if (wallFill <= 0.5) {
+                stability = 0; // Instant failure — wall is half built or less
+            } else if (wallFill < 1.0) {
+                const volumePenalty = (1.0 - wallFill) * 300;
+                stability = Math.max(0, stability - volumePenalty);
+            }
+            updateUI(); // Refresh header HUD so review mode shows post-penalty integrity
+
+            // Star rating (uses stability after volume penalty)
             const stars = calculateStars(complete, stability);
 
             document.getElementById('finalScore').textContent = score;
@@ -10357,7 +10461,7 @@
             document.getElementById('statBanked').textContent = totalBankedCount;
             document.getElementById('statFacePins').textContent = (5 - facePinsRemaining);
             document.getElementById('statCuts').textContent = cutsUsed;
-            document.getElementById('statSetAside').textContent = stonesSetAside;
+            document.getElementById('statRedraws').textContent = 3 - redrawsRemaining;
             document.getElementById('statThroughBanked').textContent = throughBankUsedCount;
             document.getElementById('statStability').textContent = Math.round(stability) + '%';
             document.getElementById('statCraftsmanship').textContent = '+' + craftsmanshipBonus;
@@ -10376,12 +10480,21 @@
             if (breakdownEl) breakdownEl.classList.remove('open');
 
             const msg = document.getElementById('wallCompleteMsg');
-            if (complete) {
-                msg.textContent = 'Wall section completed!';
-                msg.style.color = '#2a8a2a';
-            } else if (stability <= 0) {
+            if (!complete && stability <= 0) {
                 msg.textContent = 'Wall collapsed!';
                 msg.style.color = '#aa2a2a';
+            } else if (wallFill <= 0.5) {
+                msg.textContent = 'Pile of rubble.';
+                msg.style.color = '#aa2a2a';
+            } else if (wallFill < 0.7) {
+                msg.textContent = 'Half-stacked.';
+                msg.style.color = '#aa6a2a';
+            } else if (complete && stars > 0) {
+                msg.textContent = 'Wall section completed!';
+                msg.style.color = '#2a8a2a';
+            } else if (complete) {
+                msg.textContent = 'Wall finished, but needs work.';
+                msg.style.color = '#aa6a2a';
             } else {
                 msg.textContent = 'Out of space!';
                 msg.style.color = '#666';
@@ -10441,7 +10554,7 @@
                     hsHtml += `<div class="high-score-entry${isCurrent ? ' current' : ''}">
                         <span class="hs-rank">#${i + 1}</span>
                         <span class="hs-score">${entry.score}</span>
-                        <span class="hs-stars">${renderStarsHTML(entry.stars || 0)}</span>
+                        <span class="hs-stars">${renderStarsHTML(entry.stars || 0, true)}</span>
                     </div>`;
                 });
                 hsSection.innerHTML = hsHtml;
@@ -10510,7 +10623,7 @@
                     comboCount: comboCount,
                     pullsRemaining: pullsRemaining,
                     cutsUsed: cutsUsed,
-                    stonesSetAside: stonesSetAside,
+                    redrawsRemaining: redrawsRemaining,
                     pendingOffcut: pendingOffcut,
                     facePinsRemaining: facePinsRemaining,
                     copingBank: copingBank,
@@ -10569,7 +10682,7 @@
             comboCount = state.comboCount || 0;
             pullsRemaining = state.pullsRemaining !== undefined ? state.pullsRemaining : 3;
             cutsUsed = state.cutsUsed || 0;
-            stonesSetAside = state.stonesSetAside || 0;
+            redrawsRemaining = state.redrawsRemaining !== undefined ? state.redrawsRemaining : 3;
             pendingOffcut = state.pendingOffcut || null;
             facePinsRemaining = state.facePinsRemaining !== undefined ? state.facePinsRemaining : 5;
             copingBank = state.copingBank || [];
@@ -10877,7 +10990,7 @@
                 ctx.textAlign = 'center';
                 const stars = calculateStars(true, stability);
                 const starText = '★'.repeat(stars) + '☆'.repeat(5 - stars);
-                ctx.fillText(`Stone By Stone  |  Score: ${score}  |  ${starText}  |  Stability: ${Math.round(stability)}%`, canvas.width / 2, barY + 20);
+                ctx.fillText(`Waller  |  Score: ${score}  |  ${starText}  |  Stability: ${Math.round(stability)}%`, canvas.width / 2, barY + 20);
                 ctx.restore();
 
                 const dataUrl = canvas.toDataURL('image/png');
