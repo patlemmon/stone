@@ -365,9 +365,15 @@
             transition: all 0.3s ease;
         }
 
+        @keyframes principleFlash {
+            0% { transform: scale(1); box-shadow: none; }
+            30% { transform: scale(1.04); box-shadow: 0 0 8px rgba(42,42,42,0.4); }
+            100% { transform: scale(1); box-shadow: none; }
+        }
         .principle-card.active {
             background: #2a2a2a;
             color: #fffdf7;
+            animation: principleFlash 0.4s ease-out;
         }
 
         .principle-card.violation {
@@ -402,7 +408,7 @@
         }
 
         .principle-card.expanded .principle-detail {
-            max-height: 80px;
+            max-height: 120px;
             margin-top: 4px;
         }
 
@@ -498,7 +504,7 @@
             letter-spacing: 4px;
         }
         .star.filled { color: #e6a817; }
-        .star.empty { color: #ccc; }
+        .star.empty { color: #aaa; }
 
         /* New high score */
         .new-high-score {
@@ -1477,9 +1483,9 @@
 
         .card-timer-bar {
             flex-basis: 100%;
-            height: 6px;
+            height: 8px;
             background: #e0e0e0;
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
         }
 
@@ -1823,7 +1829,7 @@
 
         <div class="side-panel" id="sidePanel">
             <!-- Expand button (visible when collapsed) -->
-            <button class="panel-expand-btn" id="panelExpandBtn" title="Toggle panel (Tab)">&#x2261;</button>
+            <button class="panel-expand-btn" id="panelExpandBtn" title="Toggle panel (Tab)" aria-label="Toggle panel">&#x2261;</button>
 
             <!-- Principle dots (visible when collapsed) -->
             <div class="principle-dots" id="principleDots">
@@ -1849,8 +1855,8 @@
             <div class="controls" id="gameControls">
                 <button class="btn" id="startBtn">Start</button>
                 <button class="btn" id="pauseBtn">Pause</button>
-                <button class="btn help-btn" id="settingsBtn" title="Settings" onclick="showSettings()">&#x2699;</button>
-                <button class="btn help-btn" id="soundToggleBtn" title="Toggle sound" onclick="toggleSound()">&#x1F50A;</button>
+                <button class="btn help-btn" id="settingsBtn" title="Settings" aria-label="Settings" onclick="showSettings()">&#x2699;</button>
+                <button class="btn help-btn" id="soundToggleBtn" title="Toggle sound" aria-label="Toggle sound" onclick="toggleSound()">&#x1F50A;</button>
                 <button class="btn help-btn" id="helpBtn" title="How to play">?</button>
             </div>
 
@@ -2017,10 +2023,20 @@
         </div>
     </div>
 
+    <div class="confirm-overlay" id="resumeOverlay">
+        <div class="confirm-content">
+            <p>Resume your previous game?</p>
+            <div class="confirm-buttons">
+                <button class="btn" id="resumeYes">Resume</button>
+                <button class="btn" id="resumeNo">New Game</button>
+            </div>
+        </div>
+    </div>
+
     <div class="pause-overlay" id="pauseOverlay">
         <div class="pause-content">
             <h2>PAUSED</h2>
-            <p>Press P or click Resume to continue</p>
+            <p>Press P to resume</p>
         </div>
     </div>
 
@@ -2162,8 +2178,8 @@
                 </div>
                 <div class="settings-row">
                     <label>Music Volume</label>
-                    <input type="range" id="settingMusicVol" min="0" max="100" value="60">
-                    <span class="range-value" id="settingMusicVolVal">60</span>
+                    <input type="range" id="settingMusicVol" min="0" max="100" value="50">
+                    <span class="range-value" id="settingMusicVolVal">50</span>
                 </div>
             </div>
 
@@ -2217,7 +2233,7 @@
 
     <!-- Wall Review Controls (Feature 31) -->
     <div id="reviewControls" style="display:none; text-align:center; padding:8px; background:#fffdf7; border:2px solid #2a2a2a; margin-top:4px;">
-        <label style="font-size:11px; font-family:Georgia; color:#2a2a2a;">Timeline: <input type="range" id="reviewScrubber" min="0" max="1" value="1" step="1" style="width:300px; vertical-align:middle;"></label>
+        <label style="font-size:11px; font-family:Georgia; color:#2a2a2a;">Timeline: <input type="range" id="reviewScrubber" min="0" max="1" value="1" step="1" style="width:min(300px, 60vw); vertical-align:middle;"></label>
         <span id="reviewScrubberLabel" style="font-size:10px; color:#666; margin-left:8px;">All stones</span>
         <button class="btn" id="reviewErrorsBtn" style="margin-left:12px; font-size:10px; padding:4px 12px; background:#d94040; color:#fff; border-color:#a02020;">Show Errors</button>
         <button class="btn" id="reviewBackBtn" style="margin-left:8px; font-size:10px; padding:4px 12px;">Back to Scores</button>
@@ -2853,7 +2869,7 @@
         // ============ SOUND SYSTEM ============
 
         let sfxVolume = 0.7;
-        let musicVolume = 0.6;
+        let musicVolume = 0.5;
 
         function initAudio() {
             if (audioCtx) return;
@@ -2934,6 +2950,7 @@
                 bgMusicBuffer.play().catch(() => {});
                 bgMusic = true;
                 startFolkMusic(); // Folk music starts 5s after meadow sounds
+                startFolkWatchdog();
             } catch (e) {
                 console.warn('Background music start failed:', e);
             }
@@ -2947,6 +2964,7 @@
                 } catch(e) {}
                 bgMusic = false;
                 stopFolkMusic();
+                stopFolkWatchdog();
             }
         }
 
@@ -2995,8 +3013,17 @@
             folkMusic = new Audio(trackPath);
             folkMusic.volume = getFolkVolume();
             folkMusic.addEventListener('ended', onFolkTrackEnded);
-            folkMusic.play().catch(() => {});
-            folkMusicPlaying = true;
+            folkMusicPlaying = false;
+            folkMusic.play().then(function() {
+                folkMusicPlaying = true;
+            }).catch(function() {
+                // Play failed — retry with next track after a delay
+                folkMusicPlaying = false;
+                folkMusicTimer = setTimeout(function() {
+                    folkMusicTimer = null;
+                    if (bgMusic && soundEnabled) playNextFolkTrack();
+                }, 3000);
+            });
         }
 
         function onFolkTrackEnded() {
@@ -3027,6 +3054,28 @@
         function updateFolkMusicVolume() {
             if (folkMusic && folkMusicPlaying) {
                 folkMusic.volume = getFolkVolume();
+            }
+        }
+
+        // Safety net: periodic check to ensure folk music chain hasn't broken
+        let folkWatchdogInterval = null;
+
+        function startFolkWatchdog() {
+            if (folkWatchdogInterval) return;
+            folkWatchdogInterval = setInterval(function() {
+                if (!bgMusic || !soundEnabled || gamePaused) return;
+                // If no track playing, no timer pending, and no audio element — chain stalled
+                if (!folkMusicPlaying && !folkMusicTimer && !folkMusic) {
+                    console.log('Folk music watchdog: restarting stalled chain');
+                    startFolkMusic();
+                }
+            }, 10000);
+        }
+
+        function stopFolkWatchdog() {
+            if (folkWatchdogInterval) {
+                clearInterval(folkWatchdogInterval);
+                folkWatchdogInterval = null;
             }
         }
 
@@ -3364,7 +3413,7 @@
         let gameSettings = {
             masterVolume: 100,
             sfxVolume: 70,
-            musicVolume: 60,
+            musicVolume: 50,
             dropSpeed: 'normal',     // 'relaxed', 'normal', 'intense'
             showGridLines: false,
             showGuides: true,
@@ -3684,7 +3733,7 @@
 <p><span class="key-hint">F</span> <span class="rule-name">Face Pin</span> — Fill a small void with a pinning stone. 5 per game.</p>
 <p><span class="key-hint">T</span> <span class="rule-name">Through Bank</span> — Store a through stone for later, or retrieve one when you reach the through line.</p>
 <p><span class="key-hint">U</span> <span class="rule-name">Pull</span> — Remove a placed stone from the wall. 3 per game.</p>
-<p><span class="key-hint">X</span> <span class="rule-name">Set Aside</span> — Discard a card you don't want — it returns to the deck.</p>
+<p><span class="key-hint">X</span> <span class="rule-name">Set Aside</span> — Discard a card you don't want, it returns to the deck.</p>
 <p><span class="key-hint">B</span> <span class="rule-name">Bank</span> — Bank through stones and coping stones. Through stones go to the through bank; other stones go to the coping bank. Press "Set Copes" when ready to cap the wall.</p>`
             },
             {
@@ -3719,15 +3768,29 @@
             hideWelcomeBanner();
             const savedState = checkAutoSave();
             if (savedState) {
-                if (confirm('Resume your previous game?')) {
-                    restoreAutoSave(savedState);
-                } else {
-                    clearAutoSave();
-                    startGame();
-                }
+                // Show styled resume overlay instead of browser confirm()
+                pendingAutoSave = savedState;
+                document.getElementById('resumeOverlay').classList.add('show');
             } else {
                 startGame();
             }
+        }
+
+        let pendingAutoSave = null;
+
+        function handleResumeYes() {
+            document.getElementById('resumeOverlay').classList.remove('show');
+            if (pendingAutoSave) {
+                restoreAutoSave(pendingAutoSave);
+                pendingAutoSave = null;
+            }
+        }
+
+        function handleResumeNo() {
+            document.getElementById('resumeOverlay').classList.remove('show');
+            pendingAutoSave = null;
+            clearAutoSave();
+            startGame();
         }
 
         function welcomeHowTo() {
@@ -3834,6 +3897,8 @@
             document.getElementById('reviewWallBtn').addEventListener('click', enterReviewMode);
             document.getElementById('resetConfirmYes').addEventListener('click', confirmReset);
             document.getElementById('resetConfirmNo').addEventListener('click', cancelReset);
+            document.getElementById('resumeYes').addEventListener('click', handleResumeYes);
+            document.getElementById('resumeNo').addEventListener('click', handleResumeNo);
             document.getElementById('challengeBtn').addEventListener('click', () => { switchMode('challenge'); updateModeButtons(); });
             document.getElementById('designBtn').addEventListener('click', () => { switchMode('design'); updateModeButtons(); });
             document.getElementById('clearWallBtn').addEventListener('click', clearDesignWall);
@@ -4042,7 +4107,7 @@
                 // Card hints (Feature 24)
                 let hintText = '';
                 if (isThroughStone && awaitingCardSelection) {
-                    hintText = 'T: Bank';
+                    hintText = 'T: Save for through line';
                 } else if (awaitingCardSelection && getWallProgress() > 0.75 && copingBank.length < copingBankTarget) {
                     hintText = 'B: Bank for coping / through';
                 }
@@ -5005,11 +5070,8 @@
             if (hand.length <= 1) return;
             cardsWinnowed++;
 
-            // One-time winnow explanation (Phase 6C)
-            if (!winnowExplainedThisSession) {
-                winnowExplainedThisSession = true;
-                showFeedback('Running out of time — cards are being removed!', 'negative');
-            }
+            // Show winnow feedback every time a card is removed
+            showFeedback('Card removed — running out of time!', 'negative');
 
             // Pick a random card to remove
             const removeIndex = Math.floor(Math.random() * hand.length);
@@ -7788,7 +7850,7 @@
         function drawGameHUD() {
             ctx.save();
             const hudY = 8;
-            const dotSize = 10;
+            const dotSize = 12;
             const dotGap = 4;
             const rowHeight = 28;
 
@@ -7864,15 +7926,15 @@
             if (gamePhase === 'playing') {
                 const progress = getWallProgress();
                 if (progress > 0.1) {
-                    const skyAlpha = Math.min(0.08, (progress - 0.1) * 0.114); // 0→0.08 from 10%→80%
-                    ctx.fillStyle = `rgba(230,180,80,${skyAlpha})`;
+                    const skyAlpha = Math.min(0.15, (progress - 0.1) * 0.2); // 0→0.15 from 10%→85%
+                    ctx.fillStyle = `rgba(240,180,40,${skyAlpha})`;
                     const skyH = (ROWS - 2 - WALL_HEIGHT) * BLOCK_SIZE; // Sky region above wall
                     ctx.fillRect(0, 0, canvas.width, skyH + 10);
                 }
 
                 // Combo warmth overlay — golden tint at combo ≥ 2 (Feature 9)
                 if (comboCount >= 2) {
-                    const comboAlpha = Math.min(0.06, comboCount * 0.012);
+                    const comboAlpha = Math.min(0.12, comboCount * 0.025);
                     ctx.fillStyle = `rgba(255,200,50,${comboAlpha})`;
                     const skyH = (ROWS - 2 - WALL_HEIGHT) * BLOCK_SIZE;
                     ctx.fillRect(0, 0, canvas.width, skyH + 10);
@@ -8267,6 +8329,7 @@
                     hand.splice(selectedCardIndex, 1);
                     drawFreshHand();
                 }
+                showFeedback('Wall complete — setting coping stones!', 'positive');
                 startCopingAnimation();
                 return;
             }
@@ -10597,6 +10660,15 @@
             }
         }
 
+        // Draw a bold violation rectangle: filled wash + colored border
+        function drawViolationRect(px, py, pw, ph, fillColor, borderColor) {
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(px, py, pw, ph);
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
+        }
+
         // Draw violation overlays on all stones with errors in review mode
         function drawReviewViolations() {
             if (!reviewMode || !reviewShowViolations || !placementHistory.length) return;
@@ -10618,8 +10690,7 @@
                 for (const v of entry.violations) {
                     if (v === 'Stone on end!') {
                         // Red wash over entire stone
-                        ctx.fillStyle = 'rgba(200,40,40,0.25)';
-                        ctx.fillRect(px, py, pw, ph);
+                        drawViolationRect(px, py, pw, ph, 'rgba(200,40,40,0.40)', 'rgba(200,40,40,0.7)');
                     } else if (v === 'Cold joint' || v === 'Weak joint' || v === 'Dangerous joint!') {
                         // Bold red vertical line at offending edge(s)
                         drawJointHighlight(entry, 'rgba(200,40,40,0.85)', 4);
@@ -10628,32 +10699,27 @@
                         drawJointHighlight(entry, 'rgba(220,140,30,0.85)', 4);
                     } else if (v === 'Off-center!') {
                         // Yellow wash
-                        ctx.fillStyle = 'rgba(220,180,30,0.2)';
-                        ctx.fillRect(px, py, pw, ph);
+                        drawViolationRect(px, py, pw, ph, 'rgba(220,180,30,0.35)', 'rgba(220,180,30,0.7)');
                     } else if (v === 'Sitting on 3 stones' || v === 'Sitting on too many stones') {
                         // Orange bottom edge stroke
-                        ctx.strokeStyle = 'rgba(220,140,30,0.5)';
-                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = 'rgba(220,140,30,0.7)';
+                        ctx.lineWidth = 3;
                         ctx.beginPath();
                         ctx.moveTo(px, py + ph);
                         ctx.lineTo(px + pw, py + ph);
                         ctx.stroke();
                     } else if (v === 'Heavy stone high' || v === 'Thin stone low') {
                         // Amber wash
-                        ctx.fillStyle = 'rgba(200,160,40,0.15)';
-                        ctx.fillRect(px, py, pw, ph);
+                        drawViolationRect(px, py, pw, ph, 'rgba(200,160,40,0.30)', 'rgba(200,160,40,0.7)');
                     } else if (v.includes('Through stone')) {
                         // Purple wash
-                        ctx.fillStyle = 'rgba(150,40,150,0.2)';
-                        ctx.fillRect(px, py, pw, ph);
+                        drawViolationRect(px, py, pw, ph, 'rgba(150,40,150,0.35)', 'rgba(150,40,150,0.7)');
                     } else if (v === 'Stone on cheek wall!' || v === 'Stone outside wall face!' || v === 'Stone above wall!') {
                         // Red wash for boundary violations
-                        ctx.fillStyle = 'rgba(200,40,40,0.2)';
-                        ctx.fillRect(px, py, pw, ph);
+                        drawViolationRect(px, py, pw, ph, 'rgba(200,40,40,0.40)', 'rgba(200,40,40,0.7)');
                     } else if (v.includes('Non-standard coping height')) {
                         // Amber wash for non-standard coping
-                        ctx.fillStyle = 'rgba(200,160,40,0.2)';
-                        ctx.fillRect(px, py, pw, ph);
+                        drawViolationRect(px, py, pw, ph, 'rgba(200,160,40,0.35)', 'rgba(200,160,40,0.7)');
                     }
                 }
             }
@@ -10839,6 +10905,9 @@
         }
 
         window.onload = init;
+        window.addEventListener('beforeunload', function() {
+            if (gameRunning) autoSaveState();
+        });
         window.addEventListener('resize', function() {
             // Responsive scaling — fit game to viewport
             updateGameScale();
