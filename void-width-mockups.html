@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Void Width Visualization Options — Stone By Stone</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        background: #f5f1e8;
+        font-family: 'Georgia', serif;
+        color: #2a2a2a;
+        padding: 30px 40px;
+    }
+    h1 {
+        text-align: center;
+        font-size: 22px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    .subtitle {
+        text-align: center;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 30px;
+    }
+    .option {
+        margin-bottom: 40px;
+        border: 2px solid #2a2a2a;
+        background: #fffdf7;
+        padding: 20px 24px;
+    }
+    .option h2 {
+        font-size: 16px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .option .desc {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 14px;
+        line-height: 1.6;
+    }
+    .canvas-row {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+    .canvas-wrap {
+        position: relative;
+    }
+    .canvas-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #888;
+        margin-bottom: 4px;
+    }
+    canvas {
+        border: 1px solid #ccc;
+        display: block;
+    }
+    .hand-mockup {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+    }
+    .hand-card {
+        border: 2px solid #2a2a2a;
+        background: #fffdf7;
+        padding: 6px 10px;
+        font-size: 11px;
+        text-align: center;
+        min-width: 60px;
+    }
+    .hand-card.highlighted {
+        border-color: #2a8a2a;
+        background: #e8f5e8;
+    }
+    .hand-card .dims {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 12px;
+    }
+    .hand-card .fit-badge {
+        font-size: 9px;
+        margin-top: 3px;
+        padding: 1px 4px;
+        border-radius: 2px;
+    }
+    .fit-badge.good { background: #2a8a2a; color: white; }
+    .fit-badge.ok { background: #c4a32a; color: white; }
+    .fit-badge.bad { background: #cc4444; color: white; }
+</style>
+</head>
+<body>
+
+<h1>Void Width Visualization Options</h1>
+<p class="subtitle">5 approaches to help players gauge gap widths when selecting stones</p>
+
+<div class="option" id="opt1">
+    <h2>Option 1 — Width Labels on Voids</h2>
+    <p class="desc">Small measurements appear in each open gap along the wall surface during card selection. Like a tape measure overlay showing exact inches.</p>
+    <div class="canvas-wrap">
+        <div class="canvas-label">During card selection phase</div>
+        <canvas id="c1" width="700" height="260"></canvas>
+    </div>
+</div>
+
+<div class="option" id="opt2">
+    <h2>Option 2 — Color-Coded Gap Highlighting</h2>
+    <p class="desc">Open voids are highlighted with colors indicating fit quality against cards in hand. Green = a card fits perfectly, yellow = close, gray = nothing fits.</p>
+    <div class="canvas-wrap">
+        <div class="canvas-label">Gaps colored by fit quality</div>
+        <canvas id="c2" width="700" height="260"></canvas>
+    </div>
+</div>
+
+<div class="option" id="opt3">
+    <h2>Option 3 — Stone Silhouette Preview</h2>
+    <p class="desc">When hovering a card, translucent silhouettes appear at every valid placement on the wall. Player instantly sees "this stone fits here and here."</p>
+    <div class="canvas-row">
+        <div class="canvas-wrap">
+            <div class="canvas-label">Hovering the 8" wide stone card</div>
+            <canvas id="c3" width="700" height="260"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="option" id="opt4">
+    <h2>Option 4 — Gap Ruler Overlay</h2>
+    <p class="desc">A subtle ruler/measuring bar drawn along the top build surface with tick marks and width labels between filled stones. Always visible during play.</p>
+    <div class="canvas-wrap">
+        <div class="canvas-label">Persistent ruler along build surface</div>
+        <canvas id="c4" width="700" height="260"></canvas>
+    </div>
+</div>
+
+<div class="option" id="opt5">
+    <h2>Option 5 — Card Fit Indicators</h2>
+    <p class="desc">Each hand card shows a badge indicating how many valid placements exist. Helps players avoid picking stones that won't fit anywhere.</p>
+    <div class="canvas-wrap">
+        <div class="canvas-label">Badges on hand cards</div>
+        <canvas id="c5" width="700" height="260"></canvas>
+    </div>
+</div>
+
+<script>
+const BS = 8; // Block size for mockups (smaller than game's 10)
+const STONE_COLOR = '#c4b49a';
+const STONE_BORDER = '#8a7a5a';
+const STONE_DARK = '#3a3a3a'; // through stone
+const SKY_TOP = '#d4e6f0';
+const SKY_BOT = '#e8dcc8';
+const GROUND = '#6a5a3a';
+
+// Common wall layout for all mockups
+// Each stone: [x, y, w, h, type] where type: 'r'=regular, 't'=through
+// x,y in grid cells from top-left of canvas area
+const WALL_Y = 8; // wall starts at row 8
+const GROUND_ROW = 30; // ground at row 30
+
+function drawBackground(ctx, w, h) {
+    // Sky gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, WALL_Y * BS);
+    grad.addColorStop(0, SKY_TOP);
+    grad.addColorStop(1, SKY_BOT);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, WALL_Y * BS);
+
+    // Wall area background
+    ctx.fillStyle = '#e8dcc8';
+    ctx.fillRect(0, WALL_Y * BS, w, (GROUND_ROW - WALL_Y) * BS);
+
+    // Ground
+    ctx.fillStyle = GROUND;
+    ctx.fillRect(0, GROUND_ROW * BS, w, h - GROUND_ROW * BS);
+}
+
+function drawStone(ctx, x, y, w, h, color, borderColor) {
+    const px = x * BS, py = y * BS, pw = w * BS, ph = h * BS;
+    ctx.fillStyle = color || STONE_COLOR;
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeStyle = borderColor || STONE_BORDER;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(px + 0.5, py + 0.5, pw - 1, ph - 1);
+
+    // Subtle hatching
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(px, py, pw, ph);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.lineWidth = 0.5;
+    for (let i = -ph; i < pw; i += 4) {
+        ctx.beginPath();
+        ctx.moveTo(px + i, py);
+        ctx.lineTo(px + i + ph, py + ph);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+// Shared wall stones for all mockups
+const wallStones = [
+    // Bottom course (foundation) - row 24-30
+    [4, 24, 14, 6, 'r'],
+    [18, 24, 12, 6, 'r'],
+    [30, 24, 16, 6, 'r'],
+    [46, 24, 10, 6, 'r'],
+    [56, 24, 14, 6, 'r'],
+    [70, 24, 12, 6, 'r'],
+    // Second course - row 20-24
+    [4, 20, 10, 4, 'r'],
+    [14, 20, 8, 4, 'r'],
+    [22, 20, 12, 4, 'r'],
+    [34, 20, 6, 4, 'r'],
+    // GAP at 40-48 (8 wide)
+    [48, 20, 10, 4, 'r'],
+    [58, 20, 8, 4, 'r'],
+    // GAP at 66-72 (6 wide)
+    [72, 20, 10, 4, 'r'],
+    // Third course - row 16-20
+    [4, 16, 12, 4, 'r'],
+    [16, 16, 6, 4, 'r'],
+    // GAP at 22-34 (12 wide)
+    [34, 16, 8, 4, 'r'],
+    [42, 16, 10, 4, 'r'],
+    // GAP at 52-60 (8 wide)
+    [60, 16, 10, 4, 'r'],
+    [70, 16, 12, 4, 'r'],
+];
+
+// Gaps: [startX, y, width]
+const gaps = [
+    { x: 40, y: 20, w: 8 },
+    { x: 66, y: 20, w: 6 },
+    { x: 22, y: 16, w: 12 },
+    { x: 52, y: 16, w: 8 },
+];
+
+function drawWall(ctx, canvasW, canvasH) {
+    drawBackground(ctx, canvasW, canvasH);
+    for (const s of wallStones) {
+        const color = s[4] === 't' ? STONE_DARK : STONE_COLOR;
+        drawStone(ctx, s[0], s[1], s[2], s[3], color);
+    }
+}
+
+// ─── OPTION 1: Width Labels on Voids ───
+(function() {
+    const c = document.getElementById('c1');
+    const ctx = c.getContext('2d');
+    drawWall(ctx, c.width, c.height);
+
+    // Draw width labels in gaps
+    for (const g of gaps) {
+        const cx = (g.x + g.w / 2) * BS;
+        const cy = (g.y + 2) * BS;
+
+        // Subtle background highlight for gap
+        ctx.fillStyle = 'rgba(42, 100, 180, 0.08)';
+        ctx.fillRect(g.x * BS, g.y * BS, g.w * BS, 4 * BS);
+
+        // Measurement arrows
+        ctx.strokeStyle = '#2a64b4';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+
+        // Left arrow
+        ctx.beginPath();
+        ctx.moveTo(g.x * BS + 3, cy);
+        ctx.lineTo((g.x + g.w) * BS - 3, cy);
+        ctx.stroke();
+
+        // Arrowheads
+        ctx.beginPath();
+        ctx.moveTo(g.x * BS + 3, cy);
+        ctx.lineTo(g.x * BS + 7, cy - 3);
+        ctx.moveTo(g.x * BS + 3, cy);
+        ctx.lineTo(g.x * BS + 7, cy + 3);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo((g.x + g.w) * BS - 3, cy);
+        ctx.lineTo((g.x + g.w) * BS - 7, cy - 3);
+        ctx.moveTo((g.x + g.w) * BS - 3, cy);
+        ctx.lineTo((g.x + g.w) * BS - 7, cy + 3);
+        ctx.stroke();
+
+        // Vertical end lines
+        ctx.beginPath();
+        ctx.moveTo(g.x * BS + 2, cy - 5);
+        ctx.lineTo(g.x * BS + 2, cy + 5);
+        ctx.moveTo((g.x + g.w) * BS - 2, cy - 5);
+        ctx.lineTo((g.x + g.w) * BS - 2, cy + 5);
+        ctx.stroke();
+
+        // Width label with background
+        const label = g.w + '"';
+        ctx.font = 'bold 11px Georgia';
+        const tw = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(255,253,247,0.9)';
+        ctx.fillRect(cx - tw/2 - 3, cy - 8, tw + 6, 14);
+        ctx.fillStyle = '#2a64b4';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, cx, cy + 3);
+    }
+    ctx.textAlign = 'left';
+})();
+
+// ─── OPTION 2: Color-Coded Gap Highlighting ───
+(function() {
+    const c = document.getElementById('c2');
+    const ctx = c.getContext('2d');
+    drawWall(ctx, c.width, c.height);
+
+    // Mock hand: 8" wide, 6" wide, 10" wide stones
+    const handWidths = [8, 6, 10];
+
+    for (const g of gaps) {
+        let fitColor, fitLabel;
+
+        if (handWidths.includes(g.w)) {
+            fitColor = 'rgba(42, 138, 42, 0.25)';  // Green = exact match
+            fitLabel = { text: g.w + '"', color: '#2a8a2a' };
+        } else if (handWidths.some(w => Math.abs(w - g.w) <= 2)) {
+            fitColor = 'rgba(196, 163, 42, 0.25)';  // Yellow = close
+            fitLabel = { text: g.w + '"', color: '#a08a20' };
+        } else {
+            fitColor = 'rgba(100, 100, 100, 0.15)';  // Gray = no fit
+            fitLabel = { text: g.w + '"', color: '#888' };
+        }
+
+        // Fill gap area
+        ctx.fillStyle = fitColor;
+        ctx.fillRect(g.x * BS, g.y * BS, g.w * BS, 4 * BS);
+
+        // Dashed border
+        ctx.strokeStyle = fitLabel.color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 3]);
+        ctx.strokeRect(g.x * BS + 1, g.y * BS + 1, g.w * BS - 2, 4 * BS - 2);
+        ctx.setLineDash([]);
+
+        // Width label
+        const cx = (g.x + g.w / 2) * BS;
+        const cy = (g.y + 2) * BS;
+        ctx.font = 'bold 11px Georgia';
+        ctx.fillStyle = fitLabel.color;
+        ctx.textAlign = 'center';
+        ctx.fillText(fitLabel.text, cx, cy + 4);
+    }
+
+    // Legend
+    ctx.textAlign = 'left';
+    ctx.font = '10px Georgia';
+    const ly = 10;
+    ctx.fillStyle = 'rgba(42, 138, 42, 0.4)';
+    ctx.fillRect(c.width - 180, ly, 10, 10);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillText('Card fits exactly', c.width - 166, ly + 9);
+
+    ctx.fillStyle = 'rgba(196, 163, 42, 0.4)';
+    ctx.fillRect(c.width - 180, ly + 16, 10, 10);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillText('Close fit (within 2")', c.width - 166, ly + 25);
+
+    ctx.fillStyle = 'rgba(100, 100, 100, 0.25)';
+    ctx.fillRect(c.width - 180, ly + 32, 10, 10);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillText('No card matches', c.width - 166, ly + 41);
+})();
+
+// ─── OPTION 3: Stone Silhouette Preview ───
+(function() {
+    const c = document.getElementById('c3');
+    const ctx = c.getContext('2d');
+    drawWall(ctx, c.width, c.height);
+
+    // Hovering an 8" wide × 4" tall stone — show silhouettes in 8"-wide gaps
+    const hoverW = 8, hoverH = 4;
+
+    for (const g of gaps) {
+        if (g.w === hoverW) {
+            // Draw translucent stone silhouette
+            const px = g.x * BS, py = g.y * BS;
+            const pw = hoverW * BS, ph = hoverH * BS;
+
+            ctx.fillStyle = 'rgba(42, 138, 42, 0.2)';
+            ctx.fillRect(px, py, pw, ph);
+            ctx.strokeStyle = '#2a8a2a';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
+            ctx.setLineDash([]);
+
+            // Checkmark
+            ctx.font = 'bold 14px Georgia';
+            ctx.fillStyle = '#2a8a2a';
+            ctx.textAlign = 'center';
+            ctx.fillText('✓', (g.x + g.w / 2) * BS, (g.y + 2.5) * BS);
+        }
+    }
+
+    // Annotate the non-matching gaps
+    for (const g of gaps) {
+        if (g.w !== hoverW) {
+            const cx = (g.x + g.w / 2) * BS;
+            const cy = (g.y + 2) * BS;
+            ctx.fillStyle = 'rgba(180, 60, 60, 0.1)';
+            ctx.fillRect(g.x * BS, g.y * BS, g.w * BS, 4 * BS);
+            ctx.font = '10px Georgia';
+            ctx.fillStyle = '#aa5555';
+            ctx.textAlign = 'center';
+            ctx.fillText(g.w + '" gap', cx, cy + 4);
+        }
+    }
+
+    // Label
+    ctx.textAlign = 'left';
+    ctx.font = '10px Georgia';
+    ctx.fillStyle = '#2a8a2a';
+    ctx.fillText('Hovering: 8" × 4" stone — green silhouettes show valid fits', 10, 14);
+})();
+
+// ─── OPTION 4: Gap Ruler Overlay ───
+(function() {
+    const c = document.getElementById('c4');
+    const ctx = c.getContext('2d');
+    drawWall(ctx, c.width, c.height);
+
+    // Find the top build surface at each row
+    // For row 16 (third course), draw ruler across gaps
+    const rulerRows = [
+        { y: 16, stones: [[4,12],[16,6],[34,8],[42,10],[60,10],[70,12]], gapColor: '#2a64b4' },
+        { y: 20, stones: [[4,10],[14,8],[22,12],[34,6],[48,10],[58,8],[72,10]], gapColor: '#8a4a2a' },
+    ];
+
+    for (const row of rulerRows) {
+        const ry = row.y * BS - 2; // just above the course
+
+        // Draw ruler bar background
+        ctx.fillStyle = 'rgba(255,253,247,0.7)';
+        ctx.fillRect(4 * BS, ry - 10, 78 * BS, 12);
+
+        // Tick marks and gap measurements
+        let prevEnd = 4; // start of wall face
+
+        for (const [sx, sw] of row.stones) {
+            const gapW = sx - prevEnd;
+            if (gapW > 0) {
+                // Gap measurement
+                const gx = prevEnd * BS;
+                const gw = gapW * BS;
+                const gcx = gx + gw / 2;
+
+                // Bracket
+                ctx.strokeStyle = row.gapColor;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(gx + 2, ry - 8);
+                ctx.lineTo(gx + 2, ry - 2);
+                ctx.lineTo(gx + gw - 2, ry - 2);
+                ctx.lineTo(gx + gw - 2, ry - 8);
+                ctx.stroke();
+
+                // Label
+                ctx.font = 'bold 9px Courier New';
+                ctx.fillStyle = row.gapColor;
+                ctx.textAlign = 'center';
+                ctx.fillText(gapW + '"', gcx, ry - 3);
+            }
+
+            // Stone top tick marks
+            ctx.strokeStyle = 'rgba(42,42,42,0.2)';
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(sx * BS, ry - 1);
+            ctx.lineTo(sx * BS, ry + 2);
+            ctx.moveTo((sx + sw) * BS, ry - 1);
+            ctx.lineTo((sx + sw) * BS, ry + 2);
+            ctx.stroke();
+
+            prevEnd = sx + sw;
+        }
+    }
+
+    ctx.textAlign = 'left';
+    ctx.font = '10px Georgia';
+    ctx.fillStyle = '#555';
+    ctx.fillText('Persistent rulers show gap widths at each course level', 10, 14);
+})();
+
+// ─── OPTION 5: Card Fit Indicators ───
+(function() {
+    const c = document.getElementById('c5');
+    const ctx = c.getContext('2d');
+    drawWall(ctx, c.width, c.height);
+
+    // Draw subtle gap outlines on the wall
+    for (const g of gaps) {
+        ctx.strokeStyle = 'rgba(42,42,42,0.15)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.strokeRect(g.x * BS + 1, g.y * BS + 1, g.w * BS - 2, 4 * BS - 2);
+        ctx.setLineDash([]);
+    }
+
+    // Draw hand cards below the wall with fit badges
+    const handCards = [
+        { w: 8, h: 4, fits: 2 },   // fits in both 8" gaps
+        { w: 12, h: 4, fits: 1 },  // fits in the 12" gap
+        { w: 6, h: 4, fits: 1 },   // fits in the 6" gap
+        { w: 14, h: 6, fits: 0 },  // fits nowhere
+        { w: 10, h: 4, fits: 0 },  // no exact 10" gap at top
+    ];
+
+    const cardW = 80, cardH = 50, cardGap = 12;
+    const cardsStartX = (c.width - (handCards.length * (cardW + cardGap) - cardGap)) / 2;
+    const cardsY = c.height - cardH - 15;
+
+    ctx.font = '10px Georgia';
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'center';
+    ctx.fillText('Hand cards with fit badges:', c.width / 2, cardsY - 8);
+
+    for (let i = 0; i < handCards.length; i++) {
+        const card = handCards[i];
+        const cx = cardsStartX + i * (cardW + cardGap);
+
+        // Card background
+        ctx.fillStyle = '#fffdf7';
+        ctx.fillRect(cx, cardsY, cardW, cardH);
+        ctx.strokeStyle = '#2a2a2a';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx, cardsY, cardW, cardH);
+
+        // Stone dimensions
+        ctx.font = 'bold 12px Courier New';
+        ctx.fillStyle = '#2a2a2a';
+        ctx.textAlign = 'center';
+        ctx.fillText(card.w + '" x ' + card.h + '"', cx + cardW / 2, cardsY + 22);
+
+        // Fit badge
+        let badgeColor, badgeText;
+        if (card.fits >= 2) {
+            badgeColor = '#2a8a2a';
+            badgeText = card.fits + ' fits';
+        } else if (card.fits === 1) {
+            badgeColor = '#c4a32a';
+            badgeText = '1 fit';
+        } else {
+            badgeColor = '#cc4444';
+            badgeText = '0 fits';
+        }
+
+        const badgeTw = ctx.measureText(badgeText).width;
+        ctx.font = 'bold 9px Georgia';
+        const btw = ctx.measureText(badgeText).width;
+        ctx.fillStyle = badgeColor;
+        ctx.beginPath();
+        const bx = cx + cardW / 2 - btw / 2 - 4;
+        const by = cardsY + 30;
+        const bw = btw + 8;
+        const bh = 14;
+        // Rounded rect
+        const br = 3;
+        ctx.moveTo(bx + br, by);
+        ctx.lineTo(bx + bw - br, by);
+        ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+        ctx.lineTo(bx + bw, by + bh - br);
+        ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+        ctx.lineTo(bx + br, by + bh);
+        ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+        ctx.lineTo(bx, by + br);
+        ctx.quadraticCurveTo(bx, by, bx + br, by);
+        ctx.fill();
+
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText(badgeText, cx + cardW / 2, by + 10);
+    }
+
+    ctx.textAlign = 'left';
+})();
+</script>
+</body>
+</html>

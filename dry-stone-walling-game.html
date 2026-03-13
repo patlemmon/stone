@@ -1398,13 +1398,12 @@
         .hand-card.winnowing {
             opacity: 0;
             transform: scale(0.7) translateY(10px);
-            max-width: 0 !important;
-            min-width: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border-width: 0 !important;
-            overflow: hidden;
-            transition: all 0.4s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+        }
+
+        .hand-card.winnowed {
+            visibility: hidden;
             pointer-events: none;
         }
 
@@ -1445,9 +1444,10 @@
         }
 
         .hand-card-dims {
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: 700;
             font-family: monospace;
-            color: #555;
+            color: #333;
         }
 
         .hand-card-type {
@@ -1772,7 +1772,7 @@
         .large-text-mode .stat-value { font-size: 20px !important; }
         .large-text-mode .principle-card { font-size: 11px !important; }
         .large-text-mode .principle-card h4 { font-size: 13px !important; }
-        .large-text-mode .hand-card-dims { font-size: 12px !important; }
+        .large-text-mode .hand-card-dims { font-size: 16px !important; }
         .large-text-mode .hand-card-type { font-size: 10px !important; }
         .large-text-mode .feedback-toast { font-size: 16px !important; }
     </style>
@@ -2232,7 +2232,7 @@
 
     <!-- Wall Review Controls (Feature 31) -->
     <div id="reviewControls" style="display:none; text-align:center; padding:8px; background:#fffdf7; border:2px solid #2a2a2a; margin-top:4px;">
-        <label style="font-size:11px; font-family:Georgia; color:#2a2a2a;">Timeline: <input type="range" id="reviewScrubber" min="0" max="1" value="1" step="1" style="width:min(300px, 60vw); vertical-align:middle;"></label>
+        <label style="font-size:11px; font-family:Georgia; color:#2a2a2a;">Timeline: <input type="range" id="reviewScrubber" min="0" max="1" value="1" step="1" style="width:min(300px, 60vw); vertical-align:middle; accent-color:#2a2a2a;"></label>
         <span id="reviewScrubberLabel" style="font-size:10px; color:#666; margin-left:8px;">All stones</span>
         <button class="btn" id="reviewErrorsBtn" style="margin-left:12px; font-size:10px; padding:4px 12px; background:#d94040; color:#fff; border-color:#a02020;">Show Errors</button>
         <button class="btn" id="reviewBackBtn" style="margin-left:8px; font-size:10px; padding:4px 12px;">Back to Scores</button>
@@ -2309,6 +2309,7 @@
         let score = 0;
         let stability = 100;
         let stabilityScar = 0;  // Permanent integrity damage — max achievable = 100 - stabilityScar
+        let violationCounts = { layFlat: 0, oneOverN: 0, offCenter: 0, joints: 0, zipper: 0, coursing: 0, throughMiss: 0, voidSealed: 0 };
         let sealedVoidCells = new Set();   // Set of "r,c" strings for known sealed void positions
         let totalSealedVoidArea = 0;       // Running total of all sealed void sq inches (for end-game bonus)
         let gameRunning = false;
@@ -2329,6 +2330,18 @@
         const MAX_REDRAWS = 3;
         const COPING_WAVE_DELAY = 250; // ms between each coping stone in wave animation
         const CARD_SELECT_TIME = 15; // Seconds to choose a card before auto-select
+
+        // Repeat violation escalation — after N violations of the same type, extra scar applied
+        const REPEAT_VIOLATION_CONFIG = {
+            layFlat:     { threshold: 4, extraScar: 2 },
+            oneOverN:    { threshold: 3, extraScar: 3 },
+            offCenter:   { threshold: 5, extraScar: 1 },
+            joints:      { threshold: 4, extraScar: 2 },
+            zipper:      { threshold: 3, extraScar: 2 },
+            coursing:    { threshold: 5, extraScar: 1 },
+            throughMiss: { threshold: 2, extraScar: 3 },
+            voidSealed:  { threshold: 4, extraScar: 2 }
+        };
 
         // Game phases
         let gamePhase = 'title'; // 'title', 'showing', 'deconstructing', 'playing', 'design'
@@ -4072,6 +4085,13 @@
                 const card = document.createElement('div');
                 card.className = 'hand-card';
 
+                // Winnowed (null) slots render as invisible placeholders to keep positions stable
+                if (stone === null) {
+                    card.classList.add('winnowed');
+                    handRow.appendChild(card);
+                    return;
+                }
+
                 // State-based styling
                 if (!awaitingCardSelection && index === selectedCardIndex) {
                     card.classList.add('placing');
@@ -4186,6 +4206,7 @@
         function onCardClicked(index) {
             if (!awaitingCardSelection) return;
             if (index < 0 || index >= hand.length) return;
+            if (hand[index] === null) return; // Winnowed slot
             if (gamePhase !== 'playing') return;
 
             clearCardSelectTimer();
@@ -4462,6 +4483,7 @@
             currentStone = {
                 ...stone,
                 id: ++stoneIdCounter,
+                _variantId: stone._previewId || 0,
                 x: spawnX,
                 y: 0
             };
@@ -5005,7 +5027,7 @@
             // Resume game
             gameRunning = true;
             const freeCutsLeft = Math.max(0, 3 - cutsUsed);
-            showFeedback(freeCutsLeft > 0 ? `Stone cut! ${freeCutsLeft} free cuts left` : `Stone cut! (affects craftsmanship)`, cutsUsed <= 3 ? 'positive' : 'negative');
+            showFeedback(freeCutsLeft > 0 ? `Stone cut! ${freeCutsLeft} free cuts left` : `Less shaping, more stacking!`, cutsUsed <= 3 ? 'positive' : 'negative');
             renderHandRow();
             drawBoard();
             requestAnimationFrame(gameLoop);
@@ -5066,10 +5088,10 @@
                 }
             }
 
-            // Winnow a card at each color-change threshold (if hand has >1 card)
-            if (fraction <= 2/3 && cardsWinnowed === 0 && hand.length > 1) {
+            // Winnow a card at each color-change threshold (if hand has >1 active card)
+            if (fraction <= 2/3 && cardsWinnowed === 0 && activeHandCount() > 1) {
                 winnowCard();
-            } else if (fraction <= 1/3 && cardsWinnowed === 1 && hand.length > 1) {
+            } else if (fraction <= 1/3 && cardsWinnowed === 1 && activeHandCount() > 1) {
                 winnowCard();
             }
 
@@ -5082,33 +5104,41 @@
             cardSelectAnimFrame = requestAnimationFrame(updateCardTimerBar);
         }
 
-        // Remove a random card from the hand with a collapse animation
+        // Count non-null (active) cards in the hand
+        function activeHandCount() {
+            return hand.filter(s => s !== null).length;
+        }
+
+        // Remove a random card from the hand — fades out in place, no shifting
         function winnowCard() {
-            if (hand.length <= 1) return;
+            if (activeHandCount() <= 1) return;
             cardsWinnowed++;
 
             // Show winnow feedback every time a card is removed
             showFeedback('Card removed — running out of time!', 'negative');
 
-            // Pick a random card to remove
-            const removeIndex = Math.floor(Math.random() * hand.length);
-            const removedStone = hand.splice(removeIndex, 1)[0];
+            // Pick a random active (non-null) card to remove
+            const activeIndices = hand.map((s, i) => s !== null ? i : -1).filter(i => i >= 0);
+            const removeIndex = activeIndices[Math.floor(Math.random() * activeIndices.length)];
+            const removedStone = hand[removeIndex];
 
-            // Return the removed stone to the deck
+            // Null out the slot (keep position stable) and return stone to deck
+            hand[removeIndex] = null;
             if (removedStone) deck.push(removedStone);
 
-            // Animate the card out in the DOM, then re-render
+            // Animate the card out in the DOM — fades in place, no re-render needed
             const handRow = document.getElementById('handRow');
             const cards = handRow.querySelectorAll('.hand-card');
             if (cards[removeIndex]) {
                 cards[removeIndex].classList.add('winnowing');
-                // After animation completes, re-render the hand
+                // After fade animation, mark as winnowed placeholder (keep winnowing class to avoid flash)
                 winnowTimeout = setTimeout(() => {
-                    renderHandRow();
+                    if (cards[removeIndex]) {
+                        cards[removeIndex].classList.add('winnowed');
+                    }
                     drawBoard();
                 }, 420);
             } else {
-                renderHandRow();
                 drawBoard();
             }
         }
@@ -5129,10 +5159,11 @@
 
         function autoSelectCard() {
             clearCardSelectTimer();
-            if (!awaitingCardSelection || hand.length === 0) return;
+            if (!awaitingCardSelection || activeHandCount() === 0) return;
 
-            // Pick a random card from the hand
-            const randomIndex = Math.floor(Math.random() * hand.length);
+            // Pick a random active (non-null) card from the hand
+            const activeIndices = hand.map((s, i) => s !== null ? i : -1).filter(i => i >= 0);
+            const randomIndex = activeIndices[Math.floor(Math.random() * activeIndices.length)];
             showFeedback('Time! Auto-selected stone', 'negative');
             onCardClicked(randomIndex);
         }
@@ -5925,8 +5956,8 @@
         }
 
         // Register a stone in the registry for efficient rendering
-        function registerStone(id, minR, maxR, minC, maxC, thickness, isCoping, isThroughStone) {
-            stoneRegistry[id] = { minR, maxR, minC, maxC, thickness, isCoping: !!isCoping, isThroughStone: !!isThroughStone };
+        function registerStone(id, minR, maxR, minC, maxC, thickness, isCoping, isThroughStone, variantId) {
+            stoneRegistry[id] = { minR, maxR, minC, maxC, thickness, isCoping: !!isCoping, isThroughStone: !!isThroughStone, variantId: variantId || 0 };
         }
 
         function buildRackedBackCheeks() {
@@ -7060,6 +7091,7 @@
 
         function selectCard(index) {
             if (index < 0 || index >= hand.length) return;
+            if (hand[index] === null) return; // Winnowed slot
             if (currentStone) return; // Don't spawn if a stone already exists
 
             selectedCardIndex = index;
@@ -7071,6 +7103,7 @@
             currentStone = {
                 ...stone,
                 id: ++stoneIdCounter,
+                _variantId: stone._previewId || 0,
                 x: spawnX,
                 y: 0
             };
@@ -7079,7 +7112,7 @@
         function drawFreshHand() {
             // Return any remaining hand cards to deck, shuffle, draw fresh hand
             for (const stone of hand) {
-                deck.push(stone);
+                if (stone !== null) deck.push(stone);
             }
             hand = [];
 
@@ -7575,7 +7608,9 @@
             const x = stone.x * BLOCK_SIZE * scale + offsetX;
             const y = stone.y * BLOCK_SIZE * scale + offsetY;
             const isThroughStone = stone.isThroughStone || false;
-            drawStoneBlock(ctx, x, y, w, h, stone.thickness, isGhost, false, false, stone.width, stone.height, isThroughStone && !isGhost, stone.id || 0);
+            // Use _variantId (from card preview) so the falling stone matches its card appearance
+            const renderId = stone._variantId || stone.id || 0;
+            drawStoneBlock(ctx, x, y, w, h, stone.thickness, isGhost, false, false, stone.width, stone.height, isThroughStone && !isGhost, renderId);
         }
 
         function drawBoardStones() {
@@ -7609,7 +7644,9 @@
                     ctx.translate(-cx, -cy);
                 }
 
-                drawStoneBlock(ctx, x, y, w, h, s.thickness, false, isCheek, s.isCoping, stoneW, stoneH, s.isThroughStone, numId);
+                // Use variantId (from card preview) so placed stones match their card appearance
+                const renderId = s.variantId || numId;
+                drawStoneBlock(ctx, x, y, w, h, s.thickness, false, isCheek, s.isCoping, stoneW, stoneH, s.isThroughStone, renderId);
 
                 if (isWobbling) ctx.restore();
 
@@ -7641,13 +7678,13 @@
         function drawVoidPreview() {
             if (!awaitingCardSelection) return;
             if (gamePhase !== 'playing' || facePinMode || cutMode) return;
-            if (!hand || hand.length === 0) return;
+            if (!hand || activeHandCount() === 0) return;
 
             const groundRow = ROWS - 2;
             const wallTop = groundRow - WALL_HEIGHT + 1;
 
-            // Collect laid-flat widths of all cards in hand
-            const handWidths = hand.map(s => Math.max(s.width, s.height));
+            // Collect laid-flat widths of all active cards in hand
+            const handWidths = hand.filter(s => s !== null).map(s => Math.max(s.width, s.height));
 
             // Find all bounded gaps in the wall. Scan every row that has
             // at least one filled-to-empty transition (i.e., a stone edge).
@@ -7788,8 +7825,8 @@
 
                 // Adaptive sizing: scale down for small gaps
                 const isSmall = pw < 50;
-                const fontSize = isSmall ? 10 : 13;
-                const capH = isSmall ? 4 : 6;
+                const fontSize = isSmall ? 13 : 17;
+                const capH = isSmall ? 5 : 7;
                 const inset = isSmall ? 1 : 2;
 
                 // Draw measurement arrow near the bottom of the gap
@@ -7799,7 +7836,7 @@
 
                 ctx.strokeStyle = arrowColor;
                 ctx.fillStyle = arrowColor;
-                ctx.lineWidth = isSmall ? 1 : 1.5;
+                ctx.lineWidth = isSmall ? 1.5 : 2;
                 ctx.setLineDash([]);
 
                 // Horizontal line
@@ -7826,8 +7863,8 @@
                 ctx.textAlign = 'center';
                 const tw = ctx.measureText(label).width;
                 const lx = px + pw / 2;
-                const pillW = tw + (isSmall ? 6 : 10);
-                const pillH = isSmall ? 14 : 18;
+                const pillW = tw + (isSmall ? 8 : 12);
+                const pillH = isSmall ? 18 : 24;
 
                 // Position label: inside arrow if it fits, above arrow if not
                 let labelY = arrowY;
@@ -8278,7 +8315,8 @@
                 currentStone.x, currentStone.x + currentStone.width - 1,
                 currentStone.thickness,
                 false, // isCoping — player-placed stones are never coping
-                currentStone.isThroughStone || false
+                currentStone.isThroughStone || false,
+                currentStone._variantId || 0
             );
 
             analyzeStone(positions, currentStone);
@@ -8415,7 +8453,7 @@
                 const spacing = Math.abs(centerB - centerA);
                 if (spacing < 30 || spacing > 42) {
                     stability = Math.max(0, stability - 10);
-                    addScar(3);
+                    addScar(3, 'throughMiss');
                     const ft = (spacing / 12).toFixed(1);
                     showFeedback('Through stones ' + ft + '\' apart — need 2.5-3.5\'!', 'negative');
                     highlightPrinciple('principle-through', 'bad');
@@ -8434,7 +8472,7 @@
 
             // If a stone is currently falling, cancel it — return card to deck
             if (gameRunning && currentStone) {
-                if (selectedCardIndex >= 0 && selectedCardIndex < hand.length) {
+                if (selectedCardIndex >= 0 && selectedCardIndex < hand.length && hand[selectedCardIndex] !== null) {
                     deck.push(hand[selectedCardIndex]);
                 }
                 gameRunning = false;
@@ -8987,18 +9025,18 @@
                 const t = Math.min((aspectRatio - 1) / 5, 1); // 0 at ratio 1.0, 1 at ratio 6.0
                 const penalty = Math.round(3 + 15 * Math.pow(t, 2.2));
                 stability = Math.max(0, stability - penalty);
-                addScar(penalty <= 5 ? 2 : penalty <= 10 ? 3 : 5);
+                addScar(penalty <= 5 ? 2 : penalty <= 10 ? 3 : 5, 'layFlat');
                 stats.violations++;
                 violations.push('Stone on end!');
                 highlightPrinciple('principle-layflat', 'bad');
             }
 
-            // 1 OVER 2
+            // 1 OVER 2 (cheek stones count — they're real structural support)
             const below = new Set();
             if (maxY < ROWS - 2) {
                 for (let c = minX; c <= maxX; c++) {
                     const bid = stoneInfo[maxY + 1][c];
-                    if (bid > 0 && bid !== stone.id) below.add(bid);
+                    if (bid && bid !== stone.id) below.add(bid);
                 }
             }
 
@@ -9018,13 +9056,13 @@
             } else if (below.size === 3) {
                 // 3 below — stone is too small relative to course, not bridging well
                 stability = Math.max(0, stability - 10);
-                addScar(5);
+                addScar(5, 'oneOverN');
                 violations.push('Sitting on 3 stones');
                 highlightPrinciple('principle-1over2', 'bad');
             } else if (below.size >= 4) {
                 // 4+ below — stone is far too small for this course
                 stability = Math.max(0, stability - 15);
-                addScar(8);
+                addScar(8, 'oneOverN');
                 violations.push('Sitting on too many stones');
                 highlightPrinciple('principle-1over2', 'bad');
             }
@@ -9034,7 +9072,8 @@
             //   Middle third: +40 bonus, +3 stability
             //   Middle half (but outside third): neutral — no bonus, no penalty
             //   Outside middle half: -5 stability penalty
-            if (below.size >= 1 && maxY < ROWS - 2) {
+            //   Only applies when spanning 2+ stones — sitting on 1 stone can't be "off center"
+            if (below.size >= 2 && maxY < ROWS - 2) {
                 let bMinX = COLS, bMaxX = 0;
                 for (let c = 0; c < COLS; c++) {
                     if (stoneInfo[maxY + 1][c] && below.has(stoneInfo[maxY + 1][c])) {
@@ -9084,6 +9123,7 @@
                     } else if (!offsetTowardCheek) {
                         // Outside middle half toward open face — poor weight distribution
                         stability = Math.max(0, stability - 5);
+                        addScar(0, 'offCenter'); // No base scar, but counts for repeat escalation
                         violations.push('Off-center!');
                         highlightPrinciple('principle-middlethird', 'bad');
                     }
@@ -9113,11 +9153,12 @@
 
             if (belowRow < ROWS - 1) {
                 // A) Check joints COVERED by the stone's body (interior columns)
+                //    Includes cheek-to-player joints (cheek boundary should be bonded)
                 for (let c = minX + 1; c <= maxX; c++) {
                     if (c <= 0 || c >= COLS) continue;
                     const leftId  = stoneInfo[belowRow][c - 1];
                     const rightId = stoneInfo[belowRow][c];
-                    if (leftId > 0 && rightId > 0 && leftId !== rightId) {
+                    if (leftId && rightId && leftId !== rightId && !(leftId < 0 && rightId < 0)) {
                         // Joint exists at column c — stone body covers it, resolving it
                         coveredJoints++;
                         const faces = countJointFaces(c, belowRow);
@@ -9135,11 +9176,12 @@
                 // Edge-aligned joints are WORSE than covered joints because the
                 // running crack is extended rather than bridged. Check both zipper
                 // depth AND face quality (same as covered joints).
+                // Includes cheek-to-player boundaries.
                 for (const edgeCol of [minX, maxX + 1]) {
                     if (edgeCol <= 0 || edgeCol >= COLS) continue;
                     const leftId  = stoneInfo[belowRow][edgeCol - 1];
                     const rightId = stoneInfo[belowRow][edgeCol];
-                    if (leftId > 0 && rightId > 0 && leftId !== rightId) {
+                    if (leftId && rightId && leftId !== rightId && !(leftId < 0 && rightId < 0)) {
                         // Zipper depth (stacking detection)
                         const depth = countZipperBelow(edgeCol, belowRow);
                         worstZipperLength = Math.max(worstZipperLength, depth + 1);
@@ -9169,12 +9211,12 @@
                 if (worstTotalFaces <= 4) {
                     // 3-into-1 or 2-into-2 — weak joint
                     stability = Math.max(0, stability - 8);
-                    addScar(3);
+                    addScar(3, 'joints');
                     violations.push('Weak joint');
                 } else if (worstTotalFaces === 5) {
                     // 4-into-1 or 3-into-2 — cold joint
                     stability = Math.max(0, stability - 10);
-                    addScar(5);
+                    addScar(5, 'joints');
                     violations.push('Cold joint');
                 } else {
                     // 6+ total faces — severe convergence
@@ -9182,7 +9224,7 @@
                     const penalty = Math.min(15, 5 + excessFaces * 3);
                     const scar = Math.min(5, 2 + excessFaces);
                     stability = Math.max(0, stability - penalty);
-                    addScar(scar);
+                    addScar(scar, 'joints');
                     violations.push('Dangerous joint!');
                 }
                 highlightPrinciple('principle-2into1', 'bad');
@@ -9193,7 +9235,7 @@
             if (worstZipperLength >= 3) {
                 const zipperPenalty = Math.min(15, (worstZipperLength - 2) * 3);
                 stability = Math.max(0, stability - zipperPenalty);
-                if (worstZipperLength >= 4) addScar(worstZipperLength <= 4 ? 1 : worstZipperLength <= 5 ? 3 : 5);
+                if (worstZipperLength >= 4) addScar(worstZipperLength <= 4 ? 1 : worstZipperLength <= 5 ? 3 : 5, 'zipper');
                 const zipperMsg = worstZipperLength >= 6 ? 'Dangerous zipper!' :
                     worstZipperLength >= 5 ? 'Long zipper joint!' :
                     worstZipperLength >= 4 ? 'Zipper joint!' : 'Short zipper joint';
@@ -9213,6 +9255,7 @@
             } else {
                 // Thickness is off by 2+ (e.g. thin at base or thick at top)
                 stability = Math.max(0, stability - 6);
+                addScar(0, 'coursing'); // No base scar, but counts for repeat escalation
                 violations.push(stone.thickness > expected ? 'Heavy stone high' : 'Thin stone low');
                 highlightPrinciple('principle-coursing', 'bad');
             }
@@ -9253,7 +9296,7 @@
                 } else {
                     // Not touching the line at all — harsh penalty for wasting a through stone
                     stability = Math.max(0, stability - 20);
-                    addScar(10);
+                    addScar(10, 'throughMiss');
                     violations.push('Through stone must touch the through line!');
                     highlightPrinciple('principle-through', 'bad');
                 }
@@ -9279,7 +9322,7 @@
                     else                { stabPenalty = 3;  scarAmount = 1; }
 
                     stability = Math.max(0, stability - stabPenalty);
-                    addScar(scarAmount);
+                    addScar(scarAmount, 'voidSealed');
                     violations.push('Void sealed! (' + area + ' sq in)');
                     totalSealedVoidArea += area;
                 }
@@ -9601,8 +9644,6 @@
             if (col <= 0 || col >= COLS) return { left: 0, right: 0 };
             const leftFaces = new Set();
             const rightFaces = new Set();
-            let leftHasCheek = false;
-            let rightHasCheek = false;
             for (let row = startRow; row < ROWS - 1; row++) {
                 const leftId = stoneInfo[row][col - 1];
                 const rightId = stoneInfo[row][col];
@@ -9610,25 +9651,15 @@
                 if (!leftId || !rightId) break;
                 // Same stone on both sides = joint ended
                 if (leftId === rightId) break;
-                // Track cheek presence (counts as 1 face for that side)
-                // but still count the OTHER side's player stone
-                if (leftId < 0) {
-                    leftHasCheek = true;
-                    if (rightId > 0) rightFaces.add(rightId);
-                    continue;
-                }
-                if (rightId < 0) {
-                    rightHasCheek = true;
-                    if (leftId > 0) leftFaces.add(leftId);
-                    continue;
-                }
-                // Both positive IDs — normal player-stone faces
+                // Cheek-to-cheek boundary isn't a real joint
+                if (leftId < 0 && rightId < 0) break;
+                // Count each unique stone (player or cheek) as its own face
                 leftFaces.add(leftId);
                 rightFaces.add(rightId);
             }
             return {
-                left: leftFaces.size + (leftHasCheek ? 1 : 0),
-                right: rightFaces.size + (rightHasCheek ? 1 : 0)
+                left: leftFaces.size,
+                right: rightFaces.size
             };
         }
 
@@ -9644,8 +9675,8 @@
                 const rightId = stoneInfo[row][jointCol];
                 if (!leftId || !rightId) break;
                 if (leftId === rightId) break;
-                // Skip cheek rows — cheek doesn't count as a zipper course
-                if (leftId < 0 || rightId < 0) continue;
+                // Skip cheek-to-cheek rows, but cheek-to-player IS a real joint
+                if (leftId < 0 && rightId < 0) continue;
                 if (leftId === lastLeftId && rightId === lastRightId) continue;
                 count++;
                 lastLeftId = leftId;
@@ -9655,7 +9686,22 @@
         }
 
         // Permanent scar — irrecoverable stability damage
-        function addScar(amount) {
+        // Optional category param triggers repeat violation escalation
+        function addScar(amount, category) {
+            if (category && REPEAT_VIOLATION_CONFIG[category]) {
+                violationCounts[category]++;
+                const cfg = REPEAT_VIOLATION_CONFIG[category];
+                if (violationCounts[category] === cfg.threshold) {
+                    // First time crossing threshold — notify player
+                    const names = { layFlat: 'Lay Flat', oneOverN: '1 Over 2', offCenter: 'Off-Center',
+                        joints: 'Joint', zipper: 'Zipper', coursing: 'Coursing',
+                        throughMiss: 'Through Stone', voidSealed: 'Sealed Void' };
+                    showFeedback(`Repeated ${names[category]} violations!`, 'bad');
+                }
+                if (violationCounts[category] >= cfg.threshold) {
+                    amount += cfg.extraScar;
+                }
+            }
             stabilityScar += amount;
         }
 
@@ -10051,6 +10097,7 @@
             if (copingDropFrame) { cancelAnimationFrame(copingDropFrame); copingDropFrame = null; }
             clearCardSelectTimer();
             stats = { stonesPlaced: 0, laidFlat: 0, oneOverTwo: 0, copingStones: 0, violations: 0 };
+            violationCounts = { layFlat: 0, oneOverN: 0, offCenter: 0, joints: 0, zipper: 0, coursing: 0, throughMiss: 0, voidSealed: 0 };
 
             // Reset face pin and cut state
             facePinsRemaining = 5;
@@ -10564,8 +10611,8 @@
             const missedDiv = document.getElementById('missedSummary');
             if (missedDiv) {
                 const stonesUsed = placementHistory.length;
-                const totalStones = stonesUsed + deck.length + hand.length;
-                const unusedThrough = deck.filter(s => s.isThroughStone).length + hand.filter(s => s.isThroughStone).length;
+                const totalStones = stonesUsed + deck.length + activeHandCount();
+                const unusedThrough = deck.filter(s => s.isThroughStone).length + hand.filter(s => s !== null && s.isThroughStone).length;
                 let missedLines = [];
                 missedLines.push(`Used ${stonesUsed} of ${totalStones} stones`);
                 if (unusedThrough > 0) missedLines.push(`${unusedThrough} through stone${unusedThrough > 1 ? 's' : ''} unused`);
@@ -10639,7 +10686,8 @@
                     activeWallSize: activeWallSize,
                     gamePhase: gamePhase,
                     sealedVoidCells: Array.from(sealedVoidCells),
-                    totalSealedVoidArea: totalSealedVoidArea
+                    totalSealedVoidArea: totalSealedVoidArea,
+                    violationCounts: violationCounts
                 };
                 localStorage.setItem('sbs_autosave', JSON.stringify(state));
             } catch (e) {
@@ -10668,7 +10716,7 @@
             stoneInfo = state.stoneInfo;
             stoneRegistry = state.stoneRegistry || {};
             deck = state.deck || [];
-            hand = state.hand || [];
+            hand = (state.hand || []).filter(s => s !== null);
             score = state.score || 0;
             displayedScore = score;
             targetScore = score;
@@ -10697,6 +10745,7 @@
             peakStability = state.peakStability || 100;
             sealedVoidCells = state.sealedVoidCells ? new Set(state.sealedVoidCells) : new Set();
             totalSealedVoidArea = state.totalSealedVoidArea || 0;
+            violationCounts = state.violationCounts || { layFlat: 0, oneOverN: 0, offCenter: 0, joints: 0, zipper: 0, coursing: 0, throughMiss: 0, voidSealed: 0 };
             if (state.activeWallSize) setWallSize(state.activeWallSize);
             // Clear caches and rebuild UI
             _bgCache = null;
@@ -10728,6 +10777,20 @@
 
         // Draw a vertical highlight line at bad joints the stone covers.
         // Only highlights joints that are 3+-into-1 or 2+-into-2+ (true cold joints).
+        // Draw a circle highlight around a joint line to make it stand out
+        function drawJointCircle(x, yTop, yBot, color) {
+            const midY = (yTop + yBot) / 2;
+            const jointH = yBot - yTop;
+            const rx = Math.max(14, jointH * 0.5); // horizontal radius — wide enough to be visible
+            const ry = Math.max(14, jointH * 0.6 + 6); // vertical radius — enclose the line with padding
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.ellipse(x, midY, rx, ry, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
         function drawJointHighlight(entry, color, lineWidth) {
             const belowRow = entry.y + entry.h;
             if (belowRow >= ROWS - 1) return;
@@ -10736,7 +10799,7 @@
                 if (c <= 0 || c >= COLS) continue;
                 const leftId = stoneInfo[belowRow][c - 1];
                 const rightId = stoneInfo[belowRow][c];
-                if (leftId > 0 && rightId > 0 && leftId !== rightId) {
+                if (leftId && rightId && leftId !== rightId && !(leftId < 0 && rightId < 0)) {
                     // Joint exists — check face counts to see if it's a bad joint
                     const faces = countJointFaces(c, belowRow);
                     const isBad = (faces.left >= 3 || faces.right >= 3) ||
@@ -10745,12 +10808,18 @@
                         // Trace the joint extent through the stones below
                         var jTop = belowRow, jBot = belowRow;
                         while (jBot + 1 < ROWS - 1 && stoneInfo[jBot + 1][c - 1] === leftId && stoneInfo[jBot + 1][c] === rightId) jBot++;
+                        const lineX = c * BLOCK_SIZE;
+                        const lineYTop = jTop * BLOCK_SIZE;
+                        const lineYBot = (jBot + 1) * BLOCK_SIZE;
+                        // Draw the joint line
                         ctx.strokeStyle = color;
                         ctx.lineWidth = lineWidth;
                         ctx.beginPath();
-                        ctx.moveTo(c * BLOCK_SIZE, jTop * BLOCK_SIZE);
-                        ctx.lineTo(c * BLOCK_SIZE, (jBot + 1) * BLOCK_SIZE);
+                        ctx.moveTo(lineX, lineYTop);
+                        ctx.lineTo(lineX, lineYBot);
                         ctx.stroke();
+                        // Circle the joint to make it stand out
+                        drawJointCircle(lineX, lineYTop, lineYBot, color);
                     }
                 }
             }
@@ -10759,16 +10828,22 @@
                 if (edgeCol <= 0 || edgeCol >= COLS) continue;
                 const leftId = stoneInfo[belowRow][edgeCol - 1];
                 const rightId = stoneInfo[belowRow][edgeCol];
-                if (leftId > 0 && rightId > 0 && leftId !== rightId) {
+                if (leftId && rightId && leftId !== rightId && !(leftId < 0 && rightId < 0)) {
                     // Trace the joint extent through the stones below
                     var ljBot = belowRow;
                     while (ljBot + 1 < ROWS - 1 && stoneInfo[ljBot + 1][edgeCol - 1] === leftId && stoneInfo[ljBot + 1][edgeCol] === rightId) ljBot++;
+                    const lineX = edgeCol * BLOCK_SIZE;
+                    const lineYTop = belowRow * BLOCK_SIZE;
+                    const lineYBot = (ljBot + 1) * BLOCK_SIZE;
+                    // Draw the joint line
                     ctx.strokeStyle = color;
                     ctx.lineWidth = lineWidth;
                     ctx.beginPath();
-                    ctx.moveTo(edgeCol * BLOCK_SIZE, belowRow * BLOCK_SIZE);
-                    ctx.lineTo(edgeCol * BLOCK_SIZE, (ljBot + 1) * BLOCK_SIZE);
+                    ctx.moveTo(lineX, lineYTop);
+                    ctx.lineTo(lineX, lineYBot);
                     ctx.stroke();
+                    // Circle the joint to make it stand out
+                    drawJointCircle(lineX, lineYTop, lineYBot, color);
                 }
             }
         }
@@ -10814,12 +10889,21 @@
                         // Yellow wash
                         drawViolationRect(px, py, pw, ph, 'rgba(220,180,30,0.35)', 'rgba(220,180,30,0.7)');
                     } else if (v === 'Sitting on 3 stones' || v === 'Sitting on too many stones') {
-                        // Orange bottom edge stroke
+                        // Orange bottom edge stroke + circle highlight
                         ctx.strokeStyle = 'rgba(220,140,30,0.7)';
                         ctx.lineWidth = 3;
                         ctx.beginPath();
                         ctx.moveTo(px, py + ph);
                         ctx.lineTo(px + pw, py + ph);
+                        ctx.stroke();
+                        // Circle the bottom edge
+                        const midX = px + pw / 2;
+                        const rx = Math.max(14, pw * 0.55);
+                        const ry = Math.max(10, ph * 0.3);
+                        ctx.strokeStyle = 'rgba(220,140,30,0.85)';
+                        ctx.lineWidth = 2.5;
+                        ctx.beginPath();
+                        ctx.ellipse(midX, py + ph, rx, ry, 0, 0, Math.PI * 2);
                         ctx.stroke();
                     } else if (v === 'Heavy stone high' || v === 'Thin stone low') {
                         // Amber wash
