@@ -1463,6 +1463,32 @@
             font-style: italic;
         }
 
+        /* Through stone card — distinct styling when card is a through stone */
+        .hand-card.through-stone-card {
+            border-color: #4a4a4a;
+            background: #f0ece4;
+        }
+        .hand-card.through-stone-card:hover {
+            border-color: #3a3a3a;
+            background: #e8e2d6;
+        }
+        .hand-card.through-stone-card .hand-card-hint {
+            font-size: 9px;
+            font-weight: 700;
+            font-style: normal;
+            color: #5a4a2a;
+            letter-spacing: 0.5px;
+        }
+
+        /* Pulsing glow when through stone is in hand and player hasn't reached through line */
+        @keyframes throughPulse {
+            0%, 100% { box-shadow: 0 0 0 2px rgba(90, 74, 42, 0.2); }
+            50% { box-shadow: 0 0 8px 3px rgba(90, 74, 42, 0.35); }
+        }
+        .hand-card.through-stone-card.through-pulse {
+            animation: throughPulse 2s ease-in-out infinite;
+        }
+
         .hand-row-info {
             display: flex;
             flex-direction: column;
@@ -1843,7 +1869,7 @@
 
             <div class="mode-switcher">
                 <button id="challengeBtn" class="active">Challenge</button>
-                <button id="designBtn">Design</button>
+                <button id="practiceBtn">Practice</button>
             </div>
             <!-- Wall size selector — 12' option hidden for now, re-enable by removing style="display:none" -->
             <div id="wallSizeSelector" class="wall-size-selector" style="display:none">
@@ -2150,6 +2176,10 @@
             <h1 class="welcome-title">WALLER</h1>
             <p class="welcome-subtitle">The Dry Stone Walling Game</p>
             <p class="welcome-tagline">Learn the ancient craft of building walls without mortar,<br>held together only by skill and gravity.</p>
+            <div class="welcome-mode-switcher" style="display:flex; justify-content:center; gap:0; margin-bottom:18px;">
+                <button id="welcomeChallengeBtn" class="active" style="padding:8px 20px; font-family:Georgia,serif; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; border:2px solid #2a2a2a; cursor:pointer; background:#2a2a2a; color:#fff; border-radius:0;" onclick="practiceMode=false; updateModeButtons(); updateWelcomeModeBtns();">Challenge</button>
+                <button id="welcomePracticeBtn" style="padding:8px 20px; font-family:Georgia,serif; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; border:2px solid #2a2a2a; border-left:none; cursor:pointer; background:#fffdf7; color:#2a2a2a; border-radius:0;" onclick="practiceMode=true; updateModeButtons(); updateWelcomeModeBtns();">Practice</button>
+            </div>
             <div class="welcome-buttons">
                 <button class="btn welcome-btn welcome-btn-primary" id="welcomeStartBtn">Start</button>
                 <button class="btn welcome-btn" id="welcomeHowToBtn">How To Play</button>
@@ -2326,6 +2356,7 @@
         let selectedCardIndex = 0; // Currently highlighted card
         let redraws = 3; // Number of redraws remaining
         let totalDeckSize = 0; // Initial deck size at start of play, for weighted draw progress
+        let stonesDrawnCount = 0; // How many cards drawn this game (for early-draw boosts)
         const HAND_SIZE = 5;
         const MAX_REDRAWS = 3;
         const COPING_WAVE_DELAY = 250; // ms between each coping stone in wave animation
@@ -2350,6 +2381,9 @@
 
         // Original wall data for reconstruction
         let originalWallStones = [];
+
+        // Practice mode — stress-free gameplay (no timer, unlimited redraws/pulls, no collapse)
+        let practiceMode = false;
 
         // Design mode state
         let designMode = false;
@@ -2480,6 +2514,7 @@
 
         // Dramatic deconstruction state
         let fallingDeconStones = [];
+        let deconThroughGlow = null; // { x, y, width, height, alpha, startTime }
 
         // Sound system: master gain node
         let soundMasterGain = null;
@@ -2562,8 +2597,29 @@
         function getHandSize() { return HAND_SIZE; }
 
         function updateModeButtons() {
-            document.getElementById('challengeBtn').classList.toggle('active', !designMode);
-            document.getElementById('designBtn').classList.toggle('active', designMode);
+            document.getElementById('challengeBtn').classList.toggle('active', !practiceMode && !designMode);
+            document.getElementById('practiceBtn').classList.toggle('active', practiceMode);
+        }
+
+        function togglePracticeMode() {
+            // Only toggle from title screen
+            if (gamePhase === 'playing' || gamePhase === 'deconstructing') return;
+            // Exit design mode if active
+            if (designMode) switchMode('challenge');
+            practiceMode = !practiceMode;
+            updateModeButtons();
+            updateWelcomeModeBtns();
+        }
+
+        function updateWelcomeModeBtns() {
+            const cBtn = document.getElementById('welcomeChallengeBtn');
+            const pBtn = document.getElementById('welcomePracticeBtn');
+            if (cBtn && pBtn) {
+                cBtn.style.background = practiceMode ? '#fffdf7' : '#2a2a2a';
+                cBtn.style.color = practiceMode ? '#2a2a2a' : '#fff';
+                pBtn.style.background = practiceMode ? '#2a2a2a' : '#fffdf7';
+                pBtn.style.color = practiceMode ? '#fff' : '#2a2a2a';
+            }
         }
 
         // ============ SCREEN SHAKE SYSTEM ============
@@ -3788,6 +3844,7 @@
 
         function showWelcomeBanner() {
             document.getElementById('welcomeOverlay').classList.add('show');
+            updateWelcomeModeBtns();
         }
 
         function hideWelcomeBanner() {
@@ -3929,8 +3986,8 @@
             document.getElementById('resetConfirmNo').addEventListener('click', cancelReset);
             document.getElementById('resumeYes').addEventListener('click', handleResumeYes);
             document.getElementById('resumeNo').addEventListener('click', handleResumeNo);
-            document.getElementById('challengeBtn').addEventListener('click', () => { switchMode('challenge'); updateModeButtons(); });
-            document.getElementById('designBtn').addEventListener('click', () => { switchMode('design'); updateModeButtons(); });
+            document.getElementById('challengeBtn').addEventListener('click', () => { practiceMode = false; if (designMode) switchMode('challenge'); updateModeButtons(); });
+            document.getElementById('practiceBtn').addEventListener('click', () => { togglePracticeMode(); });
             document.getElementById('clearWallBtn').addEventListener('click', clearDesignWall);
             document.getElementById('saveWallBtn').addEventListener('click', saveDesign);
             document.getElementById('loadWallBtn').addEventListener('click', () => document.getElementById('loadFileInput').click());
@@ -4144,7 +4201,13 @@
                 // Card hints (Feature 24)
                 let hintText = '';
                 if (isThroughStone && awaitingCardSelection) {
-                    hintText = 'T: Save for through line';
+                    hintText = 'T: Bank it!';
+                    card.classList.add('through-stone-card');
+                    // Pulse when player is below the through line
+                    const throughProgress = getWallProgress();
+                    if (throughProgress < 0.55) {
+                        card.classList.add('through-pulse');
+                    }
                 } else if (awaitingCardSelection && getWallProgress() > 0.75 && copingBank.length < copingBankTarget) {
                     hintText = 'B: Bank for coping / through';
                 }
@@ -4170,12 +4233,20 @@
             const throughBtnHtml = (awaitingCardSelection && throughBank.length > 0)
                 ? `<button class="hand-action-btn" style="background:#eae5dc;border-color:#8a7a6a;color:#3a3a3a;" onclick="retrieveThroughStone(0)">Through (T) <strong>${throughBank.length}</strong></button>`
                 : (throughBank.length > 0 ? `<button class="hand-action-btn" style="background:#eae5dc;border-color:#8a7a6a;color:#3a3a3a;" disabled>Through (T) <strong>${throughBank.length}</strong></button>` : '');
-            const pullBtnHtml = (awaitingCardSelection && pullsRemaining > 0)
-                ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" onclick="startPullMode()">Pull (U) <strong>${pullsRemaining}</strong></button>`
-                : (pullsRemaining > 0 ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" disabled>Pull (U) <strong>${pullsRemaining}</strong></button>` : '');
-            const redrawBtnHtml = (awaitingCardSelection && redrawsRemaining > 0)
-                ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" onclick="redrawHand()">Redraw (X) <strong>${redrawsRemaining}</strong></button>`
-                : (redrawsRemaining > 0 ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" disabled>Redraw (X) <strong>${redrawsRemaining}</strong></button>` : '');
+            const pullBtnHtml = practiceMode
+                ? (awaitingCardSelection
+                    ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" onclick="startPullMode()">Pull (U) <strong>&infin;</strong></button>`
+                    : `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" disabled>Pull (U) <strong>&infin;</strong></button>`)
+                : ((awaitingCardSelection && pullsRemaining > 0)
+                    ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" onclick="startPullMode()">Pull (U) <strong>${pullsRemaining}</strong></button>`
+                    : (pullsRemaining > 0 ? `<button class="hand-action-btn" style="background:#e0eaf5;border-color:#2a64b4;color:#2a64b4;" disabled>Pull (U) <strong>${pullsRemaining}</strong></button>` : ''));
+            const redrawBtnHtml = practiceMode
+                ? (awaitingCardSelection
+                    ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" onclick="redrawHand()">Redraw (X) <strong>&infin;</strong></button>`
+                    : `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" disabled>Redraw (X) <strong>&infin;</strong></button>`)
+                : ((awaitingCardSelection && redrawsRemaining > 0)
+                    ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" onclick="redrawHand()">Redraw (X) <strong>${redrawsRemaining}</strong></button>`
+                    : (redrawsRemaining > 0 ? `<button class="hand-action-btn" style="background:#f5efe5;border-color:#8a7a5a;color:#6a5a3a;" disabled>Redraw (X) <strong>${redrawsRemaining}</strong></button>` : ''));
             const deckPct = totalDeckSize > 0 ? Math.round((deck.length / totalDeckSize) * 100) : 0;
             info.innerHTML = `
                 <div class="deck-bar-container">
@@ -4189,8 +4260,8 @@
             `;
             handRow.appendChild(info);
 
-            // Timer bar (shown when awaiting selection)
-            if (awaitingCardSelection) {
+            // Timer bar (shown when awaiting selection) — hidden in practice mode
+            if (awaitingCardSelection && !practiceMode) {
                 const timerBar = document.createElement('div');
                 timerBar.className = 'card-timer-bar';
                 timerBar.innerHTML = '<div class="card-timer-fill" id="cardTimerFill" style="width:100%"></div>';
@@ -4678,7 +4749,8 @@
         }
 
         function startPullMode() {
-            if (pullsRemaining <= 0 || !awaitingCardSelection || gamePhase !== 'playing') return;
+            if (!practiceMode && pullsRemaining <= 0) return;
+            if (!awaitingCardSelection || gamePhase !== 'playing') return;
 
             pullableStones = findPullableStones();
             if (pullableStones.length === 0) {
@@ -4732,7 +4804,7 @@
                 isThroughStone: isThroughStone
             });
 
-            pullsRemaining--;
+            if (!practiceMode) pullsRemaining--;
             pullMode = false;
             pullableStones = [];
             canvas.style.cursor = '';
@@ -5047,6 +5119,7 @@
         // ============ CARD SELECTION TIMER ============
 
         function startCardSelectTimer() {
+            if (practiceMode) return; // No timer in practice mode
             clearCardSelectTimer();
             cardsWinnowed = 0;
             cardSelectDeadline = performance.now() + CARD_SELECT_TIME * 1000;
@@ -5145,13 +5218,14 @@
 
         function redrawHand() {
             // "Redraw" — return all cards to deck and draw a fresh hand
-            // 3 uses per game
-            if (!awaitingCardSelection || redrawsRemaining <= 0) return;
+            if (!awaitingCardSelection) return;
+            if (!practiceMode && redrawsRemaining <= 0) return;
 
-            redrawsRemaining--;
+            if (!practiceMode) redrawsRemaining--;
             drawFreshHand();
 
-            showFeedback('Hand redrawn! (' + redrawsRemaining + ' left)', 'positive');
+            const msg = practiceMode ? 'Hand redrawn!' : 'Hand redrawn! (' + redrawsRemaining + ' left)';
+            showFeedback(msg, 'positive');
             updateUI();
             renderHandRow();
             drawBoard();
@@ -6793,6 +6867,7 @@
         function startDeconstruction() {
             gamePhase = 'deconstructing';
             fallingDeconStones = [];
+            deconThroughGlow = null;
 
             // Sort stones by Y position (top first) for deconstruction order
             // This removes from top to bottom, like taking apart a wall
@@ -6811,15 +6886,27 @@
         }
 
         function deconstructRenderStep() {
+            const now = performance.now();
             // Update falling stones
             for (let i = fallingDeconStones.length - 1; i >= 0; i--) {
                 const fs = fallingDeconStones[i];
+                // Through stones have a brief delay before falling
+                if (fs.fallDelay > 0) {
+                    fs.fallDelay -= 16; // ~1 frame at 60fps
+                    continue; // Don't apply gravity yet
+                }
                 fs.fallVy += 0.8;
                 fs.fallY += fs.fallVy;
                 // Remove when off screen
                 if ((fs.y + fs.fallY) * BLOCK_SIZE > canvas.height + 100) {
                     fallingDeconStones.splice(i, 1);
                 }
+            }
+            // Fade out through stone glow
+            if (deconThroughGlow) {
+                const elapsed = now - deconThroughGlow.startTime;
+                deconThroughGlow.alpha = Math.max(0, 0.6 * (1 - elapsed / 600));
+                if (deconThroughGlow.alpha <= 0) deconThroughGlow = null;
             }
             drawBoard();
             // Continue loop if still deconstructing or stones still falling
@@ -6949,6 +7036,18 @@
                 };
                 deck.push(card);
 
+                // Through stone recognition — brief glow before falling
+                if (stone.isThroughStone) {
+                    deconThroughGlow = {
+                        x: stone.x,
+                        y: stone.y,
+                        width: stone.width,
+                        height: stone.height,
+                        alpha: 0.6,
+                        startTime: performance.now()
+                    };
+                }
+
                 // Push a falling stone for dramatic effect
                 fallingDeconStones.push({
                     x: stone.x,
@@ -6957,13 +7056,16 @@
                     height: stone.height,
                     thickness: stone.thickness,
                     id: stone.id || Date.now(),
+                    isThroughStone: stone.isThroughStone || false,
                     fallY: 0,
-                    fallVy: Math.random() * 0.5 // Slight random initial velocity
+                    fallVy: stone.isThroughStone ? 0 : Math.random() * 0.5, // Through stones pause before falling
+                    fallDelay: stone.isThroughStone ? 400 : 0 // ms delay before gravity kicks in
                 });
             }
 
-            // Continue deconstruction with delay for animation effect
-            deconstructTimer = setTimeout(deconstructNextStone, 50);
+            // Continue deconstruction — through stones pause the sequence briefly
+            const nextDelay = (stone.isThroughStone && cellsCleared > 0) ? 500 : 50;
+            deconstructTimer = setTimeout(deconstructNextStone, nextDelay);
         }
 
         function shuffleDeck() {
@@ -6982,19 +7084,47 @@
                 ? 1 - (deck.length / totalDeckSize)
                 : 0;
 
+            stonesDrawnCount++;
             const maxSize = 240; // 20×12, biggest regular stone (inch-based)
+
+            // Check if wall is near the through line and no through stones have been drawn yet
+            const wallProgress = getWallProgress();
+            const throughLineApproaching = wallProgress > 0.3;
+            const hasThroughInHand = hand && hand.some(s => s && s.isThroughStone);
+            const hasThroughBanked = throughBank && throughBank.length > 0;
+            const needsThrough = throughLineApproaching && !hasThroughInHand && !hasThroughBanked;
+
+            // Force a through stone if wall is approaching through line and player has none
+            if (needsThrough) {
+                const throughIdx = deck.findIndex(c => c.isThroughStone);
+                if (throughIdx >= 0) {
+                    const card = deck.splice(throughIdx, 1)[0];
+                    card._previewId = ++previewIdCounter;
+                    return card;
+                }
+            }
 
             // Compute weight for each card based on size and progress
             // Early game: favors large stones (foundation material)
             // Late game: favors small stones (filling gaps, upper courses)
-            const throughBoost = 1 - Math.abs(progress - 0.5) * 4; // 0→1→0 peaking at 50%
             const weights = deck.map(card => {
                 const sizeRatio = (card.width * card.height) / maxSize;
                 let weight = sizeRatio * (1 - progress) + (1 - sizeRatio) * progress;
-                // Boost through stones when wall is 40-60% built
-                if (card.isThroughStone && throughBoost > 0) {
-                    weight += throughBoost * 2.0; // Strong boost near midpoint
+
+                // Through stones: boosted throughout early and mid game (0-65% progress)
+                // Peaks at ~40% progress, tapers off after 65%
+                if (card.isThroughStone) {
+                    if (progress < 0.65) {
+                        const throughBoost = progress < 0.4 ? 1.5 : 1.5 * (1 - (progress - 0.4) / 0.25);
+                        weight += throughBoost;
+                    }
                 }
+
+                // First 3 draws: strong boost for 12" tall (thick foundation) stones
+                if (stonesDrawnCount <= 3 && card.height >= 12) {
+                    weight += 3.0;
+                }
+
                 return Math.max(weight, 0.1); // Floor so nothing is impossible
             });
 
@@ -7917,24 +8047,28 @@
                 dotX += dotSize + dotGap;
             }
 
-            // --- Pulls remaining (label + 3 dots, blue) ---
-            ctx.fillStyle = pullsRemaining > 0 ? '#2a64b4' : 'rgba(100,100,100,0.4)';
+            // --- Pulls remaining (label + 3 dots or ∞, blue) ---
+            ctx.fillStyle = (practiceMode || pullsRemaining > 0) ? '#2a64b4' : 'rgba(100,100,100,0.4)';
             ctx.font = 'bold 20px Georgia';
-            ctx.fillText('PULLS', leftX, hudY + 18 + rowHeight);
-            const pullsLabelW = ctx.measureText('PULLS').width;
-            dotX = leftX + pullsLabelW + 8;
-            for (let i = 0; i < 3; i++) {
-                ctx.beginPath();
-                ctx.arc(dotX + dotSize / 2, hudY + 12 + rowHeight, dotSize / 2, 0, Math.PI * 2);
-                if (i < pullsRemaining) {
-                    ctx.fillStyle = '#2a64b4';
-                    ctx.fill();
-                } else {
-                    ctx.strokeStyle = 'rgba(100,100,100,0.35)';
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
+            if (practiceMode) {
+                ctx.fillText('PULLS \u221E', leftX, hudY + 18 + rowHeight);
+            } else {
+                ctx.fillText('PULLS', leftX, hudY + 18 + rowHeight);
+                const pullsLabelW = ctx.measureText('PULLS').width;
+                dotX = leftX + pullsLabelW + 8;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(dotX + dotSize / 2, hudY + 12 + rowHeight, dotSize / 2, 0, Math.PI * 2);
+                    if (i < pullsRemaining) {
+                        ctx.fillStyle = '#2a64b4';
+                        ctx.fill();
+                    } else {
+                        ctx.strokeStyle = 'rgba(100,100,100,0.35)';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+                    dotX += dotSize + dotGap;
                 }
-                dotX += dotSize + dotGap;
             }
 
             // === RIGHT COLUMN: Cuts & Streak (right-aligned) ===
@@ -8128,6 +8262,24 @@
             // Danger zone vignette (red edges when stability < 25%)
             drawDangerVignette();
 
+            // Draw through stone deconstruction glow (golden shimmer where through stone was)
+            if (deconThroughGlow) {
+                const g = deconThroughGlow;
+                const gx = g.x * BLOCK_SIZE;
+                const gy = g.y * BLOCK_SIZE;
+                const gw = g.width * BLOCK_SIZE;
+                const gh = g.height * BLOCK_SIZE;
+                ctx.save();
+                ctx.fillStyle = `rgba(200, 170, 80, ${g.alpha})`;
+                ctx.fillRect(gx - 2, gy - 2, gw + 4, gh + 4);
+                // Soft outer glow
+                ctx.shadowColor = 'rgba(200, 170, 80, ' + (g.alpha * 0.7) + ')';
+                ctx.shadowBlur = 12;
+                ctx.fillRect(gx, gy, gw, gh);
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+
             // Draw falling deconstruction stones
             if (fallingDeconStones.length > 0) {
                 ctx.save();
@@ -8135,7 +8287,7 @@
                     const fx = fs.x * BLOCK_SIZE;
                     const fy = (fs.y + fs.fallY) * BLOCK_SIZE;
                     drawStoneBlock(ctx, fx, fy, fs.width * BLOCK_SIZE, fs.height * BLOCK_SIZE,
-                        fs.thickness, false, false, false, fs.width, fs.height, false, fs.id);
+                        fs.thickness, false, false, false, fs.width, fs.height, fs.isThroughStone || false, fs.id);
                 }
                 ctx.restore();
             }
@@ -8349,10 +8501,12 @@
                 playSfx('generalThunk', 0.7);
             }
 
-            // Drop speed escalation: base interval at start → 75% of base at end
-            const progress = getWallProgress();
-            const base = getBaseDropInterval();
-            dropInterval = Math.round(base - progress * (base * 0.25));
+            // Drop speed escalation: base interval at start → 75% of base at end (skip in practice)
+            if (!practiceMode) {
+                const progress = getWallProgress();
+                const base = getBaseDropInterval();
+                dropInterval = Math.round(base - progress * (base * 0.25));
+            }
 
             stats.stonesPlaced++;
             document.getElementById('stonesPlaced').textContent = stats.stonesPlaced;
@@ -9493,7 +9647,15 @@
 
             updateUI();
             if (stability <= 0) {
-                gameOver(false);
+                if (practiceMode) {
+                    // Wall settles — stability floor, score penalty, keep playing
+                    stability = 20;
+                    score = Math.round(score * 0.8);
+                    showFeedback('Wall settled! Stability restored to 20%', 'negative');
+                    updateUI();
+                } else {
+                    gameOver(false);
+                }
             }
         }
 
@@ -10014,6 +10176,7 @@
             pendingOffcut = null;
             redrawsRemaining = 3;
             fallingDeconStones = [];
+            deconThroughGlow = null;
             sealedVoidCells = new Set();
             totalSealedVoidArea = 0;
             document.getElementById('cutOverlay').classList.remove('show');
@@ -10093,6 +10256,7 @@
             throughBank = [];
             throughBankUsedCount = 0;
             totalDeckSize = 0;
+            stonesDrawnCount = 0;
             if (copingTimer) { clearTimeout(copingTimer); copingTimer = null; }
             if (copingDropFrame) { cancelAnimationFrame(copingDropFrame); copingDropFrame = null; }
             clearCardSelectTimer();
@@ -10127,6 +10291,7 @@
             pendingOffcut = null;
             redrawsRemaining = 3;
             fallingDeconStones = [];
+            deconThroughGlow = null;
             // Reset void tracking
             sealedVoidCells = new Set();
             totalSealedVoidArea = 0;
@@ -10480,7 +10645,7 @@
             document.getElementById('copingBankStrip').style.display = 'none';
 
             // Calculate end-of-game bonuses
-            const pullBonus = pullsRemaining * 50;
+            const pullBonus = practiceMode ? 0 : pullsRemaining * 50;
             const craftsmanshipBonus = Math.max(0, 200 - Math.max(0, cutsUsed - 5) * 30);
             const fillQualityBonus = Math.max(0, 150 - totalSealedVoidArea * 10);
             score += pullBonus + craftsmanshipBonus + fillQualityBonus;
@@ -10508,7 +10673,7 @@
             document.getElementById('statBanked').textContent = totalBankedCount;
             document.getElementById('statFacePins').textContent = (5 - facePinsRemaining);
             document.getElementById('statCuts').textContent = cutsUsed;
-            document.getElementById('statRedraws').textContent = 3 - redrawsRemaining;
+            document.getElementById('statRedraws').textContent = practiceMode ? '\u221E' : (3 - redrawsRemaining);
             document.getElementById('statThroughBanked').textContent = throughBankUsedCount;
             document.getElementById('statStability').textContent = Math.round(stability) + '%';
             document.getElementById('statCraftsmanship').textContent = '+' + craftsmanshipBonus;
@@ -10577,7 +10742,7 @@
                 }
             }
 
-            if (complete) {
+            if (complete && !practiceMode) {
                 isNew = isNewHighScore(activeWallSize, score);
                 top3 = saveHighScore(activeWallSize, {
                     score: score,
@@ -10687,7 +10852,9 @@
                     gamePhase: gamePhase,
                     sealedVoidCells: Array.from(sealedVoidCells),
                     totalSealedVoidArea: totalSealedVoidArea,
-                    violationCounts: violationCounts
+                    violationCounts: violationCounts,
+                    practiceMode: practiceMode,
+                    stonesDrawnCount: stonesDrawnCount
                 };
                 localStorage.setItem('sbs_autosave', JSON.stringify(state));
             } catch (e) {
@@ -10746,6 +10913,9 @@
             sealedVoidCells = state.sealedVoidCells ? new Set(state.sealedVoidCells) : new Set();
             totalSealedVoidArea = state.totalSealedVoidArea || 0;
             violationCounts = state.violationCounts || { layFlat: 0, oneOverN: 0, offCenter: 0, joints: 0, zipper: 0, coursing: 0, throughMiss: 0, voidSealed: 0 };
+            practiceMode = state.practiceMode || false;
+            stonesDrawnCount = state.stonesDrawnCount || 0;
+            updateModeButtons();
             if (state.activeWallSize) setWallSize(state.activeWallSize);
             // Clear caches and rebuild UI
             _bgCache = null;
